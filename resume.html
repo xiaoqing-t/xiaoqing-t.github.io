@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>简历 · Zhao Yunzhe</title>
+  <meta name="description" content="Zhao Yunzhe 的个人简历 —— 计算机科学专业,深度学习 / 脑机接口 / AI 智能体方向。" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="resume.css" />
+</head>
+<body class="resume-body">
+
+  <!-- 导航 -->
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ 返回主页</span></a>
+      <ul class="nav-links no-print">
+        <li><a href="#education">教育背景</a></li>
+        <li><a href="#skills">技能</a></li>
+        <li><a href="#projects">项目经历</a></li>
+        <li><a href="#experience">实践经历</a></li>
+        <li><a href="#contact" class="nav-cta">联系方式</a></li>
+      </ul>
+      <button class="no-print btn-print" onclick="window.print()">打印 / 导出 PDF</button>
+    </div>
+  </nav>
+
+  <!-- 简历主体 -->
+  <main class="resume container">
+    <!-- 头部 -->
+    <header class="resume-head">
+      <div>
+        <h1 class="resume-name">Zhao Yunzhe</h1>
+        <p class="resume-role">计算机科学与技术 · 本科在读(大三)</p>
+        <p class="resume-intro">深度学习 / 脑机接口(BCI) / AI 智能体方向实习,上海交通大学。</p>
+      </div>
+      <ul class="resume-contact">
+        <li>✉️ <a href="mailto:zyz.sjtu@sjtu.edu.cn">zyz.sjtu@sjtu.edu.cn</a></li>
+        <li>🐙 <a href="https://github.com/xiaoqing-t" target="_blank" rel="noopener">github.com/xiaoqing-t</a></li>
+        <li>📍 中国</li>
+      </ul>
+    </header>
+
+    <!-- 教育背景 -->
+    <section id="education" class="resume-section">
+      <h2 class="resume-h2">教育背景</h2>
+      <div class="resume-item">
+        <div class="resume-item-head">
+          <h3>上海交通大学 · 计算机科学与技术(本科)</h3>
+          <span class="resume-date">2024 – 2028(预计)</span>
+        </div>
+        <ul class="resume-list">
+          <li>当前大三,主修计算机科学,关注深度学习与智能系统方向。</li>
+          <li>相关学习:<span class="tag">操作系统</span><span class="tag">数据结构与算法</span><span class="tag">机器学习/深度学习</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 技能 -->
+    <section id="skills" class="resume-section">
+      <h2 class="resume-h2">专业技能</h2>
+      <div class="resume-item">
+        <ul class="resume-list">
+          <li><b>编程语言:</b>Python(熟练)、C/C++(课程实践);熟练使用 Git、命令行、Linux 基础。</li>
+          <li><b>深度学习:</b>理解并实现过 CNN 前向/反向传播、损失函数与训练循环(CS231n 从零实现,不使用现成框架)。</li>
+          <li><b>信号处理:</b>熟练使用 MNE 处理 EEG/ECG/EOG,掌握滤波、陷波、降采样、z-score 归一化与 HDF5 存储;熟悉"先 QC 再预处理"的数据质量流程。</li>
+          <li><b>AI 智能体:</b>研究过智能体系统架构(主循环、LLM 对话、工具调用、上下文管理、技能与总结)。</li>
+          <li><b>工程工具:</b>NumPy / SciPy / Matplotlib / h5py,配置驱动与可复现管线设计。</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 项目经历 -->
+    <section id="projects" class="resume-section">
+      <h2 class="resume-h2">项目经历</h2>
+
+      <div class="resume-item">
+        <div class="resume-item-head">
+          <h3>EEG/ECG/EOG 多模态生理信号预处理 Pipeline</h3>
+          <a class="resume-link" href="https://github.com/xiaoqing-t/EEG-preprocess-pipeline-skill" target="_blank" rel="noopener">GitHub ↗</a>
+        </div>
+        <ul class="resume-list">
+          <li>设计并实现配置驱动的多模态生理信号预处理管线:先 QC 再预处理、可复现随机段 QC 图、跨被试汇总报告、滤波 → 陷波 → 降采样 → z-score → HDF5。</li>
+          <li>沉淀为可复用的 Skill 文档并开源,已应用于多个公开数据集(ds004118 / ds005087 / ds005114 等),处理多通道 EEG 数据。</li>
+          <li>解决单位换算(Volts→uV)、参考电极取舍、多通道数分 H5 合并等工程难点。</li>
+        </ul>
+      </div>
+
+      <div class="resume-item">
+        <div class="resume-item-head">
+          <h3>AI 智能体架构研究</h3>
+          <a class="resume-link" href="https://github.com/xiaoqing-t/Project1-of-OS-2026-fall" target="_blank" rel="noopener">Project 1 ↗</a>
+          <a class="resume-link" href="https://github.com/xiaoqing-t/Project2-of-OS-2026-Fall" target="_blank" rel="noopener">Project 2 ↗</a>
+        </div>
+        <ul class="resume-list">
+          <li>采用"学习 → 复现 → 修改"的方法研究智能体系统:主循环、LLM 对话、客户端、工具调用、线程池、上下文管理、技能与总结、offload 代理。</li>
+          <li>拆解系统设计的关键取舍,并通过亲手重写核心组件进行刻意练习。</li>
+        </ul>
+      </div>
+
+      <div class="resume-item">
+        <div class="resume-item-head">
+          <h3>CS231n · 从零实现卷积神经网络</h3>
+          <a class="resume-link" href="https://github.com/xiaoqing-t/CS231n-assignments" target="_blank" rel="noopener">GitHub ↗</a>
+        </div>
+        <ul class="resume-list">
+          <li>不借助现成框架,逐行实现 CNN 的 forward / backward、损失函数、优化器与训练循环。</li>
+          <li>通过手写实现夯实对梯度传播与表示学习的理解,并对照 BCI 信号表示学习。</li>
+        </ul>
+      </div>
+
+      <div class="resume-item">
+        <div class="resume-item-head">
+          <h3>操作系统课程项目</h3>
+        </div>
+        <ul class="resume-list">
+          <li>完成操作系统课程 Project 1 / Project 2,涉及进程/线程、同步机制与系统调用等核心概念的系统级实现与调试。</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 实践经历 -->
+    <section id="experience" class="resume-section">
+      <h2 class="resume-h2">实践经历</h2>
+      <div class="resume-item">
+        <div class="resume-item-head">
+          <h3>BCI 实验室 · EEG 数据处理</h3>
+          <span class="resume-date">实习</span>
+        </div>
+        <ul class="resume-list">
+          <li>参与 EEG 数据采集与预处理,负责搭建多模态数据预处理管线,并把重复工程步骤沉淀为可复用 Skill。</li>
+          <li>遵循"工具执行、自己审查与决策"的流程,保证数据质量与结果可复现。</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 联系方式 -->
+    <section id="contact" class="resume-section no-print">
+      <h2 class="resume-h2">联系方式</h2>
+      <p class="resume-contact-foot">
+        欢迎交流技术、科研与实习机会。
+        <a class="btn btn-primary" href="mailto:zyz.sjtu@sjtu.edu.cn">发邮件</a>
+        <a class="btn btn-ghost" href="https://github.com/xiaoqing-t" target="_blank" rel="noopener">GitHub</a>
+        <a class="btn btn-ghost" href="index.html">返回主页</a>
+      </p>
+    </section>
+  </main>
+
+  <footer class="footer no-print">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 简历</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

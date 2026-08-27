@@ -1,0 +1,122 @@
+/* ===== 简历页专用样式 ===== */
+
+/* 导航里的打印按钮 */
+.btn-print {
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--ink-soft);
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--sans);
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-print:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ===== 简历主体 ===== */
+.resume { padding: 40px 0 64px; max-width: 840px; }
+
+.resume-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 32px 0 28px;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 32px;
+}
+.resume-name {
+  font-size: clamp(2rem, 4vw, 2.6rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.resume-role {
+  color: var(--accent);
+  font-weight: 600;
+  margin-top: 8px;
+}
+.resume-intro { color: var(--ink-soft); margin-top: 8px; font-size: 0.95rem; max-width: 34em; }
+
+.resume-contact {
+  list-style: none;
+  text-align: right;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  line-height: 1.9;
+  flex-shrink: 0;
+}
+.resume-contact a { color: var(--ink-soft); }
+.resume-contact a:hover { color: var(--accent); text-decoration: none; }
+
+/* ===== 区块 ===== */
+.resume-section { margin-bottom: 32px; }
+.resume-h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 18px;
+  color: var(--ink);
+}
+.resume-h2::before { content: ""; display: inline-block; width: 4px; height: 1em; background: var(--accent); border-radius: 2px; margin-right: 10px; vertical-align: -0.1em; }
+
+.resume-item { margin-bottom: 22px; }
+.resume-item-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-bottom: 8px;
+}
+.resume-item-head h3 { font-size: 1.02rem; font-weight: 700; }
+.resume-date { font-size: 0.82rem; color: var(--ink-faint); font-family: var(--mono); white-space: nowrap; }
+.resume-link { font-size: 0.82rem; font-weight: 600; color: var(--accent); }
+.resume-link:hover { text-decoration: underline; }
+
+.resume-list { list-style: none; }
+.resume-list li {
+  position: relative;
+  padding-left: 16px;
+  color: var(--ink-soft);
+  font-size: 0.93rem;
+  margin-bottom: 6px;
+}
+.resume-list li::before { content: "—"; position: absolute; left: 0; color: var(--accent); }
+.resume-list b { color: var(--ink); }
+
+.tag {
+  display: inline-block;
+  font-size: 0.78rem;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 1px 10px;
+  margin: 0 4px 4px 0;
+}
+
+.resume-contact-foot { color: var(--ink-soft); margin-bottom: 20px; }
+.resume-contact-foot .btn { margin: 8px 8px 0 0; }
+
+/* ===== 响应式 ===== */
+@media (max-width: 640px) {
+  .resume-head { flex-direction: column; }
+  .resume-contact { text-align: left; }
+}
+
+/* ===== 打印样式(导出 PDF) ===== */
+@media print {
+  @page { size: A4; margin: 14mm 12mm; }
+  body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .nav, .footer, .no-print { display: none !important; }
+  .resume { padding: 0; max-width: 100%; }
+  .resume-head { border-bottom: 2px solid #000; padding-top: 0; }
+  .card, .creative-cell { opacity: 1 !important; transform: none !important; }
+  .resume-h2 { break-after: avoid; }
+  .resume-item, .resume-section { break-inside: avoid; }
+  a { color: inherit; text-decoration: none; }
+}
