@@ -99,6 +99,18 @@
   margin: 0 4px 4px 0;
 }
 
+/* 课程成绩 */
+.resume-courses li { font-size: 0.9rem; }
+.course-grade {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 4px;
+  padding: 0 5px;
+}
+
 .resume-contact-foot { color: var(--ink-soft); margin-bottom: 20px; }
 .resume-contact-foot .btn { margin: 8px 8px 0 0; }
 
