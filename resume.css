@@ -110,6 +110,15 @@
   border-radius: 4px;
   padding: 0 5px;
 }
+.course-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 0 6px;
+  vertical-align: 1px;
+}
 
 .resume-contact-foot { color: var(--ink-soft); margin-bottom: 20px; }
 .resume-contact-foot .btn { margin: 8px 8px 0 0; }
