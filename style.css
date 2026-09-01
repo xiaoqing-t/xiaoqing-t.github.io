@@ -253,6 +253,12 @@ a:hover { text-decoration: underline; }
 /* ===== 联系 ===== */
 .contact-lead { color: var(--ink-soft); margin-bottom: 28px; }
 .contact-links { display: flex; gap: 14px; flex-wrap: wrap; }
+.contact-email {
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--accent);
+  align-self: center;
+}
 
 /* ===== 滚动渐入动画 ===== */
 .card, .creative-cell {
