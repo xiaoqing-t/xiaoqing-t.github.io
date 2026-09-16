@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claude Code 1M 上下文配置 · 学习笔记</title>
+  <meta name="description" content="一次完整的问题排查记录:让 Claude Code 桌面 App 的自动压缩阈值从 200K 提到接近 1M。" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article pre {
+      background: #16181d;
+      color: #d6dce5;
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      margin-bottom: 18px;
+    }
+    .article pre code { background: none; border: 0; padding: 0; color: inherit; font-size: 1em; }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .back-link { display: inline-block; margin-bottom: 28px; font-size: 0.92rem; }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="index.html#creative">创意</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">工程实践 · 2026-09-16</p>
+    <h1>Claude Code 1M 上下文配置实录</h1>
+
+    <blockquote>
+      一次完整的排查记录:<strong>让 Claude Code 桌面 App 的自动压缩阈值从 200K 提到接近 1M</strong>。
+      每一步都给出现象 → 根因 → 操作,写给想复刻的人,也写给接手维护的自己。已验证生效。
+    </blockquote>
+
+    <h2 id="summary">一句话结论</h2>
+    <p>桌面 App 的推理配置文件里,模型条目加上 <code>"supports1m": true</code>(可加 <code>"prefer1m": true</code> 设为默认),模型选择器就会出现 1M 变体,客户端随之按 1M 计算压缩阈值。再配合 <code>~/.claude/settings.json</code> 顶层 <code>"autoCompactWindow": 900000</code> 留安全余量。</p>
+
+    <h2 id="background">背景</h2>
+    <ul>
+      <li>环境:Windows 11,Claude Code 桌面 App(Code 标签页),走本地网关转发请求。</li>
+      <li>症状:会话每到 <strong>200K token</strong> 就触发 auto-compact,长任务被反复压缩,体验很差。</li>
+      <li>关键实测:向网关后端直接发约 <strong>93 万 input tokens</strong> 的请求,正常返回 → 说明<strong>后端装得下接近 1M,200K 纯粹是客户端自己的保守认知</strong>。</li>
+    </ul>
+
+    <h2 id="root-cause">根因链:为什么改了很多处都没用</h2>
+    <p>客户端的窗口解析逻辑可以总结成这两行:</p>
+    <pre><code>实际压缩阈值 = min(autoCompactWindow 设置, 客户端相信的模型窗口)
+
+客户端相信的模型窗口:
+  1. 模型名以 [1m] 结尾 → 直接按 1M 计算        ← 最强,无附加条件
+  2. 配置里模型声明了 supports1m → 选择器提供 1M 变体,
+     选中后模型名即带 [1m] 后缀
+  3. 否则:模型表里明明写着 1M,也会"降级相信"为 200K
+     ← 这就是 200K 压缩的根源</code></pre>
+    <p>这个 <code>min()</code> 意味着:<strong>只调 <code>autoCompactWindow</code> 没有用</strong>,必须先让客户端"相信"模型窗口是 1M。</p>
+
+    <h3 id="pitfalls">走过的弯路(都无效,别再试)</h3>
+    <table>
+      <thead><tr><th>尝试</th><th>为什么无效</th></tr></thead>
+      <tbody>
+        <tr><td>settings.json 里模型名加 <code>[1M]</code> 后缀</td><td>桌面 App 托管模式会把环境变量里的模型设置覆盖为空,不生效</td></tr>
+        <tr><td><code>ANTHROPIC_MODEL</code> 指定带 <code>[1m]</code> 的模型名</td><td>优先级:App 选择器传入的模型 &gt; 环境变量 &gt; settings 的 model。App 传了裸名,env 被压掉</td></tr>
+        <tr><td>请求头加 <code>context-1m</code> beta header</td><td>只影响请求头,不影响客户端对窗口大小的认知</td></tr>
+        <tr><td>网关代理层改写模型名加 <code>[1m]</code></td><td>模型名由客户端解析,网关改写对客户端不可见</td></tr>
+        <tr><td><code>"autoCompactWindow": 900000</code> 单独使用</td><td>被 min() 钳到 200K(但与 supports1m 组合后有效,见下)</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="steps">操作步骤(复刻指南)</h2>
+
+    <h3>第 1 步:确认后端真的装得下大上下文(可选但强烈建议)</h3>
+    <p>先探测后端的真实容量,避免把"压缩太频繁"的问题变成"请求直接报错"。用 python 发一个大请求(Windows 下别用 curl,TLS 会挂):</p>
+    <pre><code>python - &lt;&lt;'EOF'
+import json, random, urllib.request
+random.seed(42)
+words = [f'w{i}{chr(97+random.randint(0,25))}' for i in range(5000)]
+text = ' '.join(random.choices(words, k=210000))   # 约等于 93 万 token
+body = json.dumps({'model':'claude-sonnet-5','max_tokens':8,
+    'messages':[{'role':'user','content': text + '\n\n只需回复:ok'}]}).encode()
+req = urllib.request.Request('http://127.0.0.1:&lt;port&gt;/v1/messages', data=body,
+    headers={'content-type':'application/json','anthropic-version':'2023-06-01'})
+r = urllib.request.urlopen(req, timeout=300)
+print(json.loads(r.read()).get('usage'))   # 看 input_tokens 是否远超 200K 且返回 200
+EOF</code></pre>
+    <p>返回 200 且 <code>input_tokens</code> 达到几十万 → 后端支持,继续;报 4xx → 后端真的只有 200K,到此为止(这是后端套餐问题,客户端无解)。</p>
+
+    <h3>第 2 步:找到 App 的推理配置文件</h3>
+    <p>桌面 App 的配置目录下有一个 <code>configLibrary/</code>,其中 <code>_meta.json</code> 的 <code>appliedId</code> 字段指出当前生效的配置文件(一个 uuid 命名的 .json)。生效文件改之前长这样:</p>
+    <pre><code>{
+  "inferenceProvider": "gateway",
+  "inferenceGatewayBaseUrl": "http://127.0.0.1:&lt;port&gt;",
+  "inferenceModels": [
+    { "name": "sonnet" }
+  ]
+}</code></pre>
+
+    <h3>第 3 步:备份并修改模型列表</h3>
+    <p>先复制一份备份(如 <code>原文件名.json.bak</code>),然后把 <code>inferenceModels</code> 改成:</p>
+    <pre><code>"inferenceModels": [
+  {
+    "name": "claude-sonnet-5",
+    "supports1m": true,
+    "prefer1m": true,
+    "anthropicFamilyTier": "sonnet",
+    "isFamilyDefault": true
+  },
+  {
+    "name": "claude-haiku-4-5",
+    "anthropicFamilyTier": "haiku",
+    "isFamilyDefault": true
+  },
+  {
+    "name": "claude-opus-4-8",
+    "supports1m": true,
+    "anthropicFamilyTier": "opus",
+    "isFamilyDefault": true
+  }
+]</code></pre>
+    <p>各字段含义:</p>
+    <table>
+      <thead><tr><th>字段</th><th>作用</th></tr></thead>
+      <tbody>
+        <tr><td><code>name</code></td><td>必须是网关端点接受的确切模型 ID。<code>"claude-sonnet-5[1m]"</code> 是 <code>supports1m: true</code> 的等价简写</td></tr>
+        <tr><td><code>supports1m</code></td><td><strong>核心开关</strong>。给该模型在选择器里加一个 1M 上下文变体。只对确认支持 1M 的部署勾选</td></tr>
+        <tr><td><code>prefer1m</code></td><td>该模型是默认模型时,1M 变体作为选择器默认选中项(用户仍可切换)</td></tr>
+        <tr><td><code>anthropicFamilyTier</code></td><td>告诉 App 该条目顶替哪个档位(haiku/sonnet/opus/fable),裸别名(如 sonnet)才能解析到它</td></tr>
+        <tr><td><code>isFamilyDefault</code></td><td>同档位多条目时的默认赢家</td></tr>
+      </tbody>
+    </table>
+
+    <h3>第 4 步:settings.json 加安全余量(可选)</h3>
+    <p><code>~/.claude/settings.json</code> 顶层加:</p>
+    <pre><code>"autoCompactWindow": 900000</code></pre>
+    <p>模型窗口变成 1M 后,实际压缩阈值 = min(900000, 1M) = 90 万——比顶满 1M 留约 10% 余量,避免贴边报错。不想要余量可省略此步(阈值即 1M)。</p>
+
+    <h3>第 5 步:完全重启桌面 App</h3>
+    <ul>
+      <li>托盘图标也退出,再重新启动(配置在启动时读取)。</li>
+      <li><strong>App 正在运行时改配置文件,退出时可能被内存态覆盖回去</strong>。改完立刻重启;如果发现文件被打回原形,改走 App 设置界面:在模型列表里添加模型并勾选 "Offer 1M-context variant"(对应 supports1m)和 "Default to 1M context"(对应 prefer1m),效果相同。</li>
+    </ul>
+
+    <h2 id="verify">验证</h2>
+    <ol>
+      <li>新开对话,模型选择器应出现 1M 变体(或默认已选中)。</li>
+      <li><code>/context</code> 看 Tokens 分母是否为 1M。注意:<strong>必须在新会话里看</strong>,旧会话是启动时读的配置,永远显示旧值。</li>
+      <li>实际使用中观察:不再在 ~167K(200K × 83%)附近触发 compact。</li>
+    </ol>
+
+    <h2 id="rollback">回滚</h2>
+    <ul>
+      <li>还原配置目录里的模型列表(用备份覆盖回去)。</li>
+      <li>删掉 settings.json 里的 <code>autoCompactWindow</code> 行。</li>
+      <li>重启 App。</li>
+    </ul>
+
+    <h2 id="takeaways">这次排查学到的</h2>
+    <ul>
+      <li><strong>先测后端,再怪客户端。</strong>93 万 token 探测请求直接把"瓶颈在哪"这一半问题定死了——剩下的一切排查才有方向。</li>
+      <li><strong>工具链的每一层都可能"好心办坏事"。</strong>客户端的 min() 钳制是保护,但保护性降级如果没有开关暴露出来,就成了排查黑洞。</li>
+      <li><strong>配置的读取时机和优先级比配置内容本身更重要。</strong>同一个配置项,放在 env、settings、App 选择器三个位置,结果完全不同——先搞清楚谁覆盖谁,再动手改。</li>
+    </ul>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+</body>
+</html>
