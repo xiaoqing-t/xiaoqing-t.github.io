@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EEG 预处理的那些坑 · 学习笔记</title>
+  <meta name="description" content="先 QC 再预处理、单位转换、参考电极、多通道数分文件:批量处理 EEG 数据集踩过的坑与排查表。" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article pre {
+      background: #16181d;
+      color: #d6dce5;
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      margin-bottom: 18px;
+    }
+    .article pre code { background: none; border: 0; padding: 0; color: inherit; font-size: 1em; }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .back-link { display: inline-block; margin-bottom: 28px; font-size: 0.92rem; }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="index.html#creative">创意</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">脑机接口 · EEG</p>
+    <h1>EEG 预处理的那些坑</h1>
+
+    <blockquote>
+      批量处理十余个公开数据集(累计数百小时 EEG/EOG/ECG 数据)后沉淀的经验。
+      核心结论一句话:<strong>数据质量先行——先 QC 再预处理,不要拿到数据直接跑。</strong>
+      这些经验已沉淀为一个可复用的预处理 pipeline(见项目页)。
+    </blockquote>
+
+    <h2 id="qc-first">坑一:拿到数据就直接跑预处理</h2>
+
+    <p>最贵的错误是预处理跑完几小时后,才发现数据本身有问题。正确顺序:</p>
+
+    <pre><code>原始数据
+  │
+  ▼
+[1. QC 质量检测] ── 统计评估 + 可复现随机段图像 + 跨被试汇总报告
+  │
+  ▼
+[2. 用户决策] ──── 放弃数据集 / 排除被试 / 丢弃通道 / 调整参数
+  │
+  ▼
+[3. 预处理] ────── 滤波 → 陷波 → 重采样 → z-score → HDF5
+  │
+  ▼
+[4. Merge] ─────── 按通道数分 H5 合并</code></pre>
+
+    <p>QC 阶段对每个被试做:单位转换、逐通道统计(mean/std/min/max)、通道分类(bad/noisy/normal)、NaN/Inf 检查、可复现随机段图像(用被试 ID 做种子)、跨被试质量汇总 + 排除建议。</p>
+
+    <p>两条原则:</p>
+    <ul>
+      <li><strong>QC 只看原始数据</strong>,不滤波、不降采样、不归一化——它评估的是数据本来的样子。</li>
+      <li><strong>QC 阈值要按数据类型调</strong>。常规数据 bad 通道阈值 2 µV;临床数据(TBI 等)幅值大得多,阈值要调到 1000 µV 量级,否则全部误报。</li>
+    </ul>
+
+    <h2 id="units">坑二:单位转换——最关键也最易错的点</h2>
+
+    <p>不同格式的数据文件存的单位不一样,处理错了,后面 QC 全是假的:</p>
+
+    <table>
+      <thead><tr><th>格式</th><th>判断方法</th><th>处理</th></tr></thead>
+      <tbody>
+        <tr><td>BrainVision .vhdr</td><td>元数据标 V</td><td><strong>无条件 ×1e6</strong></td></tr>
+        <tr><td>EEGLAB .set(channels.tsv 写 uV)</td><td><code>max(abs(data)) &lt; 0.01</code></td><td>×1e6(存的是 V)</td></tr>
+        <tr><td>EEGLAB .set(channels.tsv 写 uV)</td><td><code>max(abs(data)) &gt; 1</code></td><td><strong>不要 ×1e6</strong>(已存 µV)</td></tr>
+        <tr><td>EEGLAB .set(无 channels.tsv)</td><td>无法判断</td><td>直接 <code>raw._data *= 1e6</code> 最保险</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>推荐统一做法:所有数据一律 <code>raw._data *= 1e6</code></strong>。即使已经是 µV 量级,再乘 1e6 变成百万级,但后面反正做 z-score,缩放不影响结果。这个技巧把"判断单位"这个易错步骤整个消掉了。</p>
+
+    <p>排查表:</p>
+    <ul>
+      <li>QC 显示全部通道 BAD(std = 0)→ 数据是 Volts 但没 ×1e6</li>
+      <li>QC 显示全部通道 NOISY(std 几千 µV)→ 多半是正常的:原始数据含 DC 偏移,0.3 Hz 高通后即改善。<strong>不要因 QC 的 std 高就放弃数据集——先跑预处理看看滤波后效果</strong></li>
+    </ul>
+
+    <h2 id="reference">坑三:参考电极——在不在通道列表里,处理完全不同</h2>
+
+    <p>不同数据集的参考电极五花八门(Cz、FCz、乳突、耳垂……),处理规则只有一条:</p>
+
+    <p><strong>查 <code>_eeg.json</code> 的 <code>EEGReference</code> → 确认该通道是否在 <code>raw.ch_names</code> 中 → 在就丢弃,不在就不操作。</strong></p>
+
+    <p>原因:有的数据集把参考电极作为真实记录通道存了下来(要丢弃),有的只是元数据里的名字,根本不在通道列表里(不能动,动了反而报错)。举例:</p>
+    <ul>
+      <li>Cz 作为记录通道存在(如某些 63ch 数据集)→ 丢弃</li>
+      <li>Cz 只是参考名,不在 63ch 里 → 不操作</li>
+      <li>EGI 128ch 系统的 Cz (E129) 是真实通道 → 丢弃</li>
+      <li>查不到参考信息 → 查 <code>_eeg.json</code> 的 EEGReference 字段</li>
+    </ul>
+
+    <p>同类问题:EMG/GSR/CWL(脉冲校正)等非目标通道,统一建立丢弃清单,存在就丢。</p>
+
+    <h2 id="merge">坑四:同一数据集里通道数不一致</h2>
+
+    <p>真实数据集里,不同被试/不同 session 的通道数可能不一样(电极掉了、系统升级)。合并成一个 H5 会导致张量形状对不齐,正确做法是<strong>按通道数分文件</strong>:</p>
+
+    <pre><code># 如某数据集: 63ch(有 T7,T8) vs 61ch(无 T7,T8)
+dataset_63ch.h5  →  EEG=211seg
+dataset_61ch.h5  →  EEG=6seg
+
+# 又如: 64ch vs 256ch(高密度)
+dataset_64ch.h5  →  EEG=99seg
+dataset_256ch.h5 →  EEG=57seg</code></pre>
+
+    <p>多模态的存储结构也要分别设计:EEG/EOG 按连续信号存,ECG 切成 10 秒 epoch 存(500 Hz × 10s = 5000 samples,HDF5 chunk 对齐 epoch 大小,读取时整块命中)。</p>
+
+    <h2 id="troubleshooting">常见问题排查表</h2>
+
+    <table>
+      <thead><tr><th>问题</th><th>原因</th><th>解决</th></tr></thead>
+      <tbody>
+        <tr><td>QC 显示全部通道 BAD (std=0)</td><td>数据是 Volts 但没 ×1e6</td><td><code>raw._data *= 1e6</code></td></tr>
+        <tr><td>QC 显示全部通道 NOISY (std 几千 µV)</td><td>正常,原始数据含 DC 偏移</td><td>0.3 Hz 高通后改善</td></tr>
+        <tr><td>filter/notch_filter 报 "picks yielded no channels"</td><td>EOG/ECG 被 MNE 归为 misc</td><td>用 <code>picks='all'</code> 或先 <code>pick_channels</code></td></tr>
+        <tr><td>.set 文件无法读取</td><td>ALLEEG 格式(EEGLAB STUDY)</td><td>跳过,记录在案</td></tr>
+        <tr><td>.vmrk 文件缺失</td><td>BrainVision 数据不完整</td><td>跳过,记录在案</td></tr>
+        <tr><td>绘图报 "x and y must have same first dimension"</td><td>不同 session 通道数不一致</td><td>取所有 session 的共同通道画图</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="qc-report">QC 报告应该长什么样</h2>
+
+    <p>QC 的产出不是给自己看的,是给"决策"用的。一份够用的报告要包含四块:</p>
+
+    <pre><code>1. 总体统计
+   Total subjects: 91
+     OK: 12 / POOR: 79 / No data: 0
+
+2. 排除建议(带原因)
+   Recommended to exclude:
+     sub-XXX: 24/62 bad channels (std &lt; 2uV)
+     sub-YYY: read error (ALLEEG format)
+
+3. 通道问题(跨被试汇总)
+   CPz: reference channel → will be dropped
+   VEOG: flat in some sessions → will be checked
+
+4. 整体评估
+   Normal channels ratio: 82.3%
+   Assessment: FAIR — some sessions may need exclusion.</code></pre>
+
+    <p>QC 图像用被试 ID 做随机种子(如 <code>sub-07</code> → 7),保证<strong>每次画出来的是同一段数据</strong>——QC 结论才能复现,两个人看的是同一张图。</p>
+
+    <h2 id="takeaways">总结:三条最值钱的经验</h2>
+    <ol>
+      <li><strong>先 QC 再预处理</strong>——所有关于数据的决策,都应该建立在看过原始数据之后,而不是跑完 pipeline 之后。</li>
+      <li><strong>把易错判断变成不变式</strong>——单位判断容易错,就统一 ×1e6 让它不再需要判断;参考电极规则收敛成一条"在就丢、不在就不动"。</li>
+      <li><strong>数据形状问题用结构解决</strong>——通道数不一致不是 bug,是数据的真实形态,分文件存比硬合并诚实得多。</li>
+    </ol>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+</body>
+</html>

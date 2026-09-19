@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>科研复现基本功 · 学习笔记</title>
+  <meta name="description" content="三层阅读法、Paper Card 证据约束、概念攻坚与实验纪律:如何把一篇论文真正变成自己的能力。" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article pre {
+      background: #16181d;
+      color: #d6dce5;
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      margin-bottom: 18px;
+    }
+    .article pre code { background: none; border: 0; padding: 0; color: inherit; font-size: 1em; }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .back-link { display: inline-block; margin-bottom: 28px; font-size: 0.92rem; }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="index.html#creative">创意</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">科研方法论</p>
+    <h1>科研复现基本功</h1>
+
+    <blockquote>
+      融合了三个来源:<strong>study-copy-understand-modify 学习循环</strong>、<strong>证据约束精读(nature-paper-card)</strong>、<strong>实验纪律(codex-autoresearch)</strong>。
+      适用场景:复现论文、读论文、做实验、沉淀知识。
+    </blockquote>
+
+    <h2 id="core">核心心法</h2>
+
+    <p>论文不是书,是"论证"——作者在论证"我的方法好"。你的任务是<strong>快速抓住论证结构</strong>,不是读完全部文字。</p>
+
+    <p>三条铁律:</p>
+    <ol>
+      <li><strong>证据约束</strong>——每个结论必须能溯源到论文某页/某图/某公式,不能凭空概括。</li>
+      <li><strong>笔记自己写</strong>——AI 讲,你复述,AI 纠错。AI 不替你写笔记。</li>
+      <li><strong>实验靠纪律</strong>——一次改一件事,可量化,可回滚,可信记录。</li>
+    </ol>
+
+    <h2 id="reading">一、论文精读:三层阅读法</h2>
+
+    <h3>第一层:扫读(3 分钟)——建立整体感</h3>
+    <ul>
+      <li>只读:标题、摘要、Figure 1(架构图)、图表标题</li>
+      <li>回答三问:<strong>解决什么问题?方法核心是什么?效果多好?</strong></li>
+      <li>产出:一句话说出这篇论文在干嘛</li>
+    </ul>
+
+    <h3>第二层:读结构(30 分钟)——理解论证链</h3>
+    <ul>
+      <li>引言:问题动机 + 现有方法不足</li>
+      <li>方法:看架构图,顺着数据流走一遍(输入 → 各模块 → 输出)</li>
+      <li>实验:只看<strong>主结果 + 消融</strong>(消融 = 证明每个组件都必要)</li>
+      <li>产出:能画出流程框图,能说出每个模块作用</li>
+      <li><strong>遇到不懂的概念直接跳过</strong>,标记"这里有个不懂的,大概是干这个的",继续往下</li>
+    </ul>
+
+    <h3>第三层:抠细节(需要时才做)</h3>
+    <ul>
+      <li>公式推导、超参数、实现细节、代码</li>
+      <li><strong>只有要复现或深究某点时</strong>才需要这层</li>
+    </ul>
+
+    <h3>贯穿三层:带着问题读,不被动读</h3>
+    <ul>
+      <li>读方法前先问:"如果我是作者,我会怎么设计?"再看作者怎么做,<strong>差异即所学</strong></li>
+      <li>读实验前先问:"这个结果能支撑论点吗?"</li>
+    </ul>
+
+    <h2 id="paper-card">二、论文精读卡(Paper Card,证据约束)</h2>
+
+    <p>精读一篇论文时,产出固定 16 节的 Paper Card。<strong>每个实质性结论必须带来源指针</strong> <code>[Paper: PDF p.N / Figure N / Table N / Section]</code>。无法溯源的内容写 <code>Not assessable</code>,不要编造。</p>
+
+    <table>
+      <thead><tr><th>节</th><th>内容</th><th>关键问题</th></tr></thead>
+      <tbody>
+        <tr><td>01</td><td>基本信息</td><td>标题/作者/期刊/年份/DOI</td></tr>
+        <tr><td>02</td><td>一句话总结</td><td>用"为了__,做了__,实现__"结构</td></tr>
+        <tr><td>03</td><td>研究问题</td><td>作者要解决什么具体问题</td></tr>
+        <tr><td>04</td><td>背景脉络</td><td>该领域怎么发展到这(外部检索才可信)</td></tr>
+        <tr><td>05</td><td>痛点</td><td>现有方法的不足(数据病/方法病)</td></tr>
+        <tr><td>06</td><td>核心思想</td><td>一句话说清创新点</td></tr>
+        <tr><td>07</td><td>方法概览</td><td>数据流:输入 → 各模块 → 输出</td></tr>
+        <tr><td>08</td><td>模块拆解</td><td>每个模块的作用,为什么存在</td></tr>
+        <tr><td>09</td><td>关键公式</td><td>抄下来 + 解释每个符号</td></tr>
+        <tr><td>10</td><td>实验证据链</td><td>每个主张 → 哪个实验/数据支撑</td></tr>
+        <tr><td>11</td><td>结论正确解读</td><td>结果到底说明了什么(不过度解读)</td></tr>
+        <tr><td>12</td><td>作者承认的局限</td><td>作者自己说了哪些不足</td></tr>
+        <tr><td>13</td><td>批判分析</td><td>证据够不够?替代解释?</td></tr>
+        <tr><td>14</td><td>学到的知识</td><td>用自己的话写学到什么</td></tr>
+        <tr><td>15</td><td>知识连接</td><td>和已有知识/其他论文的关联</td></tr>
+        <tr><td>16</td><td>可检验的想法</td><td>基于此能做什么新实验</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>批判分析三问</strong>(第 13 节):</p>
+    <ol>
+      <li>这个结果能支撑作者的论点吗?(证据强度)</li>
+      <li>有没有替代解释?(反例思维)</li>
+      <li>如果去掉某个组件会怎样?(消融思维)</li>
+    </ol>
+
+    <h2 id="concepts">三、概念攻坚:遇到不会的怎么办</h2>
+
+    <p>读论文/复现遇到不懂的概念(如 VAE、Transformer、KL 散度):</p>
+
+    <ol>
+      <li><strong>识别层次</strong>:这是"地基概念"(需要彻底学)还是"外围细节"(知道在干嘛就行)?
+        <ul>
+          <li>地基:方法的核心机制 → 开概念笔记,彻底学</li>
+          <li>外围:实现细节/工具 → 扫一眼,需要时再回来</li>
+        </ul>
+      </li>
+      <li><strong>AI 讲、你复述、AI 纠错</strong>:AI 用类比 + 上下文讲清概念,不急着写代码;<strong>你用自己的话写进概念笔记</strong>(强制,这是真正获取知识的唯一位置);AI 对照你的复述指出偏差。</li>
+      <li><strong>检验标准</strong>:能讲清"为什么"(机制),不是"是什么"(结论)。写完后在进度文件加索引。</li>
+    </ol>
+
+    <p>概念笔记模板:</p>
+    <pre><code># [概念名]
+## 一句话解释(类比)
+## 为什么在这篇论文里需要它
+## 核心细节(公式、关键点,自己的话)
+## 我的理解验证(假装讲给别人听)
+## 卡住的地方 / 疑问</code></pre>
+
+    <p>常见概念教学顺序:框架 → 改造 → 技巧(如 VAE → SVAE 频域改造 → 重参数化);先讲"要解决什么问题",再讲"怎么解决",最后讲"为什么这样解决"。</p>
+
+    <h2 id="reproduction">四、复现纪律:study-copy-understand-modify</h2>
+
+    <h3>目录铁律</h3>
+    <pre><code>项目/
+├── 01_original/   # 原始材料(只读,权威来源)
+│   ├── repo/      官方代码(记录 commit hash)
+│   ├── paper/     论文 PDF、补充材料
+│   └── data/      原始数据
+├── 02_mine/        # 工作区(所有代码、实验)
+│   ├── src/       你的代码
+│   ├── experiments/ 实验记录
+│   ├── logs/      运行日志
+│   └── data/      处理后的数据
+└── 03_notes/       # 学习笔记(第二个大脑)
+    ├── 00_进度.md  进度/下一步/卡点
+    ├── 01_paper.md 论文理解笔记
+    ├── concepts/   概念笔记(一个概念一个文件)
+    ├── code/       代码理解
+    └── methods/    复现方法论</code></pre>
+
+    <ul>
+      <li><strong>01_original 只读</strong>——它是权威来源,永不污染</li>
+      <li><strong>02_mine 从抄开始,目标是自己的实现</strong></li>
+      <li><strong>03_notes 是唯一跨会话的上下文</strong>——任何会话读 00_进度.md 就能接上</li>
+    </ul>
+
+    <h3>四步循环</h3>
+    <ol>
+      <li><strong>study</strong>:读懂代码(AI 逐段讲"这段为什么存在")</li>
+      <li><strong>copy</strong>:抄进 02_mine/src,每段加自己的注释</li>
+      <li><strong>understand</strong>:关掉官方代码,凭理解重建关键模块,卡住再看</li>
+      <li><strong>modify</strong>:改自己的实现,跑实验验证</li>
+    </ol>
+
+    <h2 id="experiments">五、实验纪律:可测量的自主实验</h2>
+
+    <p>循环:<code>看证据 → 改一件事 → 测量 → 改进则保留/失败则回滚 → 记录 → 重复直到达标</code></p>
+
+    <p><strong>五条纪律:</strong></p>
+    <ol>
+      <li><strong>一次只改一件事</strong>——指标变了才知道是谁的功劳。严禁顺手改别处。</li>
+      <li><strong>必须可量化</strong>——不能"感觉变好",要有一个命令能测出一个数字。指标要确定性强、能比较。</li>
+      <li><strong>失败就回滚</strong>——用 git 管理实验,每个 trial 一个 commit,坏的 revert。仓库永远保持"当前最优"。</li>
+      <li><strong>信任记录不信记忆</strong>——实验历史写入文件(append-only),不靠"我记得上次改了啥"。失败就明确失败,不用"其实还行吧"自欺欺人。</li>
+      <li><strong>困难 ≠ 阻塞</strong>——实验失败是"困难",继续试。只有缺数据/硬件/外部权限才是"阻塞"。</li>
+    </ol>
+
+    <p>实验记录格式:</p>
+    <pre><code>---
+exp_id: {体系}-{设备}-YYMMDD-{序号}
+date: YYYY-MM-DD
+goal: 本次实验验证什么
+---
+
+## 假设
+## 改动(只列一处!)
+## 指标命令
+## 结果(数字)
+## 对比基线
+## 结论:keep / revert
+## 卡点</code></pre>
+
+    <h2 id="distill">六、沉淀:summarize-as-skill</h2>
+
+    <p>每个项目/每次学习循环的终点,把通用知识沉淀成可复用资产:</p>
+    <ul>
+      <li><strong>概念</strong> → 概念笔记(concepts/)+ 进度索引</li>
+      <li><strong>方法</strong> → 复现方法论(methods/)</li>
+      <li><strong>可复用流程</strong> → 沉淀成 skill</li>
+      <li><strong>通用经验</strong> → 写进记忆(跨会话复用)</li>
+    </ul>
+
+    <p>检验标准:<strong>下次遇到类似问题,能不能不用重新摸索</strong>。</p>
+
+    <h2 id="progress">七、进度追踪模板(00_进度.md)</h2>
+
+    <pre><code>## 当前进度(总览)
+- [ ] 读论文,写理解笔记
+- [ ] 获取官方代码,跑通 baseline
+- [ ] 理解并复现核心模块
+- [ ] 跑实验对比论文结果
+- [ ] 沉淀通用知识
+
+## 下一步
+(一句话)
+
+## 卡点清单
+- [概念名] - 一句话描述卡在哪
+
+## 已学概念索引
+- VAE
+- SVAE</code></pre>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+</body>
+</html>
