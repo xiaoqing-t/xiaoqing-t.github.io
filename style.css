@@ -109,6 +109,9 @@ a:hover { text-decoration: underline; }
   width: min(960px, 92%);
   margin-inline: auto;
 }
+@media (min-width: 768px) {
+  .hero-inner { padding-left: 48px; }
+}
 .hero-eyebrow {
   font-family: var(--mono);
   font-size: 0.85rem;
