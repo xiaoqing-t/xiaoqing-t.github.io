@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>Zhao Yunzhe · 简历</title>
+  <style>
+    :root { --ink: #000; --soft: #333; --line: #999; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Source Han Serif SC", "Noto Serif SC", "Songti SC", SimSun, Georgia, serif;
+      color: var(--ink);
+      background: #fff;
+      line-height: 1.55;
+    }
+    .page { width: 190mm; margin: 10mm auto; }
+    @media print {
+      @page { size: A4; margin: 10mm; }
+      .page { width: auto; margin: 0; }
+      .print-btn { display: none; }
+    }
+    .print-btn {
+      display: block; margin: 0 auto 16px; padding: 8px 20px;
+      border: 1px solid #000; background: #fff; cursor: pointer;
+      font-size: 14px;
+    }
+
+    /* 头部 */
+    header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 12px; }
+    h1 { font-size: 22pt; letter-spacing: 0.05em; }
+    .sub { font-size: 10.5pt; margin-top: 2px; }
+    .contact { font-size: 9.5pt; margin-top: 4px; color: var(--soft); }
+
+    /* 区块 */
+    section { margin-bottom: 10px; }
+    h2 {
+      font-size: 12pt; border-bottom: 1px solid #000;
+      padding-bottom: 2px; margin-bottom: 6px;
+      letter-spacing: 0.08em;
+    }
+    .item-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
+    .item-head h3 { font-size: 11pt; font-weight: 700; }
+    .date { font-size: 9pt; color: var(--soft); white-space: nowrap; }
+    .item { margin-bottom: 8px; }
+    ul { list-style: none; }
+    li {
+      font-size: 10pt; color: var(--soft);
+      padding-left: 1.2em; position: relative; margin-bottom: 2px;
+      text-align: justify;
+    }
+    li::before { content: "·"; position: absolute; left: 0.4em; color: #000; font-weight: 700; }
+    b { color: #000; }
+    .grade { font-weight: 700; color: #000; }
+
+    /* 打印紧凑 */
+    @media print {
+      body { font-size: 0.92em; line-height: 1.45; }
+      section { margin-bottom: 7px; }
+      .item { margin-bottom: 5px; }
+    }
+  </style>
+</head>
+<body>
+  <button class="print-btn" onclick="window.print()">打印 / 导出 PDF</button>
+  <div class="page">
+
+    <header>
+      <h1>Zhao Yunzhe</h1>
+      <p class="sub">计算机科学与技术 · 本科三年级 · 上海交通大学</p>
+      <p class="contact">180-8004-9755 · zyz.sjtu@sjtu.edu.cn · GitHub: xiaoqing-t</p>
+    </header>
+
+    <section>
+      <h2>教育背景</h2>
+      <div class="item">
+        <div class="item-head">
+          <h3>上海交通大学 · 计算机科学与技术(永强班 · 致远荣誉计划)</h3>
+          <span class="date">2024.09 – 2028.06(预计)</span>
+        </div>
+        <ul>
+          <li>GPA <b>3.90 / 4.30</b>(均分 90.3),专业排名 <b>17 / 110</b>。</li>
+          <li>核心课程:计算机系统结构 <span class="grade">98</span> · 数学基础 <span class="grade">100</span> · 现代操作系统(强化) <span class="grade">95</span> · 操作系统课设(强化) <span class="grade">94</span> · 计算机组成 <span class="grade">96</span> · 系统结构实验 <span class="grade">97</span> · 算法与复杂性(强化) <span class="grade">91</span></li>
+          <li><b>致远荣誉奖学金</b>(2024–2025、2025–2026 连续两年获评);上海交通大学 C 等奖学金(2024–2025 学年)。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>项目经历</h2>
+
+      <div class="item">
+        <div class="item-head">
+          <h3>AI 智能体架构研究与操作系统课程项目</h3>
+          <span class="date">2026.09 – 至今</span>
+        </div>
+        <ul>
+          <li>以"学习 → 复现 → 修改"方式拆解智能体系统:主循环、LLM 对话、工具调用、上下文管理、线程池等核心组件,并亲手重写关键模块验证理解。</li>
+          <li>完成 OS 课程 Project 1 / 2:进程/线程、同步机制与系统调用的系统级实现与调试。</li>
+        </ul>
+      </div>
+
+      <div class="item">
+        <div class="item-head">
+          <h3>MIPS 单周期 CPU(Verilog / Vivado)</h3>
+          <span class="date">2026 春</span>
+        </div>
+        <ul>
+          <li>用 Verilog 从零实现可运行的单周期处理器:ALU、控制单元、寄存器堆、数据通路与顶层集成(610 行 RTL);编写 7 个 testbench 覆盖各模块与整机,完成仿真并综合出比特流。</li>
+        </ul>
+      </div>
+
+      <div class="item">
+        <div class="item-head">
+          <h3>个人网站</h3>
+          <span class="date">2026.09</span>
+        </div>
+        <ul>
+          <li>纯 HTML/CSS/JS 手写构建:主页 + 简历页 + 4 篇技术笔记,部署于 GitHub Pages,打印即单页 A4 简历。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>实践经历</h2>
+      <div class="item">
+        <div class="item-head">
+          <h3>BCI 实验室 · EEG 数据处理</h3>
+          <span class="date">实习</span>
+        </div>
+        <ul>
+          <li>参与实验室 EEG 数据预处理工作,协助搭建多模态数据预处理管线;相关经验沉淀为个人技术笔记。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>专业技能</h2>
+      <ul>
+        <li><b>编程语言:</b>Python(熟练)、C/C++;熟练使用 Git、命令行与 Linux 基础。</li>
+        <li><b>深度学习:</b>不借助框架从零实现过 CNN 的 forward/backward、损失函数与训练循环(CS231n 全套作业);PyTorch 使用经验。</li>
+        <li><b>信号处理:</b>使用 MNE/NumPy/h5py 处理 EEG/ECG/EOG 多模态生理信号,熟悉 HDF5 数据工程。</li>
+        <li><b>硬件描述:</b>Verilog 数字系统设计,Vivado 仿真与综合流程。</li>
+      </ul>
+    </section>
+
+  </div>
+</body>
+</html>
