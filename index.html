@@ -76,15 +76,15 @@
         <div class="projects-grid">
           <article class="project-card card">
             <div class="project-tag">AI Agent</div>
-            <h3>Agent 架构研究</h3>
-            <p>基于「学习—复现—修改」的思路研究 agent 架构:main 主流程、LLM 对话、client、工具调用、线程池、上下文管理、技能与总结、offload 代理等核心组件。目标是拆解后能亲手重写一遍。</p>
+            <h3>从零实现的终端 Coding Agent</h3>
+            <p>用 C 从零实现一个终端 coding agent(自研核心约 2.3k 行):ReAct 主循环 + LLM 客户端、按 dispatch table 实现的工具注册表、并行工具调度,以及两套可切换的上下文管理策略。核心模块均为自己编写。</p>
             <ul class="project-points">
-              <li>理解 agent 系统设计的关键取舍</li>
-              <li>通过重写进行刻意练习</li>
+              <li>上下文管理两套策略:摘要压缩(省 token 但丢细节) vs 卸载到外部文件(保留原文但多一次 I/O)</li>
+              <li>七个工具 + 注册表统一接口与参数 schema;CUnit 单元测试 + 端到端评测</li>
             </ul>
             <div class="project-links">
-              <a href="https://github.com/xiaoqing-t/Project1-of-OS-2026-fall" target="_blank" rel="noopener">Project 1 ↗</a>
-              <a href="https://github.com/xiaoqing-t/Project2-of-OS-2026-Fall" target="_blank" rel="noopener">Project 2 ↗</a>
+              <a href="https://github.com/xiaoqing-t/Project2-of-OS-2026-Fall" target="_blank" rel="noopener">Coding Agent ↗</a>
+              <a href="https://github.com/xiaoqing-t/Project1-of-OS-2026-fall" target="_blank" rel="noopener">Shell / HTTP / 线程池 ↗</a>
             </div>
           </article>
 

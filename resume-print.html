@@ -51,6 +51,7 @@
     li::before { content: "·"; position: absolute; left: 0.4em; color: #000; font-weight: 700; }
     b { color: #000; }
     .grade { font-weight: 700; color: #000; }
+    .repo { font-size: 8pt; font-weight: 400; color: var(--soft); letter-spacing: 0; margin-left: 8px; text-decoration: none; }
 
     /* 打印紧凑 */
     @media print {
@@ -90,18 +91,29 @@
 
       <div class="item">
         <div class="item-head">
-          <h3>AI 智能体架构研究与操作系统课程项目</h3>
+          <h3>从零实现的终端 Coding Agent(C,自研核心约 2.3k 行)<a class="repo" href="https://github.com/xiaoqing-t/Project2-of-OS-2026-Fall">Project2-of-OS-2026-Fall</a></h3>
           <span class="date">2026.03 – 至今</span>
         </div>
         <ul>
-          <li>以"学习 → 复现 → 修改"方式拆解智能体系统:主循环、LLM 对话、工具调用、上下文管理、线程池等核心组件,并亲手重写关键模块验证理解。</li>
-          <li>完成 OS 课程 Project 1 / 2:进程/线程、同步机制与系统调用的系统级实现与调试。</li>
+          <li>实现 ReAct 主循环与多轮对话:LLM 客户端(HTTP + JSON 协议解析)驱动逐轮的工具选择与执行,支持单轮多个工具调用并并发调度。</li>
+          <li>工具层:按 dispatch table 思路实现工具注册表,统一 bash / read / write / edit / skill 等工具的接口(名称、描述、参数 schema、执行函数)。</li>
+          <li>上下文管理:实现摘要压缩(旧轮次压成文本,省 token 但丢细节)与卸载(写外部文件按需读回,保留原始信息但多一次 I/O)两套可切换策略;配 CUnit 单元测试与端到端评测。</li>
         </ul>
       </div>
 
       <div class="item">
         <div class="item-head">
-          <h3>MIPS 单周期 CPU(Verilog / Vivado)</h3>
+          <h3>操作系统课程设计:Shell / HTTP 客户端 / 线程池<a class="repo" href="https://github.com/xiaoqing-t/Project1-of-OS-2026-fall">Project1-of-OS-2026-fall</a></h3>
+          <span class="date">2026 春</span>
+        </div>
+        <ul>
+          <li>实现 shell、HTTP 客户端与线程池三个底层机制,用 ThreadSanitizer 检查并发正确性;这三者后来成为上述 agent 的执行底座。</li>
+        </ul>
+      </div>
+
+      <div class="item">
+        <div class="item-head">
+          <h3>MIPS 单周期 CPU(Verilog / Vivado)<a class="repo" href="https://github.com/xiaoqing-t/CPU-by-vivado">CPU-by-vivado</a></h3>
           <span class="date">2026 春</span>
         </div>
         <ul>
@@ -111,7 +123,7 @@
 
       <div class="item">
         <div class="item-head">
-          <h3>个人网站</h3>
+          <h3>个人网站<a class="repo" href="https://xiaoqing-t.github.io">xiaoqing-t.github.io</a></h3>
           <span class="date">2026.09</span>
         </div>
         <ul>

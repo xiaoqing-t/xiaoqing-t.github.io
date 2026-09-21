@@ -71,13 +71,24 @@
 
       <div class="resume-item">
         <div class="resume-item-head">
-          <h3>AI 智能体架构研究与操作系统课程项目</h3>
-          <a class="resume-link" href="https://github.com/xiaoqing-t/Project1-of-OS-2026-fall" target="_blank" rel="noopener">Project 1 ↗</a>
-          <a class="resume-link" href="https://github.com/xiaoqing-t/Project2-of-OS-2026-Fall" target="_blank" rel="noopener">Project 2 ↗</a>
+          <h3>从零实现的终端 Coding Agent(C,自研核心约 2.3k 行)</h3>
+          <a class="resume-link" href="https://github.com/xiaoqing-t/Project2-of-OS-2026-Fall" target="_blank" rel="noopener">GitHub ↗</a>
         </div>
         <ul class="resume-list">
-          <li>以"学习 → 复现 → 修改"方式拆解智能体系统:主循环、LLM 对话、工具调用、上下文管理、线程池等核心组件,并亲手重写关键模块验证理解。</li>
-          <li>完成 OS 课程 Project 1 / 2:进程/线程、同步机制与系统调用的系统级实现与调试。</li>
+          <li>实现 ReAct 主循环与多轮对话:<b>LLM 客户端</b>(HTTP + JSON 协议解析)驱动逐轮的工具选择与执行,支持单轮返回多个工具调用并并发调度。</li>
+          <li><b>工具层</b>:按 dispatch table 思路实现工具注册表,统一 bash / read / write / edit / skill 等工具的接口(名称、描述、参数 schema、执行函数),附只读标记与输出长度上限。</li>
+          <li><b>上下文管理</b>:实现两套可切换策略——<b>摘要压缩</b>(旧轮次压成文本,省 token 但丢细节)与<b>卸载</b>(写外部文件按需读回,保留原始信息但多一次 I/O),均保留最近 N 轮。</li>
+          <li>配 CUnit 单元测试与端到端评测脚本,覆盖卸载 / 摘要 / 执行器三个模块。</li>
+        </ul>
+      </div>
+
+      <div class="resume-item">
+        <div class="resume-item-head">
+          <h3>操作系统课程设计:Shell / HTTP 客户端 / 线程池</h3>
+          <a class="resume-link" href="https://github.com/xiaoqing-t/Project1-of-OS-2026-fall" target="_blank" rel="noopener">GitHub ↗</a>
+        </div>
+        <ul class="resume-list">
+          <li>实现 shell、HTTP 客户端与线程池三个底层机制,用 ThreadSanitizer 检查并发正确性;这三者后来成为上述 agent 的执行底座。</li>
         </ul>
       </div>
 
