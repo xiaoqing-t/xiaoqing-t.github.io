@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    /* 语法与目标 */
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+
+    /* 检查强度 —— 这三行是「让 TS 帮你抓错」的主要开关 */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+
+    /* 只做类型检查，不产出文件（真正打包交给 Vite） */
+    "noEmit": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true
+  },
+  "include": ["src", "vite.config.ts"]
+}
