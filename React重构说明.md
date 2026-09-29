@@ -257,6 +257,24 @@ npm run preview  # 本地预览 dist/（≈ 将来线上的样子）
 | TS 配置（`strict`？路径别名 `@/`？） | 决定写代码时的严格程度 | 我开了 `strict` |
 | 部署方式（静态托管 / Vercel / 需要后端） | 若网站要接 LLM，**API key 放哪是安全问题**（绝不能进前端包） | 我没接后端 |
 
+### 回填：逐个对照的结果（2026-09-29，真拿到仓库之后）
+
+| 看什么 | fde-x-web 的答案 | 结论 |
+|---|---|---|
+| 包管理器 | **npm**（README 写 npm；仓库里那份 `pnpm-lock.yaml` 是残留 —— 实测 `npm install` 不动 `package-lock.json`） | 一致 ✅ |
+| 构建工具 | Vite 5 + `vite-plugin-singlefile` | 同类；**「单文件」这点值得抄**（见 §10） |
+| 目录结构 | 按**业务面**分：`pages/ components/ form/ demand/ admin/ api/ hooks/ ui/` | 它是被「一个 SPA 三副面孔」逼出来的；我只有单页，现有分法够用 |
+| 路由方案 | 手写 **hash 路由**（82 行、零依赖），8 条路径 + 兜底回首页 | 我现在不需要；将来把笔记收进 SPA 时可参考 |
+| 状态管理 | 纯 `useState` + props 下传，**没有状态库** | 一致 ✅ —— 它那么大都没上 redux/zustand |
+| 样式方案 | 纯 CSS 分文件 + **作用域类名**隔离（`.fdex-form-scope` / `.fdex-admin`） | 同类；我段落多了可以学这招 |
+| TS 配置 | **它是纯 JS，一个 TS 都没用** | ⚠️ **我比它严格**（我开了 `strict`） |
+| 部署方式 | 静态 `dist/` **手动上传，仓库没有 CI** | ⚠️ 它的痛处；我用 GitHub Pages + Actions 能绕开 |
+
+**两个反直觉的发现**：
+
+1. **它不是处处更"先进"** —— 没有 TS、没有 CI，每次上线靠人手传文件（2026-09-29 那天官网就因为"合并了但没人部署"而没上线）。
+2. **真正值得搬的只有「单文件构建」这一件**（§10）。其余机制（请求层两半共用、一处组件两处渲染、`revision`/`businessVersion` 双版本号、后台令牌闸门）都是被它那个「有后端 + 一份记录两个入口」的场景逼出来的，我这里没有对应问题，硬抄就是过度工程。
+
 ## 9. 验证记录（2026-09-26 真跑过）
 
 | 验证 | 命令 | 结果 |
@@ -271,6 +289,49 @@ npm run preview  # 本地预览 dist/（≈ 将来线上的样子）
 
 > 为什么用 `react-dom/server` 而不是开浏览器看：headless Edge 在 DSH 文件沙箱里起不来（`Access is denied`，crashpad 被拦），而 `react-dom/server` 跑的是**同一套组件代码**，能在纯 Node 里证明「组件渲染出的 DOM 是对的」。
 > 它唯一不覆盖的是 `useEffect`（服务端渲染不执行副作用）—— 所以滚动阴影、移动端菜单、渐入动画这三处**还得你自己在浏览器里点一下**确认。
+
+## 10. 单文件构建（2026-09-29）
+
+**目标**：让 `dist/` 里只剩一个 `index.html` —— 部署不用再管 `assets/` 的路径，产物还能直接双击打开。
+
+### 过程（有曲折，值得记）
+
+| 试过什么 | 结果 |
+|---|---|
+| 装 `vite-plugin-singlefile@2.3.3`（团队官网同款） | ❌ 在 Vite 8 下**静默不生效**：构建跑完，产物里 JS/CSS 仍是独立文件 |
+| 查它为什么不生效 | 它的 `peerDependencies` 写着支持 `vite ^8`，但 Vite 8 换成了 **rolldown**（Rust 内核），插件的钩子没被调用 |
+| 换 Vite 7（rollup 内核）验证 | ⚠️ `npm` 直接拦下：`@vitejs/plugin-react@6` 硬性要求 `vite ^8`。为这个往回退一整代不划算 |
+| **改成自己写内联脚本** | ✅ **成功** —— `scripts/inline-build.mjs`，约 80 行 |
+
+### 最终方案
+
+```
+npm run build
+├─ tsc --noEmit                      类型检查
+├─ vite build                        产出 index.html + assets/
+└─ node scripts/inline-build.mjs     把 JS/CSS 内联进 index.html，并删掉已内联的 assets 文件
+```
+
+### 实测结果
+
+| 项 | 值 |
+|---|---|
+| 内联前 | `index.html` 0.9 KB + `assets/index-*.js` 223.7 KB + `assets/index-*.css` 6.7 KB |
+| 内联后 | **`index.html` 231.2 KB**（正好等于三者之和），`assets/` 空了 |
+| `public/` 的东西 | 简历 PDF、四篇笔记 HTML、`legacy-v1.css`、`v1-index.html`、`script.js` —— **一个没少** |
+| **双击能打开** | ✅ 用 headless Edge 以 `file://` 协议打开 `dist/index.html`，页面与样式**完整渲染**，不依赖任何服务器 |
+
+### 代价（要知道）
+
+单文件 = 请求数 1，但**没有缓存粒度**：以后改一个字，浏览器要重下整个 230 KB。个人主页流量小、改动不频繁，划算；但**大的作品图不要内联** —— 放进 `public/` 让它作为独立文件存在。
+
+### ⚠️ 一个本机现象（不是项目问题）
+
+在 DSH 的运行环境里，`vite build` 会以 **`0xC0000409`** 崩溃（Vite 8 的 rolldown 是 Rust native 内核），**但产物是完整写出的** —— 所以后面那步 `node scripts/inline-build.mjs` 照样跑通。
+
+判定依据：① **完全原版的配置**（不带任何本次改动）也一样崩；② 复制到纯 ASCII 路径也一样崩 ⇒ **与中文路径、与本次改动都无关**。
+
+**如果你在自己的终端跑 `npm run build` 是正常退出 0，就不用理会这条。**
 
 ## 相关
 
