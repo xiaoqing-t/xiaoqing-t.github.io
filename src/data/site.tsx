@@ -180,6 +180,20 @@ export const notes: Note[] = [
     meta: '2026-09 · 五问全解',
     href: 'note-agent-skill-architecture.html',
   },
+  {
+    category: '系统虚拟化',
+    title: '启动流程对比图:QEMU 带固件 vs StratoVirt 无固件',
+    desc: '两条泳道按同一阶段对齐,StratoVirt 那一格空出来的位置就是它省下的 3.3 秒。带五段分步讲解,可缩放、可导出。',
+    meta: '2026-10 · 交互图',
+    href: 'note-stratovirt-boot-flow.html',
+  },
+  {
+    category: '系统虚拟化',
+    title: 'Epoll 事件流图:一次客户机 I/O 怎么走完一圈',
+    desc: '从客户机 kick 到内核回调唤醒 VMM,再到 irqfd 注入中断,四个角色九条消息,含五段分步讲解。',
+    meta: '2026-10 · 交互图',
+    href: 'note-epoll-event-flow.html',
+  },
 ]
 
 /** 联系区 */
