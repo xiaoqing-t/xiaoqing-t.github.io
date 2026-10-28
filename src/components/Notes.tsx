@@ -13,7 +13,7 @@ export default function Notes() {
       id="notes"
       num="03"
       title="学习笔记"
-      lead="记录「三层读论文」「AI 讲 → 复述 → 纠错」「三目录铁律」等科研复现基本功,以及我在学习中的真实思考。"
+      lead="读论文的方法、踩过的坑、做过的排查，都写在这里。有长有短，看当时想清楚了多少。"
     >
       {/* 每个条目本身是 <a>，而 <Reveal> 渲染的是 <div>，没法直接包条目 → 包整个列表 */}
       <Reveal className="notes-list">
