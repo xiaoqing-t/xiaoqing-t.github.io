@@ -1,14 +1,7 @@
-// <Reveal>：把包在里面的东西做成「滚进视野才淡入」。
+// <Reveal>：滚进视野才淡入。
 //
-// 为什么需要它：v1 里这段逻辑写在 script.js 里，靠 querySelectorAll('.card') 事后补类名 ——
-// 在 React 里那样做会跟「渲染」抢方向盘。React 的做法是：把这件事变成一个组件，
-// 它自己管自己的 ref 和副作用，谁想用就包一层。
-//
-// 两种用法（都行）：
-//   包住整块：<Reveal className="about-grid"> …多张卡… </Reveal>   → 整块一起淡入
-//   包住单张：<Reveal className="card"> … </Reveal>                → 每张各自淡入
-// 注意它渲染出来的是一个 <div>，所以要包在「能当容器的元素」外；
-// 笔记列表里每项本身是 <a>，所以那边包的是整个列表。
+// 包住整块就整块一起淡入，包住单张就每张各自淡入。
+// 它渲染出来是 <div>，所以不能直接包 <a> 这类元素——笔记列表包的是整个列表。
 
 import { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
@@ -20,8 +13,7 @@ interface RevealProps {
 }
 
 export default function Reveal({ children, className = '' }: RevealProps) {
-  // useRef 拿到的是一根「指向真实 DOM 节点的引用」，挂载后 ref.current 就是那个 div。
-  // 它跟 useState 的区别：改它不会触发重新渲染（我们也不需要重渲染，只是加个类名）。
+  // 只是加个类名，不需要重新渲染，所以用 ref 而不是 state。
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {

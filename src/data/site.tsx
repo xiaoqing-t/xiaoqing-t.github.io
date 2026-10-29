@@ -81,8 +81,12 @@ export const hero = {
   titleLead: '你好,我是',
   titleAccent: 'Zhao Yunzhe',
   titleTail: '。',
-  /** 里面用 \n 换行（CSS 那边开了 white-space: pre-line 才会真的换行） */
-  sub: '计算机科学专业，在 BCI 实验室做 EEG 数据处理。\n现在一边补深度学习，一边用 AI 写点自己想用的工具。\n喜欢把东西做出来，也喜欢把做明白的事讲清楚。',
+  /** 标题下面那几行，一行一个字符串（换行由组件渲染，不靠 CSS） */
+  subLines: [
+    '计算机科学专业，在 BCMI 实验室做 EEG 数据处理。',
+    '现在一边补深度学习，一边用 AI 写点自己想用的工具。',
+    '喜欢把东西做出来，也喜欢把做明白的事讲清楚。',
+  ],
   actions: [
     { label: '看看我的项目', href: '#projects', primary: true },
     { label: '了解更多', href: '#about' },
@@ -205,5 +209,3 @@ export const contact = {
   ],
 }
 
-/** 页脚署名（年份由 Footer 组件自己算，不用写在这里） */
-export const siteOwner = 'Zhao Yunzhe'

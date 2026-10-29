@@ -19,8 +19,12 @@ export default function Hero() {
           {hero.titleTail}
         </h1>
 
-        {/* hero.sub 里的 \n 由 CSS 的 white-space: pre-line 负责换行 */}
-        <p className="hero-sub">{hero.sub}</p>
+        {/* 一行一个 span，换行交给 CSS（.hero-sub span 是 display: block） */}
+        <p className="hero-sub">
+          {hero.subLines.map((line) => (
+            <span key={line}>{line}</span>
+          ))}
+        </p>
 
         <div className="hero-actions">
           {hero.actions.map((action) => (

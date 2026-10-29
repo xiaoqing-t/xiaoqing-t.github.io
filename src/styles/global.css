@@ -1,7 +1,7 @@
 /* 全站样式。和 v1 的 style.css 基本一致，只改了三处：
    1. 删掉了已经不再使用的「创意区块」（.creative-*）样式；
    2. 滚动渐入的类从 .card.in-view 改成 .reveal.in-view（因为渐入现在是 <Reveal> 组件控制的）；
-   3. 加了 .hero-sub 的 white-space: pre-line，让数据里的 \n 真的换行。
+   3. .hero-sub 里每行渲染成一个块级 span。
    v1 的冻结副本在 public/legacy-v1.css，只给 public/ 下那几个静态老页面用。 */
 
 /* ===== 设计变量 ===== */
@@ -139,7 +139,10 @@ a:hover { text-decoration: underline; }
   color: var(--ink-soft);
   max-width: 46em;
   margin-bottom: 32px;
-  white-space: pre-line; /* 让数据里写的 \n 换成真的换行 */
+}
+
+.hero-sub span {
+  display: block;
 }
 .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 40px; }
 .hero-meta {

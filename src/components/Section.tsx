@@ -1,8 +1,5 @@
-// 通用「章节壳」：每个区块的外层结构都一样（section > container > 标题 + 内容），
-// 抽出来一次，About / Projects / Notes / Contact 四个组件复用。
-//
-// children 是 React 的「插槽」：谁用这个组件，写在 <Section> ... </Section> 中间的东西
-// 就会作为 children 传进来，渲染在标题下面。
+// 通用章节壳：每个区块都是 section > container > 标题 + 内容，
+// 抽出来给 About / Projects / Notes / Contact 四个组件复用。
 
 import type { ReactNode } from 'react'
 
@@ -28,8 +25,6 @@ export default function Section({ id, num, title, lead, alt, children }: Section
           {title}
         </h2>
 
-        {/* lead 是可选的：写成 {lead && ...} 表示「有才渲染」。
-            React 里 false / null / undefined 都不会渲染出任何东西。 */}
         {lead && <p className="section-lead">{lead}</p>}
 
         {children}
