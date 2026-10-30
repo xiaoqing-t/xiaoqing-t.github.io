@@ -1,11 +1,13 @@
 // 导航栏。两个状态：手机端菜单开没开、页面滚过没有（滚过加阴影）。
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { navLinks, profile } from '../data/site'
 
 export default function Nav() {
   const [menuOpen, setMenuOpen] = useState(false) // 手机上折叠菜单展开了吗
   const [scrolled, setScrolled] = useState(false) // 页面往下滚过 8px 了吗（滚过就加阴影）
+  const navRef = useRef<HTMLElement>(null) // 用来判断点击是不是发生在导航外面
+  const toggleRef = useRef<HTMLButtonElement>(null) // 菜单收起后把焦点还给按钮
 
   // 滚动监听要在挂载时挂、卸载时撤，所以放 useEffect。
   useEffect(() => {
@@ -18,8 +20,30 @@ export default function Nav() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  // 菜单展开时才需要「Esc 关闭」和「点外面关闭」，收起时直接不挂监听。
+  useEffect(() => {
+    if (!menuOpen) return
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      setMenuOpen(false)
+      toggleRef.current?.focus()
+    }
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (!navRef.current?.contains(event.target as Node)) setMenuOpen(false)
+    }
+
+    document.addEventListener('keydown', onKeyDown)
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      document.removeEventListener('pointerdown', onPointerDown)
+    }
+  }, [menuOpen])
+
   return (
-    <nav className={scrolled ? 'nav scrolled' : 'nav'}>
+    <nav ref={navRef} className={scrolled ? 'nav scrolled' : 'nav'}>
       <div className="nav-inner">
         <a className="nav-brand" href="#top">
           {profile.shortName} <span className="nav-brand-en">/ {profile.name}</span>
@@ -27,9 +51,11 @@ export default function Nav() {
 
         {/* 手机端的三条横线。桌面端被 CSS 隐藏（.nav-toggle 默认 display: none） */}
         <button
+          ref={toggleRef}
           className="nav-toggle"
-          aria-label="菜单"
+          aria-label={menuOpen ? '关闭菜单' : '打开菜单'}
           aria-expanded={menuOpen}
+          aria-controls="site-menu"
           onClick={() => setMenuOpen(!menuOpen)}
         >
           <span></span>
@@ -37,7 +63,7 @@ export default function Nav() {
           <span></span>
         </button>
 
-        <ul className={menuOpen ? 'nav-links open' : 'nav-links'}>
+        <ul id="site-menu" className={menuOpen ? 'nav-links open' : 'nav-links'}>
           {/* key 用 href 而不是下标：以后在中间插一项也不会错位 */}
           {navLinks.map((link) => (
             <li key={link.href}>

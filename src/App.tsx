@@ -23,9 +23,11 @@ export default function App() {
     // <>...</> 是 Fragment：把多个兄弟节点打包成一个返回值，但**不生成多余的 DOM 节点**。
     // （一个组件只能返回一个根节点，Fragment 就是用来绕开这条限制的。）
     <>
+      {/* 键盘用户按 Tab 时第一站：跳过导航直接到正文 */}
+      <a className="skip-link" href="#main">跳到主要内容</a>
       <Nav />
       <Hero />
-      <main>
+      <main id="main" tabIndex={-1}>
         <About />
         <Projects />
         <Notes />

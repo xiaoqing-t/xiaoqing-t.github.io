@@ -234,10 +234,9 @@ npm run preview  # 本地预览 dist/（≈ 将来线上的样子）
 
 ## 7. 下一步（可选，按价值排序）
 
-1. **把线上切到 React 版**（现在没切，线上还是 v1）
-   - 前置：本地 `main` 快进到 `react-refactor`
-   - 两条路：**① GitHub Actions**（推荐；源库只存源码。需要你去 repo `Settings → Pages → Source` 改成 "GitHub Actions"）**② 构建产物提交到 `docs/`**（零设置，但 `dist` 进 git 历史）
-   - ⚠️ 用户站的 Pages 源现在是 **`main` 分支根目录**，切之前先确认新产物路径对得上
+1. ✅ **把线上切到 React 版**（2026-10-30 确认已完成）
+   - 走的是 **GitHub Actions**：`main` 推送后由 `.github/workflows/deploy.yml` 构建并发布，产物是 `dist/`（单文件 `index.html` + `public/` 静态页），线上 https://xiaoqing-t.github.io/ 已跑 React 版
+   - Pages 源已改为 **GitHub Actions**（不再是 `main` 分支根目录）
 2. **简历页也组件化 + 上路由**（`react-router`）：练「多页面应用」；注意 GitHub Pages 直接刷新子路径会 404，要配 404.html 兜底或改用 hash 路由
 3. **笔记 Markdown 管线**：笔记从 `.md` 生成页面，不用再手写 HTML（4 篇已发，正好当样本）
 4. **练表单 + 受控组件**：加一个「创意/作品」区块或留言板（v1 删掉的那块设计还在 `public/legacy-v1.css` 里）

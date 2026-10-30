@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>404 · 页面不存在</title>
+    <style>
+      :root {
+        --ink: #211d19;
+        --ink-soft: #575047;
+        --accent: #a84027;
+        --line: #e5dccd;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+          "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(600px 300px at 12% 0%, rgba(168, 64, 39, 0.1), transparent 70%),
+          #faf7f1;
+        line-height: 1.75;
+      }
+      main { max-width: 520px; }
+      .code {
+        font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+        font-size: 0.9rem;
+        letter-spacing: 0.12em;
+        color: var(--accent);
+        margin-bottom: 12px;
+      }
+      h1 { font-size: clamp(1.8rem, 5vw, 2.4rem); letter-spacing: -0.01em; margin-bottom: 10px; }
+      p { color: var(--ink-soft); margin-bottom: 28px; }
+      .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+      .btn {
+        display: inline-block;
+        padding: 9px 20px;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-decoration: none;
+        color: #fff;
+        background: var(--accent);
+      }
+      .btn.ghost { color: var(--ink); background: #fffdf9; border: 1px solid var(--ink); }
+      .btn:hover { opacity: 0.88; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="code">404 NOT FOUND</p>
+      <h1>这页不见了</h1>
+      <p>地址可能写错了，或者这页还没写。回首页看看别的。</p>
+      <div class="actions">
+        <a class="btn" href="/">回首页</a>
+        <a class="btn ghost" href="/resume.html">看简历</a>
+      </div>
+    </main>
+  </body>
+</html>
