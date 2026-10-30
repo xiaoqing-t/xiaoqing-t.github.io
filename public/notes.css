@@ -1,0 +1,18 @@
+/* 笔记页配色覆盖：笔记沿用 legacy-v1.css 的结构，这里把变量换成墨纸，
+   不直接改 legacy-v1.css，避免影响 v1-index.html 的旧版还原。 */
+
+:root {
+  --bg: #faf7f1;
+  --bg-alt: #f2ece3;
+  --ink: #211d19;
+  --ink-soft: #575047;
+  --ink-faint: #6f675c;
+  --accent: #a84027;
+  --accent-soft: #f6e6df;
+  --line: #e5dccd;
+  --shadow: 0 1px 2px rgba(80, 60, 40, 0.05), 0 8px 24px rgba(80, 60, 40, 0.07);
+}
+
+/* legacy-v1.css 里导航底色是写死的白 */
+.nav { background: rgba(250, 247, 241, 0.88); }
+.nav.scrolled { box-shadow: 0 4px 18px rgba(80, 60, 40, 0.09); }

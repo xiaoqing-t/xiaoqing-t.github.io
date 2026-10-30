@@ -6,16 +6,20 @@
 
 /* ===== 设计变量 ===== */
 :root {
-  --bg: #ffffff;
-  --bg-alt: #f7f7f5;
-  --ink: #1a1a1a;
-  --ink-soft: #555;
-  --ink-faint: #888;
-  --accent: #2563eb;
-  --accent-soft: #eaf0fd;
-  --line: #e6e6e2;
+  /* 墨纸：暖白底 + 朱砂强调色。朱砂压到 #a84027，
+     是为了让浅底小标签（accent on accent-soft）也过 WCAG AA（5.05:1）。 */
+  --bg: #faf7f1;
+  --bg-alt: #f2ece3;
+  --card: #fffdf9;
+  --ink: #211d19;
+  --ink-soft: #575047;
+  --ink-faint: #6f675c;
+  --accent: #a84027;
+  --accent-dark: #8f3520;
+  --accent-soft: #f6e6df;
+  --line: #e5dccd;
   --radius: 12px;
-  --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px rgba(16, 24, 40, 0.06);
+  --shadow: 0 1px 2px rgba(80, 60, 40, 0.05), 0 8px 24px rgba(80, 60, 40, 0.07);
   --serif: "Source Han Serif SC", "Noto Serif SC", Georgia, "Songti SC", serif;
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
     "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
@@ -24,7 +28,11 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  /* 吸顶导航高 60px，锚点跳转时留出空隙，标题才不会被盖住 */
+  scroll-padding-top: 76px;
+}
 
 body {
   font-family: var(--sans);
@@ -38,13 +46,37 @@ img { max-width: 100%; display: block; }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
+/* 键盘用户：默认焦点环要看得见 */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* 只在键盘聚焦时出现，正常浏览不占位 */
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 100;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 600;
+  transform: translateY(-180%);
+  transition: transform 0.15s ease;
+}
+.skip-link:focus { transform: translateY(0); text-decoration: none; }
+
+::selection { background: var(--accent-soft); color: var(--ink); }
+
 .container {
   width: min(960px, 92%);
   margin-inline: auto;
 }
 
 .card {
-  background: var(--bg);
+  background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -56,7 +88,7 @@ a:hover { text-decoration: underline; }
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(250, 247, 241, 0.85);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line);
 }
@@ -95,7 +127,7 @@ a:hover { text-decoration: underline; }
 }
 .nav-cta:hover { border-color: var(--accent); }
 
-.nav.scrolled { box-shadow: 0 4px 18px rgba(16, 24, 40, 0.08); }
+.nav.scrolled { box-shadow: 0 4px 18px rgba(80, 60, 40, 0.09); }
 .nav-toggle { display: none; flex-direction: column; gap: 5px; background: none; border: 0; cursor: pointer; padding: 6px; }
 .nav-toggle span { width: 22px; height: 2px; background: var(--ink); transition: transform 0.2s; }
 
@@ -104,10 +136,12 @@ a:hover { text-decoration: underline; }
 .hero-bg {
   position: absolute;
   inset: -20% -10%;
+  /* 纸纤维（两组极淡斜纹）+ 左上角暖色光；不再用横线网格 */
   background:
-    radial-gradient(600px 300px at 15% 0%, rgba(37, 99, 235, 0.10), transparent 70%),
-    radial-gradient(500px 260px at 85% 10%, rgba(37, 99, 235, 0.07), transparent 70%),
-    repeating-linear-gradient(0deg, transparent 0 23px, rgba(26, 26, 26, 0.035) 23px 24px);
+    radial-gradient(600px 300px at 12% 0%, rgba(168, 64, 39, 0.10), transparent 70%),
+    radial-gradient(500px 260px at 88% 8%, rgba(168, 64, 39, 0.06), transparent 70%),
+    repeating-linear-gradient(115deg, rgba(120, 95, 65, 0.045) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(25deg, rgba(120, 95, 65, 0.03) 0 1px, transparent 1px 6px);
   pointer-events: none;
 }
 .hero-inner {
@@ -163,8 +197,8 @@ a:hover { text-decoration: underline; }
   transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
 }
 .btn:hover { text-decoration: none; transform: translateY(-1px); }
-.btn-primary { background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3); }
-.btn-primary:hover { background: #1d4ed8; }
+.btn-primary { background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(168, 64, 39, 0.28); }
+.btn-primary:hover { background: var(--accent-dark); }
 .btn-ghost { border: 1px solid var(--ink); color: var(--ink); }
 .btn-ghost:hover { background: var(--bg-alt); }
 
@@ -269,6 +303,7 @@ a:hover { text-decoration: underline; }
   transform: translateY(0);
 }
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
   .reveal { opacity: 1; transform: none; transition: none; }
 }
 
@@ -293,9 +328,15 @@ a:hover { text-decoration: underline; }
     border-bottom: 1px solid var(--line);
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.25s ease;
+    /* 收起时顺手移出 Tab 序列，否则键盘焦点会跳进看不见的菜单 */
+    visibility: hidden;
+    transition: max-height 0.25s ease, visibility 0s linear 0.25s;
   }
-  .nav-links.open { max-height: 320px; }
+  .nav-links.open {
+    max-height: 320px;
+    visibility: visible;
+    transition: max-height 0.25s ease, visibility 0s;
+  }
   .nav-links li { width: 100%; }
   .nav-links a { display: block; padding: 14px 0; border-bottom: 1px solid var(--line); }
   .nav-links li:last-child a { border-bottom: 0; }
