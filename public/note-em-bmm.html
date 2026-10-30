@@ -74,6 +74,26 @@
     .table-wrap table { margin-bottom: 0; }
     /* 首列是行名，折行会变成 "M-" / "step" 这种断法 */
     .table-wrap td:first-child, .table-wrap th:first-child { white-space: nowrap; }
+
+    /* 竖屏短片：竖构图，宽度压到 340px 居中 */
+    .short-video { max-width: 340px; margin: 0 auto 32px; }
+    .short-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 9 / 16;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .short-video figcaption {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -98,6 +118,15 @@
     <blockquote>
       符号约定：$p$ 这边是真实分布和假设出来的分布，$q_\theta$ 那边是模型。
     </blockquote>
+
+    <figure class="short-video">
+      <video controls playsinline preload="metadata" width="1080" height="1920"
+             poster="media/em-bmm-60s-poster.jpg">
+        <source src="media/em-bmm-60s.mp4" type="video/mp4" />
+        浏览器不支持内嵌视频，<a href="media/em-bmm-60s.mp4">点这里下载这段短片</a>。
+      </video>
+      <figcaption>配套短片 · 59 秒 · 有口播：从 log-sum 卡住，到换分布、拆 A/B、两步不等式</figcaption>
+    </figure>
 
     <h2 id="goal">0. 目的</h2>
 

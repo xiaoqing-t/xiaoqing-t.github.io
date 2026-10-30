@@ -202,7 +202,7 @@ export const notes: Note[] = [
     category: '机器学习',
     title: 'EM 推导：从 KL 到 BMM',
     desc: '从 KL 散度出发，用联合分布把混合模型的 log-sum 拆开，推出两步不等式链和 Q 函数，再落到 GMM 与 BMM 的闭式解。',
-    meta: '2026-10 · 推导',
+    meta: '2026-10 · 推导 · 附短片',
     href: 'note-em-bmm.html',
   },
 ]
