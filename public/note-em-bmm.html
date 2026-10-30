@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EM 推导：从 KL 到 BMM · 学习笔记</title>
+  <meta name="description" content="从 KL 散度出发，用联合分布把混合模型的 log-sum 拆开，推出 EM 的两步不等式链和 Q 函数，再落到 GMM 与 BMM 的闭式解。" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧮</text></svg>" />
+  <link rel="stylesheet" href="legacy-v1.css" />
+  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="katex/katex.min.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .back-link { display: inline-block; margin-bottom: 28px; font-size: 0.92rem; }
+
+    /* 公式：行间公式在窄屏可横向滚动，避免撑破页面 */
+    .article .katex { font-size: 1.03em; }
+    .article .katex-display {
+      margin: 20px 0;
+      padding: 2px 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+    .article .katex-display::-webkit-scrollbar { height: 6px; }
+    .article .katex-display::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+    .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+    .table-wrap table { margin-bottom: 0; }
+    /* 首列是行名，折行会变成 "M-" / "step" 这种断法 */
+    .table-wrap td:first-child, .table-wrap th:first-child { white-space: nowrap; }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">机器学习 · 推导</p>
+    <h1>EM 推导：从 KL 到 BMM</h1>
+
+    <blockquote>
+      符号约定：$p$ 这边是真实分布和假设出来的分布，$q_\theta$ 那边是模型。
+    </blockquote>
+
+    <h2 id="goal">0. 目的</h2>
+
+    <p>目标：让模型分布 $q(x\mid\theta)$ 逼近真实分布 $p(x)$，差距用 KL 度量。</p>
+
+    <p>$$\text{minimize}\ KL\big(p(x)\,\|\,q(x\mid\theta)\big)=\int p(x)\log\frac{p(x)}{q(x\mid\theta)}dx$$</p>
+
+    <p>$p(x)$ 不知道，只有样本 $x_1,\dots,x_N$，所以把 $p(x)$ 换成 δ 函数的叠加——等于把整批样本看成一个巨大样本：</p>
+
+    <p>$$p(x)=\frac{1}{N}\sum_{i}\delta(x-x_i),\qquad \int p(x)g(x)dx=\frac{1}{N}\sum_i g(x_i)\ \to\ g(x_N)$$</p>
+
+    <p>注意这条假设是全过程唯一的近似前提，后面所有式子都从这里出。</p>
+
+    <h2 id="hard">1. 直接做不行</h2>
+
+    <p>GMM 的 $q(x\mid\theta)=\sum_k\pi_k\mathcal N(x\mid\mu_k,\Sigma_k)$，取 log：</p>
+
+    <p>$$\log q(x\mid\theta)=\log\Big(\sum_k\pi_k\mathcal N(x\mid\mu_k,\Sigma_k)\Big)$$</p>
+
+    <p>sum 在 log 里面。两种写法差别很大：</p>
+
+    <ul>
+      <li>$\sum_k\log(\cdot)$：每个 $k$ 独立求导，一步出结果（k-means 是这种）</li>
+      <li>$\log\big(\sum_k\cdot\big)$：$K$ 个高斯先被 log 合成一个数</li>
+    </ul>
+
+    <p>具体卡在哪，把导数算出来看。对 $\mu_k$ 求导：</p>
+
+    <p>$$\frac{\partial}{\partial\mu_k}\log q(x\mid\theta)=\frac{\pi_k\mathcal N(x\mid\mu_k,\Sigma_k)}{\sum_j\pi_j\mathcal N(x\mid\mu_j,\Sigma_j)}\Sigma_k^{-1}(x-\mu_k)$$</p>
+
+    <p>前面那一坨就是后验</p>
+
+    <p>$$\gamma_{nk}=\frac{\pi_k\mathcal N(x_n\mid\mu_k,\Sigma_k)}{\sum_j\pi_j\mathcal N(x_n\mid\mu_j,\Sigma_j)}$$</p>
+
+    <p><strong>$\gamma$ 依赖所有的 $\mu_j$。</strong> 令导数=0 求和：</p>
+
+    <p>$$\mu_k=\frac{\sum_n\gamma_{nk}x_n}{\sum_n\gamma_{nk}}$$</p>
+
+    <p>形式上是 $\mu_k$ 的表达式，右边却含着 $\mu_1,\dots,\mu_K$。不动点方程 $\mu=\Phi(\mu)$，不是显式解。</p>
+
+    <p>对比 k-means：$r_{nk}$ 是 0/1 常数，$J=\sum_n\sum_kr_{nk}\|x_n-\mu_k\|^2$ 里每个 $\mu_k$ 独立，求导=0 直接得均值。GMM 的 $\gamma$ 是软的，还跟着 $\mu$ 变。</p>
+
+    <p>所以不是不能求导，是求完以后未知量两边都有。</p>
+
+    <h2 id="joint">2. 换成联合分布的 KL</h2>
+
+    <p>原来的目标是 $x$ 上的两个分布之比。改成 $(x,z)$ 上的两个联合分布之比，三种写法等价：</p>
+
+    <p>$$KL\big(p(x)p(z\mid x)\,\|\,q(x\mid z,\theta)q(z\mid\theta)\big)=KL\big(p(x,z)\,\|\,q(x,z\mid\theta)\big)=KL\big(p(x)p(z\mid x)\,\|\,q(z\mid x,\theta)q(x\mid\theta)\big)$$</p>
+
+    <p>最右边那个写法是干活用的，记作 $(*)$：</p>
+
+    <p>$$(*)=\iint p(x)p(z\mid x)\log\frac{p(x)p(z\mid x)}{q(z\mid x,\theta)q(x\mid\theta)}dxdz$$</p>
+
+    <p>意思就是：$(x,z)$ 这个联合分布的自然分布，和 $\theta$ 参数化的分布，要相近。</p>
+
+    <p><strong>为什么换成联合分布就能算</strong>：联合分布取 log，log 直接分配到乘积上——</p>
+
+    <p>$$\log q(x,z\mid\theta)=\log q(z\mid\theta)+\log q(x\mid z,\theta)=\log\pi_k+\log\mathcal N(x\mid\mu_k,\Sigma_k)$$</p>
+
+    <p>log 不再套 sum。固定 $z=e_k$ 只剩一个高斯，参数各自解耦。这是「知道 $z$ 就能直接用联合分布」那句话的实际内容。</p>
+
+    <h2 id="split">3. 把 $(*)$ 拆成两项</h2>
+
+    <p>分母用 $q(x,z\mid\theta)=q(z\mid x,\theta)q(x\mid\theta)$，再把 log 里的分数拆成两个。先看第一项——</p>
+
+    <p>$$\iint p(x)p(z\mid x)\log\frac{p(z\mid x)}{q(z\mid x,\theta)}dxdz=\int p(x)\underbrace{\Big[\int p(z\mid x)\log\frac{p(z\mid x)}{q(z\mid x,\theta)}dz\Big]}_{KL(p(z\mid x)\|q(z\mid x,\theta))}dx$$</p>
+
+    <p>括号里是一个 KL，外层是对 $p(x)$ 求平均。</p>
+
+    <p>第二项里 $\dfrac{p(x)}{q(x\mid\theta)}$ 不含 $z$，而 $\int p(z\mid x)dz=1$，所以 z 直接积掉：</p>
+
+    <p>$$\iint p(x)p(z\mid x)\log\frac{p(x)}{q(x\mid\theta)}dxdz=\int p(x)\log\frac{p(x)}{q(x\mid\theta)}dx=KL\big(p(x)\|q(x\mid\theta)\big)$$</p>
+
+    <p>合起来：</p>
+
+    <p>$$(*)=\underbrace{\int p(x)KL\big(p(z\mid x)\|q(z\mid x,\theta)\big)dx}_{B}+\underbrace{KL\big(p(x)\|q(x\mid\theta)\big)}_{A}$$</p>
+
+    <p><strong>$A$ 就是第 0 节那个目标，$B$ 是换写法多出来的。</strong></p>
+
+    <h2 id="substitute">4. 代入 $p(x)$，写成能算的式子</h2>
+
+    <p>按第 0 节，$p(x)=\frac1N\sum_i\delta(x-x_i)$，$\int p(x)g(x)dx=\frac1N\sum_i g(x_i)$。</p>
+
+    <p>$B$ 那层积分直接落到样本上：</p>
+
+    <p>$$B=KL\big(p(z\mid x_N)\|q(z\mid x_N,\theta)\big)$$</p>
+
+    <p>$A$ 拆开，$\int p\log p$ 跟 $\theta$ 无关，是常数：</p>
+
+    <p>$$A=\underbrace{\int p(x)\log p(x)dx}_{const}-\int p(x)\log q(x\mid\theta)dx=const-\log q(x_N\mid\theta)$$</p>
+
+    <p>于是</p>
+
+    <p>$$(*)=KL\big(p(z\mid x_N)\|q(z\mid x_N,\theta)\big)-\log q(x_N\mid\theta)+const$$</p>
+
+    <h2 id="relation">5. $A$、$B$、$(*)$ 的关系</h2>
+
+    <p>由 $(*)=A+B$ 得 <strong>$A=(*)-B$</strong>，方向别写反（$B\ge0$，所以 $(*)$ 在 $A$ 上面）。</p>
+
+    <p>$B\ge0$，取 0 当且仅当 $p(z\mid x)=q(z\mid x,\theta)$。所以分两步：</p>
+
+    <ul>
+      <li><strong>E-step</strong>：固定 $\theta$，取 $p(z\mid x)=q(z\mid x,\theta^{old})$，把 $B$ 打成 0。此时 $(*)=A$，上界贴住目标。</li>
+      <li><strong>M-step</strong>：固定 $p(z\mid x)$，对 $\theta$ 最小化 $(*)$。</li>
+    </ul>
+
+    <p>「用 EM 间接 minimize $A$」这件事是严格的，两步不等式：</p>
+
+    <p>$$A(\theta^{t+1})\ \le\ (*)(\theta^{t+1})\ \le\ (*)(\theta^{t})\ =\ A(\theta^{t})$$</p>
+
+    <p>第一个 $\le$：$(*)=A+B$ 且 $B\ge0$。第二个 $\le$：M-step 就是在压 $(*)$。那个 $=$：上一轮 E-step 已经把 $B$ 归零。</p>
+
+    <p>所以 $A$ 单调不增，等价于似然单调不减。这一步把「用 EM 间接优化 $A$」从直觉变成了不等式链。</p>
+
+    <h2 id="q-function">6. M-step 的目标函数 $Q$ 从哪儿来</h2>
+
+    <p>M-step 要最小化 $(*)$。把 $-C$（$C=(*)$）写成能对 $\theta$ 求导的样子，log 里上下翻一下：</p>
+
+    <p>$$-C=-(*)=\iint p(x)p(z\mid x)\log\frac{q(x\mid z,\theta)q(z\mid\theta)}{p(x)p(z\mid x)}dxdz$$</p>
+
+    <p>这一步<strong>代入 E-step 的结果</strong> $p(z\mid x)=q(z\mid x_N,\theta^{old})$，并注意 $p(z\mid x)$ 与 $p(z\mid x_N)$ 是一回事（δ 假设下 $x$ 只有样本点有质量）：</p>
+
+    <p>$$-C=\int p(z\mid x_N)^{old}\log\big[q(x\mid z,\theta)q(z\mid\theta)\big]dz\ \underbrace{-\int p(z\mid x_N)^{old}\log\big[p(z\mid x_N)^{old}p(x)\big]dxdz}_{\text{与 }\theta\text{ 无关，常数}}$$</p>
+
+    <p>含 $\theta$ 的只有前半段，它就是 $Q$：</p>
+
+    <p>$$Q(\theta^{old},\theta)=\int p(z\mid x_N)^{old}\log q(x,z\mid\theta)dz=\mathbb E_{p(z\mid x)^{old}}\big[\log q(x,z\mid\theta)\big]$$</p>
+
+    <p>$$\text{M-step:}\quad \max_\theta Q(\theta^{old},\theta)$$</p>
+
+    <p>对 $N$ 个 iid 样本展开，$Q$ 就是对 $z$ 的期望加权和：</p>
+
+    <p>$$Q=\sum_{n=1}^{N}\sum_{k=1}^{K}\gamma_{nk}\big[\log\pi_k+\log q(x_n\mid z_n=e_k,\theta)\big]$$</p>
+
+    <p>$\gamma$ 在这里是<strong>已知系数</strong>（E-step 给的），不是变量。这一步也解释了名字：E-step 之所以叫 Expectation，是因为它算的这些后验，正好是 $Q$ 那个期望的权重。</p>
+
+    <h3 id="division">E-step 和 M-step 的分工</h3>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th></th><th>固定什么</th><th>动什么</th><th>产出</th></tr></thead>
+        <tbody>
+          <tr><td>E-step</td><td>$\theta^{t}$</td><td>$p(z\mid x)$</td><td>$\gamma_{nk}=p(z_{nk}=1\mid x_n,\theta)$，$N\times K$，每行和 = 1</td></tr>
+          <tr><td>M-step</td><td>$\gamma$（刚算的）</td><td>$\theta$</td><td>新的 $\pi,\mu,\Sigma$</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>两件事不能同时做。E-step 一旦动 $\theta$，算出来的后验就是被自己动过的模型的，第 5 节那串不等式作废。k-means 里「重新分配点」和「移动中心」也是这个道理。</p>
+
+    <p>E-step 不更新任何参数，也不参考上一轮的 $\gamma$，每轮用当前 $\theta$ 从零重算。</p>
+
+    <h2 id="gmm-mstep">7. GMM 的 M-step 三个式子</h2>
+
+    <p>$q(x_n\mid z_n=e_k,\theta)=\mathcal N(x_n\mid\mu_k,\Sigma_k)$，对三个参数分别求导=0：</p>
+
+    <p>$$\mu_k=\frac{\sum_n\gamma_{nk}x_n}{\sum_n\gamma_{nk}},\qquad \pi_k=\frac{1}{N}\sum_n\gamma_{nk},\qquad \Sigma_k=\frac{\sum_n\gamma_{nk}(x_n-\mu_k)(x_n-\mu_k)^T}{\sum_n\gamma_{nk}}$$</p>
+
+    <ul>
+      <li>$\mu_k$：用 $\dfrac{\partial}{\partial\mu_k}\log\mathcal N(x_n\mid\mu_k,\Sigma_k)=\Sigma_k^{-1}(x_n-\mu_k)$，求和=0 即得</li>
+      <li>$\pi_k$：带约束 $\sum_k\pi_k=1$，拉格朗日乘子最后定成 $\lambda=-N$</li>
+      <li>$\Sigma_k$：标量对矩阵求导，比前两个麻烦一层</li>
+    </ul>
+
+    <p>读法：把 k-means 三个式子里的簇内求和 / 簇内个数，换成按 $\gamma$ 加权的求和 / 权重和。反过来让 $\Sigma_k\to\epsilon I$、$\gamma\to0/1$，就退回 k-means。</p>
+
+    <h2 id="bmm">8. BMM</h2>
+
+    <p>伯努利混合，单个成分 $B(x\mid\mu_j)=\mu_j^{x}(1-\mu_j)^{1-x}$，$x\in\{0,1\}$；混合 $q(x_t\mid\theta)=\sum_j\alpha_jB(x_t\mid\mu_j)$，约束 $\sum_j\alpha_j=1$、$\alpha_j\ge0$。</p>
+
+    <h3 id="bmm-estep">E-step</h3>
+
+    <p>同一个贝叶斯公式，形式不用改：</p>
+
+    <p>$$\gamma_{tj}:=p(z_t=j\mid x_t,\theta^{old})=\frac{\alpha_j B(x_t\mid\mu_j)}{\sum_k\alpha_k B(x_t\mid\mu_k)}$$</p>
+
+    <p>分子是先验 × 似然，分母是所有成分加起来（边缘分布），作用只是归一化。iid 所以后验按 $t$ 分解。</p>
+
+    <h3 id="bmm-q">Q 函数：那串求和怎么收</h3>
+
+    <p>从 $\sum_{z_1}\cdots\sum_{z_N}$ 化简到 $\sum_t\sum_j$，中间有几步容易漏。关键一步：iid 下</p>
+
+    <p>$$\log p(x,z\mid\theta)=\sum_t\big[\log\alpha_{z_t}+\log B(x_t\mid\mu_{z_t})\big]$$</p>
+
+    <p>每个 $t$ 的括号只依赖 $z_t$，所以其他 $z_s\ (s\ne t)$ 可以先求和掉：</p>
+
+    <p>$$\sum_{z_{-t}}p(z\mid x,\theta^{old})=p(z_t\mid x_t,\theta^{old})=\gamma_{tj}$$</p>
+
+    <p>于是</p>
+
+    <p>$$Q(\theta)=\sum_t\sum_j\gamma_{tj}\Big[\log\alpha_j+x_t\log\mu_j+(1-x_t)\log(1-\mu_j)\Big]$$</p>
+
+    <h3 id="bmm-mu">解 $\mu_j$</h3>
+
+    <p>含 $\mu_j$ 的只有后两项：</p>
+
+    <p>$$\frac{\partial Q}{\partial\mu_j}=\sum_t\gamma_{tj}\Big[\frac{x_t}{\mu_j}-\frac{1-x_t}{1-\mu_j}\Big]=0$$</p>
+
+    <p>记 $S_j=\sum_t\gamma_{tj}x_t$（软正例数）、$N_j=\sum_t\gamma_{tj}$（软点数）：</p>
+
+    <p>$$\frac{S_j}{\mu_j}=\frac{N_j-S_j}{1-\mu_j}\ \Rightarrow\ S_j(1-\mu_j)=\mu_j(N_j-S_j)\ \Rightarrow\ \mu_j=\frac{S_j}{N_j}=\frac{\sum_t\gamma_{tj}x_t}{\sum_t\gamma_{tj}}$$</p>
+
+    <p>就是一个比例。伯努利的 MLE 本来就是正面朝上的频率，这里把计数换成软计数。</p>
+
+    <h3 id="bmm-alpha">解 $\alpha_j$</h3>
+
+    <p>$Q'=Q+\lambda(\sum_j\alpha_j-1)$：</p>
+
+    <p>$$\frac{\partial Q'}{\partial\alpha_j}=\frac{\sum_t\gamma_{tj}}{\alpha_j}+\lambda=0\ \Rightarrow\ \alpha_j=-\frac{1}{\lambda}\sum_t\gamma_{tj}$$</p>
+
+    <p>乘子由约束定：$1=\sum_j\alpha_j=-\frac1\lambda\cdot N$，所以 $\lambda=-N$：</p>
+
+    <p>$$\alpha_j=\frac{1}{N}\sum_t\gamma_{tj}$$</p>
+
+    <h3 id="compare">和 GMM 对照</h3>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th></th><th>GMM</th><th>BMM</th></tr></thead>
+        <tbody>
+          <tr><td>成分分布</td><td>$\mathcal N(x\mid\mu_k,\Sigma_k)$</td><td>$B(x\mid\mu_j)$</td></tr>
+          <tr><td>参数</td><td>$\mu$ 向量 + $\Sigma$ 矩阵</td><td>$\mu$ 标量，$[0,1]$</td></tr>
+          <tr><td>E-step</td><td>贝叶斯公式</td><td>一字不差</td></tr>
+          <tr><td>M-step 的 $\mu$</td><td>$\dfrac{\sum\gamma x}{\sum\gamma}$</td><td>$\dfrac{\sum\gamma x}{\sum\gamma}$，形式完全一样</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>形式一样是因为高斯和伯努利都属指数族，而指数族的 M-step 解出来永远是充分统计量的加权平均。同一个式子在 GMM 里读作质心，在 BMM 里读作正例比例。</p>
+
+    <h3 id="bmm-d">d 维的情况</h3>
+
+    <p>前面按 1 维推的，因为 $x_t\log\mu_j$ 这种写法只在 $x_t\in\{0,1\}$ 标量时成立。如果 $x_t$ 是 $d$ 维 0/1 向量，下面这点必须改。</p>
+
+    <p>$d$ 维 0/1 向量、各坐标条件独立时：</p>
+
+    <p>$$B(x_t\mid\mu_j)=\prod_{i=1}^{d}\mu_{ji}^{x_{ti}}(1-\mu_{ji})^{1-x_{ti}},\qquad \mu_{ji}=\frac{\sum_t\gamma_{tj}x_{ti}}{\sum_t\gamma_{tj}}$$</p>
+
+    <p>$\alpha_j$ 不变，$\mu$ 变成逐坐标各算一次软比例。</p>
+
+    <h2 id="pitfalls">9. 容易错的地方</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>位置</th><th>容易错的写法</th></tr></thead>
+        <tbody>
+          <tr><td>拆 $(*)$</td><td>忘了 $\int p(z\mid x)dz=1$，把第二项也留着 $z$</td></tr>
+          <tr><td>第 5 节的关系式</td><td>写成 $A=B-C$，方向反了，应为 $A=(*)-B$</td></tr>
+          <tr><td>M-step 代入</td><td>忘了代入的是 $p(z\mid x_N)^{old}$，于是 $-C$ 的常数项也跟着 $\theta$ 变</td></tr>
+          <tr><td>单调性</td><td>第一个不等号来自 $B\ge0$，第二个来自 M-step 真的在优化，两个不能混成一句</td></tr>
+          <tr><td>BMM 的 $\mu$</td><td>用 1 维式子推 $d$ 维，$x_t\log\mu_j$ 直接不成立</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="next">10. 这条线还能往哪走</h2>
+
+    <p>成分分布可以换：多项、泊松、指数、混合回归。E-step 永远是贝叶斯 + 归一化，变的只是 M-step 里那个加权平均的统计量。</p>
+
+    <p>$z$ 的含义也可以换：缺失值（数据补全）、话题（pLSA、LDA）、连续潜在因子（因子分析、概率 PCA）、序列状态（HMM 的 Baum-Welch 就是这个框架的序列版）。</p>
+
+    <p>loss 那条线：MAP = 似然 + 先验，所以「loss = 数据项 + 正则项」是同一副骨架；VAE 的 ELBO 里那个 KL 项就是这里的 $B$。</p>
+
+    <p>EM 自己解决不了的两件事：$K$ 取多大（模型选择，AIC / BIC / VBEM），以及起动位置决定停在哪个局部最优。</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+  <script defer src="katex/katex.min.js"></script>
+  <script defer src="katex/auto-render.min.js"></script>
+  <script defer src="katex/render-math.js"></script>
+</body>
+</html>
