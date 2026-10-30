@@ -78,14 +78,14 @@ export const navLinks: NavLink[] = [
 export const hero = {
   eyebrow: 'CS · BCI · Building things',
   /** 标题被拆成三段，中间那段上色（`.accent` 类） */
-  titleLead: '你好,我是',
+  titleLead: '你好，我是',
   titleAccent: 'Zhao Yunzhe',
   titleTail: '。',
   /** 标题下面那几行，一行一个字符串（换行由组件渲染，不靠 CSS） */
   subLines: [
     '计算机科学专业，在 BCMI 实验室做 EEG 数据处理。',
     '现在一边补深度学习，一边用 AI 写点自己想用的工具。',
-    '喜欢把东西做出来，也喜欢把做明白的事讲清楚。',
+    '做东西和想问题是我最投入的两件事。',
   ],
   actions: [
     { label: '看看我的项目', href: '#projects', primary: true },
@@ -112,7 +112,7 @@ export const aboutCards: AboutCard[] = [
   },
   {
     title: '我热爱的事',
-    body: '把没有的东西做出来，把没想明白的事想明白。',
+    body: '做东西能看到结果，想问题能知道自己以前错在哪。两件事我都愿意花时间。',
   },
 ]
 
