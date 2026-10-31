@@ -157,20 +157,6 @@ export const projects: Project[] = [
 /** 学习笔记列表。加一篇笔记就往这里追加一项（页面记得放 public/ 里）。 */
 export const notes: Note[] = [
   {
-    category: '科研方法论',
-    title: '复现一篇论文的基本功',
-    desc: '读论文分三层、一张只写证据的 Paper Card，加上五条实验纪律。这套流程我一直在用。',
-    meta: '方法论 · 全文',
-    href: 'note-reproduction-basics.html',
-  },
-  {
-    category: '脑机接口',
-    title: 'EEG 预处理的那些坑',
-    desc: '单位、参考电极、坏道、滤波边界——几百小时批处理里踩过的坑，整理成一张排查表。',
-    meta: '经验 · 全文',
-    href: 'note-eeg-pitfalls.html',
-  },
-  {
     category: '工程实践',
     title: 'Claude Code 1M 上下文配置实录',
     desc: '把自动压缩的阈值从 200K 推到接近 1M，记一次完整的排查：现象、怀疑、验证、结论。',
