@@ -205,6 +205,13 @@ export const notes: Note[] = [
     meta: '2026-10 · 推导 · 附短片',
     href: 'note-em-bmm.html',
   },
+  {
+    category: '自然语言处理',
+    title: '从「惊讶」到困惑度',
+    desc: '信息量、熵、联合熵、互信息、KL、交叉熵一路推下来，最后把 PPL 解释成概率倒数的几何平均和等效分支度。',
+    meta: '2026-10 · 推导 · 附短片',
+    href: 'note-information-perplexity.html',
+  },
 ]
 
 /** 联系区 */

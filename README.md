@@ -15,7 +15,7 @@
 | `src/components/*.tsx` | 9 个组件：Nav / Hero / Section / Reveal / About / Projects / Notes / Contact / Footer |
 | `src/data/site.tsx` | **全站内容都在这里**（文案、项目、笔记）← 平时只改这个文件 |
 | `src/styles/global.css` | 全站样式（设计变量在顶部 `:root`） |
-| `public/` | 原样保留的静态页：简历 2 页 + 7 篇笔记 + v1 主页冻结副本 + `robots.txt` / `sitemap.xml` / `404.html` / `notes.css`（笔记页配色覆盖）—— **URL 一个都没变** |
+| `public/` | 原样保留的静态页：简历 2 页 + 8 篇笔记 + v1 主页冻结副本 + `robots.txt` / `sitemap.xml` / `404.html` / `notes.css`（笔记页配色覆盖）—— **URL 一个都没变** |
 | **`React重构说明.md`** | **讲解 + 增删改查手册** ← 想改东西先看它 |
 
 ## 命令
@@ -34,7 +34,7 @@ npm run preview  # 本地预览打包结果
 ## 两个用途（没变）
 
 1. **简历**（求职向）— `public/resume.html`（网页版）+ `public/resume-print.html`（打印导出 PDF）
-2. **学习笔记发布出口** — `public/note-*.html` 7 篇（公式多的页面用 `public/katex/` 里自托管的 KaTeX 0.19.1 渲染，不依赖 CDN）
+2. **学习笔记发布出口** — `public/note-*.html` 8 篇（公式多的页面用 `public/katex/` 里自托管的 KaTeX 0.19.1 渲染，不依赖 CDN）
 
 ## v1 纯静态版去哪了
 
