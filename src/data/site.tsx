@@ -1,7 +1,10 @@
 // 全站“内容”的唯一来源。
 //
 // 组件负责怎么显示（布局、样式、交互），这个文件负责显示什么（文案、条目）。
-// 所以改文案、加项目、加笔记，都只动这一个文件，不用碰任何 .tsx 组件。
+// 所以改文案、加项目，都只动这一个文件，不用碰任何 .tsx 组件。
+//
+// 唯一例外是笔记：它们的书目结构在 public/notes.json，
+// 因为笔记页（静态 HTML）的侧边栏也在运行时读同一份数据。加一篇笔记改那里。
 //
 // 示例：加一个项目 = 往下面的 projects 数组里再写一个 { ... }，保存即可。
 // 详见同目录上层的《React重构说明.md》第 4 节“增删改查速查”。
@@ -9,6 +12,8 @@
 // ReactNode = 任何能渲染的值：字符串、数字、JSX 片段、它们组成的数组。
 // 只有需要局部加粗的文案才用得上它（见 aboutCards 第 2 条）。
 import type { ReactNode } from 'react'
+
+import notesData from '../../public/notes.json'
 
 /** 一个链接：按钮、导航项、项目底部的外链都用它 */
 export interface Link {
@@ -47,14 +52,21 @@ export interface Project {
 
 /** 一篇学习笔记 */
 export interface Note {
-  /** 分类小字，如 "科研方法论" */
-  category: string
   title: string
   desc: string
-  /** 右下角那行小字，如 "方法论 · 全文" */
+  /** 右下角那行小字，如 "2026-10 · 推导" */
   meta: string
   /** 笔记页地址（静态页放在 public/ 里，所以直接写文件名） */
   href: string
+}
+
+/** 一本书：同一主题下按阅读顺序排好的若干篇笔记 */
+export interface Book {
+  id: string
+  title: string
+  /** 书下面那行小字，说明这本书在讲什么 */
+  tagline: string
+  notes: Note[]
 }
 
 /** 站点级信息：名字、邮箱、GitHub */
@@ -154,58 +166,8 @@ export const projects: Project[] = [
   },
 ]
 
-/** 学习笔记列表。加一篇笔记就往这里追加一项（页面记得放 public/ 里）。 */
-export const notes: Note[] = [
-  {
-    category: '工程实践',
-    title: 'Claude Code 1M 上下文配置实录',
-    desc: '把自动压缩的阈值从 200K 推到接近 1M，记一次完整的排查：现象、怀疑、验证、结论。',
-    meta: '2026-09-16 · 已验证',
-    href: 'note-claude-code-1m.html',
-  },
-  {
-    category: '工程实践',
-    title: 'Agent Skill 框架架构五问',
-    desc: '契约怎么设计才稳、声明和驱动为什么要分开、契约能不能当测试用——五个问题和我现在的答案。',
-    meta: '2026-09 · 五问全解',
-    href: 'note-agent-skill-architecture.html',
-  },
-  {
-    category: '系统虚拟化',
-    title: '启动流程对比图：QEMU 带固件 vs StratoVirt 无固件',
-    desc: '两条泳道按同一阶段对齐，StratoVirt 上空出来的那一格，就是它省下的 3.3 秒。带分步讲解，可缩放。',
-    meta: '2026-10 · 交互图',
-    href: 'note-stratovirt-boot-flow.html',
-  },
-  {
-    category: '系统虚拟化',
-    title: 'Epoll 事件流图：一次客户机 I/O 怎么走完一圈',
-    desc: '客户机敲门、内核回调、VMM 醒来、再通知客户机。四个角色，九条消息，一条一条走。',
-    meta: '2026-10 · 交互图',
-    href: 'note-epoll-event-flow.html',
-  },
-  {
-    category: '机器学习',
-    title: 'EM 推导：从 KL 到 BMM',
-    desc: '从 KL 散度出发，用联合分布把混合模型的 log-sum 拆开，推出两步不等式链和 Q 函数，再落到 GMM 与 BMM 的闭式解。',
-    meta: '2026-10 · 推导 · 附短片',
-    href: 'note-em-bmm.html',
-  },
-  {
-    category: '自然语言处理',
-    title: '从「惊讶」到困惑度',
-    desc: '信息量、熵、联合熵、互信息、KL、交叉熵一路推下来，最后把 PPL 解释成概率倒数的几何平均和等效分支度。',
-    meta: '2026-10 · 推导 · 附短片',
-    href: 'note-information-perplexity.html',
-  },
-  {
-    category: '自然语言处理',
-    title: '词性标注与 HMM：三张表、两次动态规划',
-    desc: '兼类词为什么让词典失效，HMM 怎么把标注拆成 π、A、B 三张表，维特比与前向后向差在哪，参数怎么估——最后接到线性链 CRF。',
-    meta: '2026-11 · 推导 · 附短片',
-    href: 'note-pos-hmm.html',
-  },
-]
+/** 学习笔记：按书分组。增删改都在 public/notes.json 里做。 */
+export const books: Book[] = notesData.books
 
 /** 联系区 */
 export const contact = {

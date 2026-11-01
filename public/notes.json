@@ -1,0 +1,74 @@
+{
+  "books": [
+    {
+      "id": "engineering",
+      "title": "工程实践",
+      "tagline": "配置、契约、排查——工具用深了才会碰到的那些问题",
+      "notes": [
+        {
+          "href": "note-claude-code-1m.html",
+          "title": "Claude Code 1M 上下文配置实录",
+          "desc": "把自动压缩的阈值从 200K 推到接近 1M，记一次完整的排查：现象、怀疑、验证、结论。",
+          "meta": "2026-09-16 · 已验证"
+        },
+        {
+          "href": "note-agent-skill-architecture.html",
+          "title": "Agent Skill 框架架构五问",
+          "desc": "契约怎么设计才稳、声明和驱动为什么要分开、契约能不能当测试用——五个问题和我现在的答案。",
+          "meta": "2026-09 · 五问全解"
+        }
+      ]
+    },
+    {
+      "id": "virtualization",
+      "title": "系统虚拟化",
+      "tagline": "启动和 I/O 两条链路，把 VMM 里看不见的几跳画出来",
+      "notes": [
+        {
+          "href": "note-stratovirt-boot-flow.html",
+          "title": "启动流程对比图：QEMU 带固件 vs StratoVirt 无固件",
+          "desc": "两条泳道按同一阶段对齐，StratoVirt 上空出来的那一格，就是它省下的 3.3 秒。带分步讲解，可缩放。",
+          "meta": "2026-10 · 交互图"
+        },
+        {
+          "href": "note-epoll-event-flow.html",
+          "title": "Epoll 事件流图：一次客户机 I/O 怎么走完一圈",
+          "desc": "客户机敲门、内核回调、VMM 醒来、再通知客户机。四个角色，九条消息，一条一条走。",
+          "meta": "2026-10 · 交互图"
+        }
+      ]
+    },
+    {
+      "id": "ml",
+      "title": "机器学习",
+      "tagline": "公式推到能自己复述为止",
+      "notes": [
+        {
+          "href": "note-em-bmm.html",
+          "title": "EM 推导：从 KL 到 BMM",
+          "desc": "从 KL 散度出发，用联合分布把混合模型的 log-sum 拆开，推出两步不等式链和 Q 函数，再落到 GMM 与 BMM 的闭式解。",
+          "meta": "2026-10 · 推导 · 附短片"
+        }
+      ]
+    },
+    {
+      "id": "nlp",
+      "title": "自然语言处理",
+      "tagline": "从熵到解码，一条主线串起来的推导",
+      "notes": [
+        {
+          "href": "note-information-perplexity.html",
+          "title": "从「惊讶」到困惑度",
+          "desc": "信息量、熵、联合熵、互信息、KL、交叉熵一路推下来，最后把 PPL 解释成概率倒数的几何平均和等效分支度。",
+          "meta": "2026-10 · 推导 · 附短片"
+        },
+        {
+          "href": "note-pos-hmm.html",
+          "title": "词性标注与 HMM：三张表、两次动态规划",
+          "desc": "兼类词为什么让词典失效，HMM 怎么把标注拆成 π、A、B 三张表，维特比与前向后向差在哪，参数怎么估——最后接到线性链 CRF。",
+          "meta": "2026-11 · 推导 · 附短片"
+        }
+      ]
+    }
+  ]
+}

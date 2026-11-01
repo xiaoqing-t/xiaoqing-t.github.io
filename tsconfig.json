@@ -5,6 +5,8 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "bundler",
+    /* 书目数据是 JSON（笔记页运行时读的也是这一份），要允许 import */
+    "resolveJsonModule": true,
     "jsx": "react-jsx",
 
     /* 检查强度 —— 这三行是「让 TS 帮你抓错」的主要开关 */

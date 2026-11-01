@@ -11,7 +11,8 @@
 
 | 你想改的是 | 去哪 |
 |---|---|
-| 文字、项目、笔记条目 | `src/data/site.tsx` ← **90% 的情况** |
+| 文字、项目 | `src/data/site.tsx` ← **大多数情况** |
+| 笔记书目（属于哪本书、第几章） | `public/notes.json`（首页和笔记页侧栏共用） |
 | 结构（多一块 / 少一块 / 换了排布） | `src/components/` + `src/App.tsx` |
 | 颜色、间距、字号、圆角 | `src/styles/global.css` |
 
@@ -52,7 +53,7 @@ src/data/site.tsx  ──import──▶  组件  ──return JSX──▶  Rea
 | `hero` | Hero | 首屏标题、副标题、两颗按钮、下方三个小标签 |
 | `aboutCards` | About | 「关于我」三张卡 |
 | `projects` | Projects | 4 张项目卡 |
-| `notes` | Notes | 4 条笔记 |
+| `books` | Notes | 4 本书 / 7 篇（数据来自 `public/notes.json`） |
 | `contact` | Contact | 联系区的两个按钮 |
 | `siteOwner` | Footer | 页脚署名（年份自动算） |
 
@@ -90,8 +91,9 @@ npm run preview  # 本地预览 dist/（≈ 将来线上的样子）
 | **删一个项目** | 同上 | 整块 `{ … },` 删掉；**别留下孤立的逗号**，也别忘了上一项的逗号 |
 | **调项目顺序** | 同上 | 整块 `{ … }` 上下挪；顺序＝数组顺序 |
 | **改项目里的外链** | 同上 | `links: [{ label: '查看仓库', href: '...' }]`，可以放 0～n 个 |
-| **加一篇笔记** | ① `public/` ② `src/data/site.tsx` | ① html 文件丢进 `public/`；② 往 `notes` 追加 `{ category, title, desc, meta, href }`，`href` 只写文件名（如 `note-xxx.html`） |
-| **换笔记顺序 / 下架一篇** | `src/data/site.tsx` | 挪位置 / 删那一项。**html 文件删不删随意**：不在 `notes` 里的就不显示 |
+| **加一篇笔记** | ① `public/` ② `public/notes.json` | ① html 文件丢进 `public/`；② 往所属书的 `notes` 追加 `{ title, desc, meta, href }`，`href` 只写文件名（如 `note-xxx.html`） |
+| **换笔记顺序 / 下架一篇** | `public/notes.json` | 挪位置 / 删那一项。顺序＝阅读顺序，首页章节号和笔记页侧栏都跟着变；**html 文件删不删随意** |
+| **新笔记页接上「本书」侧栏** | 笔记页本身 | `<head>` 加 `book-shell.css`，`</body>` 前加 `book-shell.js`，认不到就自动不显示 |
 | **加一个导航项** | `src/data/site.tsx` 的 `navLinks` | 加 `{ label, href }`。跳本页区块写 `#id`，跳别的页面写文件名 |
 | **在页面上加一整块新区块** | ① 新建组件 ② `App.tsx` ③ 数据 ④ 导航 | 见下面「加一块新区块」 |
 | **改配色 / 圆角 / 间距** | `src/styles/global.css` 顶部 `:root` | `--accent`（主色）、`--bg`、`--radius`、`--line` 等，**改一处全站生效** |
@@ -238,7 +240,7 @@ npm run preview  # 本地预览 dist/（≈ 将来线上的样子）
    - 走的是 **GitHub Actions**：`main` 推送后由 `.github/workflows/deploy.yml` 构建并发布，产物是 `dist/`（单文件 `index.html` + `public/` 静态页），线上 https://xiaoqing-t.github.io/ 已跑 React 版
    - Pages 源已改为 **GitHub Actions**（不再是 `main` 分支根目录）
 2. **简历页也组件化 + 上路由**（`react-router`）：练「多页面应用」；注意 GitHub Pages 直接刷新子路径会 404，要配 404.html 兜底或改用 hash 路由
-3. **笔记 Markdown 管线**：笔记从 `.md` 生成页面，不用再手写 HTML（4 篇已发，正好当样本）
+3. **笔记 Markdown 管线**：笔记从 `.md` 生成页面，不用再手写 HTML（7 篇已发，正好当样本）
 4. **练表单 + 受控组件**：加一个「创意/作品」区块或留言板（v1 删掉的那块设计还在 `public/legacy-v1.css` 里）
 
 ## 8. 拿到团队官网仓库后，对照着看这几件事
@@ -317,7 +319,7 @@ npm run build
 |---|---|
 | 内联前 | `index.html` 0.9 KB + `assets/index-*.js` 223.7 KB + `assets/index-*.css` 6.7 KB |
 | 内联后 | **`index.html` 231.2 KB**（正好等于三者之和），`assets/` 空了 |
-| `public/` 的东西 | 简历 PDF、四篇笔记 HTML、`legacy-v1.css`、`v1-index.html`、`script.js` —— **一个没少** |
+| `public/` 的东西 | 简历 PDF、七篇笔记 HTML、`legacy-v1.css`、`v1-index.html`、`script.js` —— **一个没少** |
 | **双击能打开** | ✅ 用 headless Edge 以 `file://` 协议打开 `dist/index.html`，页面与样式**完整渲染**，不依赖任何服务器 |
 
 ### 代价（要知道）

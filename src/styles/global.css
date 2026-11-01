@@ -46,6 +46,19 @@ img { max-width: 100%; display: block; }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
+/* 只给读屏软件看的文字（输入框标签之类） */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* 键盘用户：默认焦点环要看得见 */
 :focus-visible {
   outline: 2px solid var(--accent);
@@ -266,20 +279,135 @@ a:hover { text-decoration: underline; }
 .project-links a:hover { background: var(--accent); color: #fff; text-decoration: none; }
 
 /* ===== 笔记 ===== */
-.notes-list { display: flex; flex-direction: column; gap: 14px; }
-.note-item { display: block; padding: 20px 24px; transition: transform 0.15s, border-color 0.2s; }
-.note-item:hover { text-decoration: none; transform: translateY(-2px); border-color: var(--accent); }
-.note-cat {
+/* 工具栏：搜索框 + 按书筛选的 chip */
+.notes-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin-bottom: 12px;
+}
+.notes-search { position: relative; flex: 1 1 240px; max-width: 320px; }
+.notes-search input {
+  width: 100%;
+  font: inherit;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 8px 16px 8px 38px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.notes-search input::placeholder { color: var(--ink-faint); }
+.notes-search input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.notes-search .search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 15px;
+  color: var(--ink-faint);
+  pointer-events: none;
+}
+
+.notes-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.chip:hover { color: var(--accent); border-color: var(--accent); }
+.chip[aria-pressed='true'] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.chip-n { font-family: var(--mono); font-size: 0.72rem; opacity: 0.7; }
+
+.notes-status {
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  color: var(--ink-faint);
+  margin-bottom: 18px;
+}
+
+/* 一本书 = 一张卡：书头 + 按顺序排的章节 */
+.books { display: flex; flex-direction: column; gap: 18px; }
+.book-card { padding: 0; overflow: hidden; }
+.book-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px dashed var(--line);
+  background: linear-gradient(180deg, rgba(168, 64, 39, 0.035), transparent);
+}
+.book-kicker {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+.book-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 4px; }
+.book-tagline { font-size: 0.88rem; color: var(--ink-faint); }
+.book-count {
+  flex: none;
+  padding-top: 6px;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+
+.book-chapters { list-style: none; }
+.book-chapters li + li { border-top: 1px dashed var(--line); }
+.book-chapters a {
+  display: grid;
+  grid-template-columns: 2.1rem minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 10px;
+  padding: 13px 24px;
+  color: var(--ink);
+  transition: background 0.15s;
+}
+.book-chapters a:hover { background: var(--bg-alt); text-decoration: none; }
+.book-chapters a:hover .chapter-title { color: var(--accent); }
+.chapter-num { font-family: var(--mono); font-size: 0.78rem; color: var(--accent); opacity: 0.8; }
+.chapter-main { min-width: 0; }
+.chapter-title { font-weight: 600; font-size: 0.95rem; transition: color 0.15s; }
+.chapter-desc {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.83rem;
+  color: var(--ink-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chapter-meta {
   font-family: var(--mono);
   font-size: 0.72rem;
-  color: var(--accent);
-  letter-spacing: 0.06em;
-  margin-bottom: 6px;
-  display: inline-block;
+  color: var(--ink-faint);
+  white-space: nowrap;
 }
-.note-item h3 { font-size: 1.05rem; color: var(--ink); margin-bottom: 6px; }
-.note-item p { color: var(--ink-soft); font-size: 0.92rem; margin-bottom: 8px; }
-.note-date { font-size: 0.8rem; color: var(--ink-faint); font-family: var(--mono); }
+
+.notes-empty { padding: 32px 24px; text-align: center; color: var(--ink-faint); }
+.notes-empty p { margin-bottom: 12px; }
 
 /* ===== 联系 ===== */
 .contact-lead { color: var(--ink-soft); margin-bottom: 28px; }
@@ -341,6 +469,16 @@ a:hover { text-decoration: underline; }
   .nav-links a { display: block; padding: 14px 0; border-bottom: 1px solid var(--line); }
   .nav-links li:last-child a { border-bottom: 0; }
   .nav-cta { border: 0; padding: 14px 0; }
+}
+
+@media (max-width: 640px) {
+  /* 窄屏放不下「搜索框 + 一排 chip」，改上下排列；章节的日期右栏也收掉 */
+  .notes-tools { flex-direction: column; align-items: stretch; }
+  /* 竖排时 flex-basis 会变成高度，这里必须清掉 */
+  .notes-search { flex: 0 0 auto; max-width: none; }
+  .book-head { padding: 16px 18px 12px; }
+  .book-chapters a { grid-template-columns: 1.6rem minmax(0, 1fr); padding: 12px 18px; }
+  .chapter-meta { display: none; }
 }
 
 @media (max-width: 560px) {

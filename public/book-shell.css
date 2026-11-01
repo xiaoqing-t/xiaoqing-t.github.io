@@ -1,0 +1,138 @@
+/* 笔记页的「本书」侧栏与上下篇。
+   由 book-shell.js 在运行时按 notes.json 生成，页面本身不手写目录。
+   宽屏：正文左侧固定一列书目录；窄屏：侧栏收起，正文开头换成可展开目录。 */
+
+/* 锚点跳到小节时别被吸顶导航盖住 */
+html { scroll-padding-top: 76px; }
+
+.book-rail { display: none; }
+.book-toc { display: none; }
+
+/* ---------- 宽屏：左栏目录 ---------- */
+@media (min-width: 1180px) {
+  html.book-page main.article {
+    display: grid;
+    /* 208 + 44 + 800：正文宽度不变，侧栏从两边留白里挤出来 */
+    grid-template-columns: 208px minmax(0, 1fr);
+    column-gap: 44px;
+    width: min(1052px, 94%);
+    max-width: none;
+  }
+  html.book-page .article-body { grid-column: 2; min-width: 0; }
+
+  .book-rail {
+    display: block;
+    grid-column: 1;
+    align-self: start;
+    position: sticky;
+    top: 84px;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    padding-right: 6px;
+    font-size: 0.85rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+  }
+  .book-rail::-webkit-scrollbar { width: 6px; }
+  .book-rail::-webkit-scrollbar-track { background: transparent; }
+  .book-rail::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+}
+
+/* ---------- 目录列表（侧栏和窄屏折叠目录共用） ---------- */
+.rail-kicker {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+.rail-book { font-weight: 700; font-size: 0.98rem; line-height: 1.4; margin-bottom: 12px; }
+
+.rail-list { list-style: none; border-left: 1px solid var(--line); }
+.rail-list a {
+  display: block;
+  margin-left: -1px;
+  padding: 5px 8px 5px 12px;
+  border-left: 2px solid transparent;
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+.rail-list a:hover { color: var(--accent); text-decoration: none; }
+.rail-list a[aria-current='page'] {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  font-weight: 600;
+}
+.rail-num { font-family: var(--mono); font-size: 0.7rem; color: var(--ink-faint); margin-right: 6px; }
+.rail-list a[aria-current='page'] .rail-num { color: var(--accent); }
+
+.rail-sec-title {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  margin: 20px 0 8px;
+}
+.rail-list-sub a { font-size: 0.8rem; padding-block: 4px; color: var(--ink-faint); }
+.rail-list-sub a.on { color: var(--accent); border-left-color: var(--accent); }
+
+.rail-foot { margin-top: 18px; font-size: 0.8rem; }
+
+/* ---------- 窄屏：正文开头的折叠目录 ---------- */
+@media (max-width: 1179px) {
+  .book-toc {
+    display: block;
+    margin: 0 0 28px;
+    padding: 0 16px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg-alt);
+  }
+  .book-toc summary {
+    padding: 12px 0;
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent);
+  }
+  .book-toc .rail-list { border-left: 0; padding-bottom: 12px; }
+  .book-toc .rail-list a { padding-left: 8px; border-left: 0; border-radius: 6px; }
+  .book-toc .rail-list a:hover { background: var(--bg); }
+  .book-toc .rail-list a[aria-current='page'] { background: var(--accent-soft); }
+}
+
+/* ---------- 正文末尾：上下篇 ---------- */
+.book-pager {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 56px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.pager-link {
+  display: block;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  transition: border-color 0.2s, background 0.2s;
+}
+a.pager-link:hover { border-color: var(--accent); background: var(--bg-alt); text-decoration: none; }
+.pager-label {
+  display: block;
+  margin-bottom: 2px;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--ink-faint);
+}
+.pager-next { text-align: right; }
+.pager-empty { color: var(--ink-faint); font-size: 0.8rem; border-style: dashed; }
+
+@media (max-width: 640px) {
+  .book-pager { grid-template-columns: 1fr; }
+  .pager-next { text-align: left; }
+}
