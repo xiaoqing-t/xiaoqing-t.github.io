@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>中文分词与 CRF：从查词典到整句打分 · 学习笔记</title>
+  <meta name="description" content="中文没有空格，分词要先解决切分歧义和未登录词。从最大匹配、最短路径、语言模型，到 BMES 序列标注与线性链 CRF：势函数、配分函数、特征模板、前向与维特比，最后落到 P/R/F1 和 SIGHAN 2005 的 89.8 对 94.3。" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✂️</text></svg>" />
+  <link rel="stylesheet" href="legacy-v1.css" />
+  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="book-shell.css" />
+  <link rel="stylesheet" href="katex/katex.min.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .back-link { display: inline-block; margin-bottom: 28px; font-size: 0.92rem; }
+
+    /* 公式：行间公式在窄屏可横向滚动，避免撑破页面 */
+    .article .katex { font-size: 1.03em; }
+    .article .katex-display {
+      margin: 20px 0;
+      padding: 2px 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+    .article .katex-display::-webkit-scrollbar { height: 6px; }
+    .article .katex-display::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+    .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+    .table-wrap table { margin-bottom: 0; }
+    .table-wrap td:first-child, .table-wrap th:first-child { white-space: nowrap; }
+
+    /* 竖屏短片：竖构图，宽度压到 340px 居中 */
+    .short-video { max-width: 340px; margin: 0 auto 32px; }
+    .short-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 9 / 16;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .short-video video::cue {
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.4;
+      color: #fffdf9;
+      background: rgba(33, 29, 25, 0.78);
+    }
+    .short-video figcaption {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">自然语言处理 · 序列标注</p>
+    <h1>中文分词与 CRF：从查词典到整句打分</h1>
+
+    <blockquote>
+      一句话主线：分词是一条从规则到统计、再到判别式的路线——先查最长词，再选最短路径，用语言模型打分；最后把「切词」换成「贴标签」，让 CRF 在整句上给标签序列打分，用动态规划找最高分。
+    </blockquote>
+
+    <figure class="short-video">
+      <video controls playsinline preload="metadata" width="1080" height="1920"
+             poster="media/seg-crf-poster.jpg">
+        <source src="media/seg-crf-5min.mp4" type="video/mp4" />
+        <track kind="captions" src="media/seg-crf-zh.vtt" srclang="zh" label="中文" default />
+        浏览器不支持内嵌视频，<a href="media/seg-crf-5min.mp4">点这里下载这段短片</a>。
+      </video>
+      <figcaption>配套短片 · 约 5 分半 · 有口播和字幕：从最大匹配一路走到线性链 CRF</figcaption>
+    </figure>
+
+    <p>记号约定：一句话写成 $X=(x_1,\dots,x_N)$，$N$ 是字数；标签序列写成 $Y=(y_1,\dots,y_N)$，$S$ 是标签集大小。切分结果用斜杠分隔，视频里统一叫「标签」，公式里用 $Y$。</p>
+
+    <h2 id="why">0. 中文为什么要分词</h2>
+
+    <p>英文的单词之间有空格，中文没有。一句话进来是一串连续的汉字，下游的检索、句法分析、命名实体识别都按「词」工作，所以先得把字串切成词。</p>
+
+    <p>难的地方不在切，而在「不只一种切法」。以「南京市长江大桥」为例：</p>
+
+    <ul>
+      <li>南京市 / 长江大桥（两个词）</li>
+      <li>南京 / 市长 / 江大桥（三个词）</li>
+    </ul>
+
+    <p>两条都说得通，可下游只认一种。更麻烦的是词典里没有的新词——人名、地名、网络新词，规则方法只能干瞪眼。所以分词的难点归结为两条：<strong>切分歧义</strong>和<strong>未登录词</strong>。</p>
+
+    <h2 id="dict">1. 查词典：最大匹配</h2>
+
+    <p>最早的办法是查词典，叫最大匹配（正向最大匹配，FMM）：从左往右，每次取能匹配上的最长词，切掉，继续往后走。</p>
+
+    <p>拿「他是研究生物化学的」试一下，词典里同时有「研究」「研究生」：</p>
+
+    <ol>
+      <li>开头是「他」，最长匹配「他」，切掉；</li>
+      <li>接下来是「是」，最长匹配「是」，切掉；</li>
+      <li>「研究生」在词典里，「研究」也在，取长的，切出「研究生」；</li>
+      <li>剩下「物化学的」，按同样规则得到「物化 / 学 / 的」。</li>
+    </ol>
+
+    <p>结果是「他 / 是 / 研究生 / 物化 / 学 / 的」，而正确答案是「他 / 是 / 研究 / 生物 / 化学 / 的」。错因很清楚：<strong>每次只顾往长里取，没有回头看的机制</strong>。第三步多取了「生」，后面的「生物」就没了。</p>
+
+    <p>把方向反过来，从右往左切，叫逆向最大匹配（BMM）。两种方法的结果常常不一样，但谁也没有本质上的优势——错误一旦发生，规则方法没有自纠能力。</p>
+
+    <p>最大匹配的优点是简单、快、只要一张词表；缺点是歧义处理差、对未登录词束手无策，而且完全依赖词典的质量。</p>
+
+    <h2 id="path">2. 最短路径</h2>
+
+    <p>换统计的思路：不急着做决定，先把<strong>所有</strong>切法列出来。</p>
+
+    <p>把句子的每个字间位置画成节点，一个词就是一条从位置 $i$ 到位置 $j$ 的边。从开头走到结尾，每经过一条边，就是一种切法。这张图没有环，叫有向无环图（DAG）。</p>
+
+    <p>在所有路径里，选边数最少的那条——也就是切出来的词最少：</p>
+
+    <p>$$W^{*}=\arg\min_{W\in\mathcal{W}(X)}|W|$$</p>
+
+    <p>「南京市 / 长江大桥」经过两条边，「南京 / 市长 / 江大桥」经过三条，所以选前者。词少通常说明切得合理，但这只是直觉：<strong>两条路径词数相同时，它又没主意了</strong>。而且「词少」并不总等于「切得对」，词组和词在长度上没法区分。</p>
+
+    <h2 id="lm">3. 语言模型：给切法打分</h2>
+
+    <p>最短路径只数边，不看词本身。语言模型法往前走一步：给每种切法算一个概率，选最大的。</p>
+
+    <p>句子确定了，词序列的概率就是整句的概率。按链式法则拆开，再用马尔可夫假设近似：</p>
+
+    <p>$$P(W)=\prod_{t=1}^{|W|}P(w_t\mid w_{&lt;t})\approx\prod_{t=1}^{|W|}P(w_t\mid w_{t-1})$$</p>
+
+    <p>实际实现里就是二元或三元语言模型：给「南京市 / 长江大桥」和「南京 / 市长 / 江大桥」各打一个分，取高的那条。概率通常在字典里查，未见过的组合要平滑，思路和 n-gram 一样。</p>
+
+    <p>问题是候选太多。一个字串的合法切法随长度指数增长，不可能全算。工程上用<strong>束搜索</strong>：从左往右逐个词扩展，每一步只保留分数最高的前 $k$ 条候选，最后取最好的一条。</p>
+
+    <p>束搜索是近似解：被剪掉的候选里可能藏着全局最优。$k$ 越大越接近精确解，代价是计算量。</p>
+
+    <h2 id="tagging">4. 换视角：BMES 序列标注</h2>
+
+    <p>上面三种方法都离不开词典，词典里没有的新词仍然是死穴。于是换个角度：<strong>不切词，改成给每个字贴标签</strong>。</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>标签</th><th>含义</th><th>例</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>B</td><td>词首（begin）</td><td>「研」在「研究」里</td></tr>
+          <tr><td>M</td><td>词中（middle）</td><td>三字词中间的字</td></tr>
+          <tr><td>E</td><td>词尾（end）</td><td>「究」在「研究」里</td></tr>
+          <tr><td>S</td><td>单独成词（single）</td><td>「他」「是」「的」</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>「他 / 是 / 研究 / 生物 / 化学 / 的」就对应标签序列 S S B E B E B E S。标签贴完，词边界自然出现：B 的前面和 E 的后面就是切点。也有更简单的 BI 标记，只用两个标签，适合词长分布比较集中的场景。</p>
+
+    <p>换成标注以后，模型不再需要「这个词在不在词典里」这种硬条件，而是学「什么样的上下文对应什么标签」。新词也有上下文，所以能处理。</p>
+
+    <h2 id="crf">5. 整句判断：CRF</h2>
+
+    <p>但标签不能乱贴。B 后面如果直接跟 S，「研」开头的词就只有半个，中间断掉了。也就是说，标签之间存在约束：相邻标签的搭配不是任意的。</p>
+
+    <p>所以要在<strong>整条序列上一起判断</strong>，而不是每个字独立分类。</p>
+
+    <p>上一集《<a href="note-pos-hmm.html">词性标注与 HMM</a>》里的 HMM 是生成式模型：它为整句 $P(X,Y)$ 建模，再用贝叶斯换成 $P(Y\mid X)$。条件随机场（CRF）换了个方向，直接建条件概率：</p>
+
+    <p>$$P(Y\mid X)$$</p>
+
+    <p>给定观测 $X$，哪条标签序列 $Y$ 最可能。观测不再需要建模，模型把全部力气花在「标签怎么配」上。这是判别式模型的基本姿态。</p>
+
+    <h2 id="graph">6. 无向图与最大团</h2>
+
+    <p>CRF 是无向图模型。图里的节点是标签，边表示依赖。</p>
+
+    <p>图里两两相连的一组节点叫<strong>团</strong>（clique），不能再加入新节点还保持两两相连的，叫<strong>最大团</strong>（maximal clique）。</p>
+
+    <p>Hammersley–Clifford 定理说：满足图上的条件独立，联合概率就能按最大团分解成一组非负函数的乘积。序列排成一条链，每个最大团就是相邻的两个标签 $(y_{t-1},y_t)$，对应的模型叫<strong>线性链 CRF</strong>：</p>
+
+    <p>$$P(Y\mid X)=\frac{1}{Z(X)}\prod_{t=1}^{N}\psi_t(y_{t-1},y_t,X)$$</p>
+
+    <p>第一步只到乘积，还没归一化；分母 $Z(X)$ 下面再说。</p>
+
+    <h2 id="score">7. 势函数与配分函数</h2>
+
+    <p>每个最大团配一个势函数 $\psi_t$。它不是一个概率，只是一个非负的分数，构造方式是「特征加权求和，再取指数」：</p>
+
+    <p>$$\psi_t(y_{t-1},y_t,X)=\exp\Big(\sum_k w_k f_k(y_{t-1},y_t,X,t)\Big)$$</p>
+
+    <p>$f_k$ 是特征函数，$w_k$ 是它对应的权重。取指数保证分数为正，加权求和让多个特征可以叠加贡献。</p>
+
+    <p>所有势函数乘起来 $\prod_t\psi_t$，再除以配分函数 $Z(X)$，就得到条件概率。$Z$ 是对<strong>所有</strong>标签序列求和：</p>
+
+    <p>$$Z(X)=\sum_{Y}\prod_{t=1}^{N}\psi_t(y_{t-1},y_t,X)$$</p>
+
+    <p>它的作用是保证概率加起来等于一。标签有 $S$ 种、句子有 $N$ 个位置，标签序列一共 $S^N$ 条，逐个求和是指数级——所以 $Z$ 要靠动态规划算，见第 9 节。</p>
+
+    <h2 id="feature">8. 特征：CRF 最强的地方</h2>
+
+    <p>整个模型最关键的部件是特征函数 $f_k$。它不只看当前字，还能看：</p>
+
+    <ul>
+      <li><strong>当前字</strong>本身，以及它的前后各一个字；</li>
+      <li><strong>前后两个字</strong>的组合，例如「研 + 究」；</li>
+      <li>这个字<strong>在不在词典里</strong>，是不是数字、字母、标点；</li>
+      <li>它<strong>在句子的哪个位置</strong>，是不是句首、句尾；</li>
+      <li>词性、偏旁部首等外部特征。</li>
+    </ul>
+
+    <p>这些特征都可以看整条观测 $X$，不受「只看当前字」的限制。实用系统有 <strong>10<sup>6</sup> 到 10<sup>7</sup> 量级</strong>的特征，靠特征模板批量生成：模板写「当前字 = ?」「前一字 = ?」「当前字在词典里 = ?」这样的模式，遍历语料自动展开。</p>
+
+    <p>对比 HMM：发射概率 $P(x_t\mid y_t)$ 只看当前字，转移只看前一个标签。同一个字在不同上下文里长得一样，HMM 就分不出来——这正是 CRF 更强的原因。</p>
+
+    <h2 id="algo">9. 算法同构：$\sum$ 与 $\max$</h2>
+
+    <p>CRF 有两个典型问题，都在同一张网格上做动态规划。</p>
+
+    <p><strong>求配分函数</strong>用前向算法。定义为「到第 $t$ 个位置、标签为 $j$ 的所有前缀路径分数之和」：</p>
+
+    <p>$$\alpha_t(j)=\sum_{i}\alpha_{t-1}(i)\,\psi_t(i,j),\qquad Z(X)=\sum_j\alpha_N(j)$$</p>
+
+    <p><strong>求最优序列</strong>用维特比。把 $\sum$ 换成 $\max$，同时记下每个格子的最优前驱（回指针），最后从终点倒着走回起点：</p>
+
+    <p>$$\delta_t(j)=\max_i\big[\delta_{t-1}(i)\,\psi_t(i,j)\big]$$</p>
+
+    <p>两个递推的复杂度都是 $O(NS^2)$：$N$ 个位置，每个位置 $S$ 个标签，每个标签枚举 $S$ 个前驱。指数级的枚举变成多项式级的递推，靠的是「每个格子只留一个最优值（或一个和）」。</p>
+
+    <blockquote>
+      维特比求最优标签序列时，$Z(X)$ 可以整个扔掉：它只和观测有关，和候选标签序列无关，比大小的时候是常数。需要概率数值时，才用前向算法把它算出来。
+    </blockquote>
+
+    <h2 id="relation">10. HMM 是 CRF 的特例</h2>
+
+    <p>把 HMM 的联合概率写成无向图的团分解：</p>
+
+    <p>$$\psi_t(y_{t-1},y_t)=P(y_t\mid y_{t-1})\cdot P(x_t\mid y_t)$$</p>
+
+    <p>再令 CRF 的特征为 $f_1=\log P(y_t\mid y_{t-1})$、$f_2=\log P(x_t\mid y_t)$，权重 $w_1=w_2=1$，取指数之后两个势函数完全一样；HMM 是生成式模型，天然归一化，所以 $Z=1$。</p>
+
+    <p><strong>换句话说：HMM 就是「特征取对数概率、权重固定为 1、没有配分函数」的线性链 CRF。</strong></p>
+
+    <p>这也解释了为什么维特比、前向、后向可以原封不动搬过来：算法结构只依赖链式图，不依赖势函数是「数出来的概率」还是「学出来的 exp 加权」。HMM 的三张表 $\pi$、$A$、$B$，在 CRF 里换成了一组特征权重 $w$。</p>
+
+    <h2 id="eval">11. 评价：P、R、F1</h2>
+
+    <p>分词怎么评价？看切出来的词对不对。以词为单位统计：系统切出 $N$ 个词，标准答案有 $M$ 个词，两边完全相同的词有 $n$ 个。标准答案里没有的词算错，切法差一个字也算错。</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>指标</th><th>公式</th><th>回答的问题</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>准确率 P</td><td>$n/N$</td><td>我切出来的词里，有多少是对的</td></tr>
+          <tr><td>召回率 R</td><td>$n/M$</td><td>标准答案里的词，我找回了多少</td></tr>
+          <tr><td>F1</td><td>$2PR/(P+R)$</td><td>两边的调和平均</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>只看一个会出问题：全切成单字，召回率很高但准确率低；只切最有把握的长词，准确率高但召回率低。所以取调和平均。课件里的例子是准确率 78.3%、召回率 91.4%、F1 84.3%——F1 偏向较小的一方，一高一低拉不上去。</p>
+
+    <p>在 SIGHAN 2005 中文分词评测上，语言模型法的准确率是 <strong>89.8%</strong>，CRF 是 <strong>94.3%</strong>，相差 4.5 个百分点。提升主要来自特征：CRF 能看前后文、词典和位置，语言模型只能看词序列本身。</p>
+
+    <h2 id="pitfalls">12. 常见错误</h2>
+
+    <ol>
+      <li><strong>以为最大匹配会自己纠错</strong>。它没有回看机制，一次切长就可能连带错一串。</li>
+      <li><strong>把「词最少」当成正确答案</strong>。最少只是启发式，词数相同的路径它无法区分。</li>
+      <li><strong>以为束搜索一定找到全局最优</strong>。被剪掉的候选里有可能是最优解。</li>
+      <li><strong>把 BMES 当成四个独立分类器</strong>。标签之间有约束，B 后面直接接 S 会产生半个词。</li>
+      <li><strong>把势函数当概率</strong>。$\psi_t$ 只是非负分数，必须除以 $Z$ 才归一化。</li>
+      <li><strong>把 $Z$ 写成对一条序列求和</strong>。$Z$ 要对所有 $S^N$ 条标签序列求和，实际用前向算法递推。</li>
+      <li><strong>把维特比当前向</strong>。一个取 $\max$ 找路径，一个取 $\sum$ 算总概率；网格一样，运算不一样。</li>
+      <li><strong>把 $O(NS^2)$ 写成 $O(S^N)$</strong>。前者是动态规划，后者是暴力枚举。</li>
+    </ol>
+
+    <h2 id="quiz">13. 自测 8 题</h2>
+
+    <ol>
+      <li>中文分词的两个核心难点是什么？各举一个例子。</li>
+      <li>最大匹配为什么会把「研究生物化学」切成「研究生 / 物化 / 学」？</li>
+      <li>最短路径法在什么情况下会失效？</li>
+      <li>BMES 标记里，词边界由哪些标签决定？</li>
+      <li>为什么标签不能每个位置独立判断？</li>
+      <li>写出线性链 CRF 的条件概率，并说明 $\psi_t$ 和 $Z$ 各是什么。</li>
+      <li>前向算法和维特比在递推上的唯一区别是什么？</li>
+      <li>HMM 对应 CRF 的哪组特征和权重？为什么此时 $Z=1$？</li>
+    </ol>
+
+    <details>
+      <summary>答案</summary>
+      <ol>
+        <li>切分歧义（南京市 / 长江大桥 与 南京 / 市长 / 江大桥）和未登录词（词典里没有的人名、新词）。</li>
+        <li>每个位置只取能匹配的最长词：先取「研究生」，「生物」就被拆掉了；后面同理得到「物化 / 学」。</li>
+        <li>两条路径边数相同的时候，「词最少」分不出高下；而且词少不一定切得对。</li>
+        <li>B 的前面、E 的后面；S 本身前后都是边界。</li>
+        <li>相邻标签有约束，例如 B 后面不能直接接 S，否则词被切成两半；一个位置的选择会影响邻居。</li>
+        <li>$P(Y\mid X)=\frac{1}{Z(X)}\prod_t\psi_t(y_{t-1},y_t,X)$；$\psi_t=\exp(\sum_k w_k f_k)$ 是最大团的分数，$Z(X)=\sum_Y\prod_t\psi_t$ 是配分函数。</li>
+        <li>合并前驱时，前向取 $\sum$，维特比取 $\max$；其余递推形式相同。</li>
+        <li>$f_1=\log P(y_t\mid y_{t-1})$、$f_2=\log P(x_t\mid y_t)$，权重取 1。此时势函数等于 HMM 的转移乘发射，而 HMM 的概率本身已归一化，所以 $Z=1$。</li>
+      </ol>
+    </details>
+
+    <h2 id="takeaway">14. 收尾</h2>
+
+    <p>四句话收尾：</p>
+
+    <ol>
+      <li><strong>分词</strong>难在歧义与未登录词，规则方法只能处理「词典里有的、切法唯一的」情况。</li>
+      <li><strong>统计方法</strong>从最短路径走到语言模型：先数边，再给整句打分，束搜索是工程上的折中。</li>
+      <li><strong>序列标注</strong>把「切」换成「贴标签」，BMES 让词边界从标签里长出来，也能处理新词。</li>
+      <li><strong>CRF</strong>在整条标签序列上打分，用特征模板看整个观测；前向求 $Z$，维特比求最优，算法与 HMM 同构。</li>
+    </ol>
+
+    <p>如果只用一句话记住这条线：<strong>分词从「找词」变成「给每个字找一个受邻居约束的标签」，CRF 只是把这个约束写成了一个可计算的分数。</strong></p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+  <script defer src="book-shell.js"></script>
+  <script defer src="katex/katex.min.js"></script>
+  <script defer src="katex/auto-render.min.js"></script>
+  <script defer src="katex/render-math.js"></script>
+</body>
+</html>
