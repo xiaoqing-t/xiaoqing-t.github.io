@@ -26,6 +26,14 @@
     return node
   }
 
+  /** 标题里的公式已经由 KaTeX 渲染过，textContent 会把隐藏 MathML 里的 TeX 源码
+   *  和可见字形拼在一起（∑\sum∑），所以先去掉 MathML 副本再取文字。 */
+  function headingText(heading) {
+    const clone = heading.cloneNode(true)
+    clone.querySelectorAll('.katex-mathml').forEach((node) => node.remove())
+    return clone.textContent.replace(/\s+/g, ' ').trim()
+  }
+
   function chapterList(book, current) {
     const list = el('ol', 'rail-list')
     book.notes.forEach((note, i) => {
@@ -122,7 +130,7 @@
       rail.append(el('p', 'rail-sec-title', '本页'))
       const sub = el('ol', 'rail-list rail-list-sub')
       headings.forEach((heading) => {
-        const link = el('a', null, heading.textContent.trim())
+        const link = el('a', null, headingText(heading))
         link.href = `#${heading.id}`
         link.dataset.target = heading.id
         const item = el('li')
