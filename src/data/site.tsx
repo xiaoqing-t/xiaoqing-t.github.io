@@ -198,6 +198,13 @@ export const notes: Note[] = [
     meta: '2026-10 · 推导 · 附短片',
     href: 'note-information-perplexity.html',
   },
+  {
+    category: '自然语言处理',
+    title: '词性标注与 HMM：三张表、两次动态规划',
+    desc: '兼类词为什么让词典失效，HMM 怎么把标注拆成 π、A、B 三张表，维特比与前向后向差在哪，参数怎么估——最后接到线性链 CRF。',
+    meta: '2026-11 · 推导 · 附短片',
+    href: 'note-pos-hmm.html',
+  },
 ]
 
 /** 联系区 */

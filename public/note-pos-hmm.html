@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>词性标注与 HMM：三张表、两次动态规划 · 学习笔记</title>
+  <meta name="description" content="从兼类词出发，把词性标注写成隐马尔可夫模型：贝叶斯丢掉分母、两条独立假设拆出三张表，用维特比解码、用前向后向求概率，最后看有监督 MLE 与无监督 Baum-Welch，并接到线性链 CRF。" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏷️</text></svg>" />
+  <link rel="stylesheet" href="legacy-v1.css" />
+  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="katex/katex.min.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .back-link { display: inline-block; margin-bottom: 28px; font-size: 0.92rem; }
+
+    /* 公式：行间公式在窄屏可横向滚动，避免撑破页面 */
+    .article .katex { font-size: 1.03em; }
+    .article .katex-display {
+      margin: 20px 0;
+      padding: 2px 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+    .article .katex-display::-webkit-scrollbar { height: 6px; }
+    .article .katex-display::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+    .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+    .table-wrap table { margin-bottom: 0; }
+    /* 首列是行名，折行会变成 "M-" / "step" 这种断法 */
+    .table-wrap td:first-child, .table-wrap th:first-child { white-space: nowrap; }
+
+    /* 竖屏短片：竖构图，宽度压到 340px 居中 */
+    .short-video { max-width: 340px; margin: 0 auto 32px; }
+    .short-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 9 / 16;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .short-video video::cue {
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.4;
+      color: #fffdf9;
+      background: rgba(33, 29, 25, 0.78);
+    }
+    .short-video figcaption {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">自然语言处理 · 推导</p>
+    <h1>词性标注与 HMM：三张表、两次动态规划</h1>
+
+    <blockquote>
+      一句话主线：词性标注是在一张网格上找一条最优路径。三张表给出每条路径的分数，维特比用 max 找路径，前向后向用 sum 算总概率，EM 在没标注的时候把三张表估出来。
+    </blockquote>
+
+    <figure class="short-video">
+      <video controls playsinline preload="metadata" width="1080" height="1920"
+             poster="media/pos-hmm-poster.jpg">
+        <source src="media/pos-hmm-5min.mp4" type="video/mp4" />
+        <track kind="captions" src="media/pos-hmm-zh.vtt" srclang="zh" label="中文" default />
+        浏览器不支持内嵌视频，<a href="media/pos-hmm-5min.mp4">点这里下载这段短片</a>。
+      </video>
+      <figcaption>配套短片 · 约 4 分半 · 有口播和字幕：从兼类词到三张表，再到维特比与 EM</figcaption>
+    </figure>
+
+    <p>记号约定：$N$ 是句子长度，$S$ 是标记集大小；$h_t$ 是第 $t$ 个词看不见的词性（状态），$v_t$ 是第 $t$ 个词本身（观测）。$h$、$v$ 不加下标时指的是整条序列。</p>
+
+    <h2 id="why">0. 为什么查词典不够</h2>
+
+    <p>最直接的做法是查词典：每个词记下它的词性，标注时查表即可。两个原因让这件事行不通。</p>
+
+    <p><strong>一是兼类。</strong>一个词可以有好几种词性，而且相当常见。按《现代汉语八百词》的统计，汉语里大约 <strong>22.5%</strong> 的词是兼类词。「在」可以是介词（<em>他在家看书</em>）也可以是动词（<em>他在家</em>）；「花」可以是名词（<em>花开了</em>）也可以是动词（<em>花钱</em>）。到底取哪个，取决于上下文。</p>
+
+    <p><strong>二是标记集不统一。</strong>不同语料库的词性集差别很大：Penn Treebank 45 个，北大语料库 39 个，Brown 语料库 87 个。同一个词性在不同体系里的粒度不一样，标注结果没法直接比。</p>
+
+    <p>于是问题变成：给定一个词序列，输出一个<strong>标签序列</strong>。这是一个序列标注问题，每个位置的答案依赖于邻居，不能逐词独立判断。</p>
+
+    <h2 id="model">1. 把标注写成概率问题</h2>
+
+    <p>我们要的是：给定观测 $v$，词性序列 $h$ 里哪一条最可能。也就是求</p>
+
+    <p>$$\hat h=\arg\max_h P(h\mid v)$$</p>
+
+    <p>用贝叶斯公式展开：</p>
+
+    <p>$$P(h\mid v)=\frac{P(v\mid h)\,P(h)}{P(v)}\ \propto\ P(v,h)$$</p>
+
+    <p>分母 $P(v)$ 是「这句话本身出现的概率」，它只和句子有关，跟候选的 $h$ 无关。比较不同 $h$ 的时候它是一个常数，可以直接扔掉。<strong>所以最大化后验，等价于最大化联合概率</strong> $P(v,h)$。这是第一步，和 HMM 无关，任何生成式模型都这么走。</p>
+
+    <p>剩下的事是给联合概率建模。直接枚举 $h$ 的所有组合要 $S^N$ 项，必须拆开。HMM 用两条假设拆：</p>
+
+    <ul>
+      <li><strong>齐次马尔可夫性</strong>：当前词性只依赖前一个词性，$P(h_t\mid h_1,\dots,h_{t-1})=P(h_t\mid h_{t-1})$。</li>
+      <li><strong>观测独立性</strong>：当前词只依赖当前词性，$P(v_t\mid h,v)=P(v_t\mid h_t)$。</li>
+    </ul>
+
+    <p>两条假设各砍掉一部分依赖，把一条长链改写成局部因子的乘积：</p>
+
+    <p>$$P(v,h)=P(h_1)\prod_{t=2}^{N}P(h_t\mid h_{t-1})\prod_{t=1}^{N}P(v_t\mid h_t)$$</p>
+
+    <p>看清楚这里的两件事：<strong>贝叶斯公式只负责丢掉分母，两条假设才负责把联合概率拆成局部因子的乘积</strong>。前者是恒等变形，后者是模型假设——如果语言里存在长距离依赖，被砍掉的就是真实的概率质量。</p>
+
+    <h2 id="tables">2. 三张表</h2>
+
+    <p>拆完之后，整个模型只剩三个参数表：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>记号</th><th>含义</th><th>形状</th><th>约束</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>$\pi_i$</td><td>初始概率：句子第一个词是词性 $i$ 的概率</td><td>$S$</td><td>$\sum_i\pi_i=1$</td></tr>
+          <tr><td>$A_{ij}$</td><td>转移概率：前一个词性 $i$ 之后接 $j$ 的概率</td><td>$S\times S$</td><td>每行和为 1</td></tr>
+          <tr><td>$B_j(k)$</td><td>发射概率：词性 $j$ 生成词 $k$ 的概率</td><td>$S\times V$</td><td>每个词性下和为 1</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>写成参数形式就是完整的打分公式：</p>
+
+    <p>$$P(v,h)=\pi_{h_1}\prod_{t=2}^{N}A_{h_{t-1},h_t}\prod_{t=1}^{N}B_{h_t,v_t}$$</p>
+
+    <p>注意转移矩阵的约定：<strong>行是前一个状态，列是当前状态</strong>，所以每行加起来是 1。有些教材反过来写，读公式前先确认方向。</p>
+
+    <p>实际计算取对数：$\log P(v,h)=\log\pi_{h_1}+\sum\log A+\sum\log B$。连乘变连加，一是快，二是长句子连乘会下溢成 0。取对数后「概率最大」变成「对数概率最大」，排序不变。</p>
+
+    <p>有了打分公式，一个笨办法是枚举所有 $S^N$ 条路径，取分数最高的那条。$S=45$、$N=20$ 时是 $45^{20}\approx10^{33}$，永远算不完。</p>
+
+    <h2 id="viterbi">3. 解码：维特比</h2>
+
+    <p>笨办法的浪费在于重复：从第 $t$ 个位置走到同一个词性的最优前缀，只取决于「到这个词性的最优分数」，后面怎么走都一样。把每一格的最优值存下来，就得到动态规划。</p>
+
+    <p>定义 $\delta_t(j)$ 为「前 $t$ 个词标完、第 $t$ 个词性是 $j$ 时，所有前缀路径里的最高分数」：</p>
+
+    <p>$$\delta_1(j)=\pi_j B_j(v_1),\qquad \delta_t(j)=\max_i\big[\delta_{t-1}(i)A_{ij}\big]B_j(v_t)$$</p>
+
+    <p>每一步只保留一个最大值和它的来源，同时记下 argmax 对应的前驱（<strong>回指针</strong>）。走到最后一个词，取 $\max_j\delta_N(j)$ 得到最高分；再从终点沿着回指针倒着走，就得到整条词性序列。</p>
+
+    <p>复杂度 $O(NS^2)$：$N$ 个位置，每个位置 $S$ 个状态，每个状态枚举 $S$ 个前驱。指数级变多项式，这就是空间换时间。</p>
+
+    <blockquote>
+      只存分数不存路径，只能答「最高分是多少」；要答「哪个序列」，必须带回指针。这两件事在维特比里是分开的。
+    </blockquote>
+
+    <h2 id="forward">4. 求概率：前向与后向</h2>
+
+    <p>有时候要的不是最优路径，而是「这句话出现的概率」$P(v)$，比如评估句子、或者无监督训练里算期望。这就是前向后向算法，网格还是那张网格，只把 max 换成 sum。</p>
+
+    <p>前向变量 $\alpha_t(j)$ 是所有前缀路径的分数<strong>之和</strong>：</p>
+
+    <p>$$\alpha_1(j)=\pi_j B_j(v_1),\qquad \alpha_t(j)=B_j(v_t)\sum_i\alpha_{t-1}(i)A_{ij}$$</p>
+
+    <p>后向变量 $\beta_t(i)$ 从后往前累加：</p>
+
+    <p>$$\beta_N(i)=1,\qquad \beta_t(i)=\sum_j A_{ij}B_j(v_{t+1})\beta_{t+1}(j)$$</p>
+
+    <p>两边的结果在任意一列 $t$ 汇合，得到整句概率：</p>
+
+    <p>$$P(v)=\sum_j\alpha_t(j)\beta_t(j)$$</p>
+
+    <p>取 $t=N$ 时 $\beta_N=1$，退化成 $\sum_j\alpha_N(j)$，也就是只跑前向就够了。后向的价值在于配合前向算<strong>后验</strong> $P(h_t=j\mid v)=\alpha_t(j)\beta_t(j)/P(v)$——EM 的 E 步要的正是这个。</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th></th><th>维特比</th><th>前向</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>递推里的合并</td><td>$\max$</td><td>$\sum$</td></tr>
+          <tr><td>回答的问题</td><td>最优路径是哪条</td><td>整句概率是多少</td></tr>
+          <tr><td>要不要回指针</td><td>要</td><td>不要</td></tr>
+          <tr><td>复杂度</td><td>$O(NS^2)$</td><td>$O(NS^2)$</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="params">5. 三张表从哪来</h2>
+
+    <h3>有监督：数频次</h3>
+
+    <p>有标注语料时，最大似然估计就是把频率当概率：</p>
+
+    <p>$$\hat A_{ij}=\frac{C(i\to j)}{C(i)},\qquad \hat B_j(k)=\frac{C(j,k)}{C(j)},\qquad \hat\pi_i=\frac{C(\text{句首}=i)}{\text{句子数}}$$</p>
+
+    <p>举例：语料里词性 $N$ 出现 10 次，其中后面接 $P$ 有 3 次，那么 $A_{NP}=3/10=0.3$。$B$ 同理，数「词性 $j$ 下出现词 $k$」的次数，再除以词性 $j$ 的总次数。</p>
+
+    <p>问题还是没见过的组合：某个转移从没出现过，概率就是 0，一条路径里只要碰到一次，整条路径的分数就被乘成 0。需要平滑——加一、加 $k$、或者折扣，思路和 n-gram 语言模型完全一样。</p>
+
+    <h3>无监督：Baum-Welch</h3>
+
+    <p>没有标注时，三个表都不知道，只有观测。Baum-Welch 就是 EM：</p>
+
+    <ul>
+      <li><strong>E 步</strong>：用当前参数跑前向后向，算出每个位置属于每个词性、以及每条转移的<strong>期望次数</strong>。</li>
+      <li><strong>M 步</strong>：把期望次数当成频次，重新归一化成新的 $\pi$、$A$、$B$。</li>
+    </ul>
+
+    <p>反复迭代，似然单调不降。但只保证收敛到<strong>局部最优</strong>：结果依赖初值，而且词性的名字可以整体互换——模型能学出「三个簇」，却不知道哪个簇该叫名词。这正是无监督效果差的原因。</p>
+
+    <h2 id="result">6. 结果与边界</h2>
+
+    <p>在 WSJ 词性标注上，三档结果大致是这样：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>方法</th><th>准确率</th><th>说明</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>只取最常见词性</td><td>90–94%</td><td>每个词永远标它在训练集里最常见的词性</td></tr>
+          <tr><td>有监督 HMM</td><td>96.5%</td><td>维特比解码 + 平滑</td></tr>
+          <tr><td>完全无监督</td><td>≈40%</td><td>Baum-Welch，只能学到簇</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>注意第一行：什么都不学，逐词取最常见词性就有九成以上。这说明<strong>大部分词只有一个词性，难的是那少数兼类词和未登录词</strong>。HMM 从 90% 到 96.5%，提升的正是这些位置；而无监督几乎不可用，是因为 45 个词性里大量标签只靠上下文才能区分。</p>
+
+    <h2 id="crf">7. 下一站：CRF</h2>
+
+    <p>HMM 的两个短板很明显：发射概率只看当前词，转移只看前一个词性；而且它是<strong>生成式</strong>的，要为整句 $P(v)$ 建模——这件事既难又没必要，因为我们真正关心的是 $P(h\mid v)$。</p>
+
+    <p>条件随机场（CRF）换了个方向：直接建条件概率，不建 $P(v)$。</p>
+
+    <p>$$P(Y\mid X)=\frac{1}{Z(X)}\prod_{t}\psi_t(y_{t-1},y_t),\qquad \psi_t(y_{t-1},y_t)=\exp\Big(\sum_k\lambda_k f_k(y_{t-1},y_t,X,t)\Big)$$</p>
+
+    <p>势函数 $\psi_t$ 由特征函数 $f_k$ 加权求和再取指数得到。关键在特征可以看<strong>整个观测序列</strong>：当前字、前后字、是否命中词典、偏旁部首……这些信息 HMM 的 $B_j(v_t)$ 用不上。$Z(X)$ 是配分函数，对标签序列求和把分数归一化成概率。</p>
+
+    <p>它和 HMM 的关系比看上去更近。把 HMM 的联合概率写成无向图的团分解：</p>
+
+    <p>$$\psi_t(y_{t-1},y_t)=P(y_t\mid y_{t-1})\cdot P(x_t\mid y_t)$$</p>
+
+    <p>再令 CRF 的特征为 $f_1=\log P(y_t\mid y_{t-1})$、$f_2=\log P(x_t\mid y_t)$，权重 $\lambda_1=\lambda_2=1$，两个势函数就完全一样；HMM 还是生成式，天然归一化，所以 $Z=1$。</p>
+
+    <p><strong>换句话说：HMM 就是「势函数取对数概率、权重固定为 1、没有配分函数」的线性链 CRF。</strong>这也解释了为什么维特比、前向、后向可以原封不动搬到 CRF：算法结构只依赖链式图，不依赖势函数是「统计出来的概率」还是「学出来的 exp 加权」。</p>
+
+    <h2 id="pitfalls">8. 常见错误</h2>
+
+    <ol>
+      <li><strong>以为要先算出 $P(v)$</strong>。它只是与 $h$ 无关的常数，最大化时可以扔掉；需要具体数值时再用前向算法算。</li>
+      <li><strong>混淆两条假设</strong>。齐次马尔可夫性管的是「词性到词性」，观测独立性管的是「词性到词」。少了任何一个，联合概率都拆不成三张表。</li>
+      <li><strong>把维特比当前向</strong>。一个取 max 找路径，一个取 sum 算总概率；网格一样，运算不一样。</li>
+      <li><strong>只存分数不存回指针</strong>。那样只能得到最高分，得不到序列。</li>
+      <li><strong>把 $O(NS^2)$ 写成 $O(S^N)$</strong>。前者是动态规划，后者是暴力枚举。</li>
+      <li><strong>认为 Baum-Welch 保证全局最优</strong>。EM 只保证似然不降，收敛到局部最优，初值敏感。</li>
+      <li><strong>忘记平滑</strong>。训练集没出现过的转移或发射概率为 0，一条路径直接乘成 0。</li>
+      <li><strong>以为 HMM 和 CRF 是两套算法</strong>。链式结构上它们是同一套递推，只是势函数的来源不同。</li>
+    </ol>
+
+    <h2 id="quiz">9. 自测 8 题</h2>
+
+    <ol>
+      <li>为什么最大化 $P(h\mid v)$ 可以改成最大化 $P(v,h)$？</li>
+      <li>两条假设分别把哪个条件概率简化成什么？</li>
+      <li>$S=45$、$N=20$，暴力枚举的路径数量级是多少？</li>
+      <li>维特比的复杂度是多少？为什么不是 $S^N$？</li>
+      <li>前向算法和维特比在递推上唯一的区别是什么？</li>
+      <li>有监督 MLE 下 $A_{NP}=3/10=0.3$ 是怎么数出来的？</li>
+      <li>Baum-Welch 和 EM 是什么关系？为什么只有局部最优？</li>
+      <li>HMM 对应 CRF 的哪组特征和权重？</li>
+    </ol>
+
+    <details>
+      <summary>答案</summary>
+      <ol>
+        <li>$P(v)$ 与 $h$ 无关，是常数；分母可以扔，剩下的比较只依赖 $P(v,h)$。</li>
+        <li>齐次马尔可夫性：$P(h_t\mid h_{&lt;t})=P(h_t\mid h_{t-1})$；观测独立性：$P(v_t\mid h,v_{&lt;t},v_{&gt;t})=P(v_t\mid h_t)$。</li>
+        <li>$45^{20}\approx10^{33}$。</li>
+        <li>$O(NS^2)$：每个位置每个状态只枚举 $S$ 个前驱，复用前缀最优值。</li>
+        <li>合并前驱时，维特比取 $\max$，前向取 $\sum$；其余递推形式相同。</li>
+        <li>语料里词性 $N$ 出现 10 次，其中后接 $P$ 的 3 次；用频率估计转移概率。</li>
+        <li>Baum-Welch 是 EM 在 HMM 上的具体形式：E 步算期望次数，M 步重估参数；EM 只保证似然不降，所以停在局部最优。</li>
+        <li>$f_1=\log P(y_t\mid y_{t-1})$、$f_2=\log P(x_t\mid y_t)$，权重取 1，此时势函数等于 HMM 的转移乘发射，且 $Z=1$。</li>
+      </ol>
+    </details>
+
+    <h2 id="takeaway">10. 收尾</h2>
+
+    <p>四句话收尾：</p>
+
+    <ol>
+      <li><strong>词性标注</strong>是序列标注：答案是一整条标签序列，不是逐词分类。</li>
+      <li><strong>HMM</strong>用贝叶斯扔掉分母，再用两条假设把联合概率拆成 $\pi$、$A$、$B$ 三张表。</li>
+      <li><strong>维特比</strong>在网格上取 max 找最优路径，<strong>前向后向</strong>在同一张网格上取 sum 算总概率。</li>
+      <li><strong>参数</strong>有标注就数频次，没标注就用 Baum-Welch；要更强的特征，就换成判别式的 CRF。</li>
+    </ol>
+
+    <p>如果把 HMM 理解成「一张按词性分行的网格 + 一条按时间递推的路径」，那么三个算法都只是在回答同一个问题：<strong>在这张网格上，哪种走法最划算？</strong></p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+  <script defer src="katex/katex.min.js"></script>
+  <script defer src="katex/auto-render.min.js"></script>
+  <script defer src="katex/render-math.js"></script>
+</body>
+</html>
