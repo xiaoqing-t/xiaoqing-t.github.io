@@ -10,6 +10,8 @@
 //     └── Contact   联系我      #contact
 //   Footer（页脚）
 
+import { useEffect } from 'react'
+
 import Nav from './components/Nav'
 import Hero from './components/Hero'
 import About from './components/About'
@@ -18,7 +20,19 @@ import Notes from './components/Notes'
 import Contact from './components/Contact'
 import Footer from './components/Footer'
 
+// 从笔记页点导航「笔记」进来时，浏览器解析 HTML 阶段还没有 #notes（React 稍后才挂载），
+// 原生锚点跳转落空会停在顶部；挂载后按 hash 补一次定位。
+function useHashScroll() {
+  useEffect(() => {
+    const id = decodeURIComponent(location.hash.slice(1))
+    if (!id) return
+    document.getElementById(id)?.scrollIntoView({ block: 'start', behavior: 'instant' })
+  }, [])
+}
+
 export default function App() {
+  useHashScroll()
+
   return (
     // <>...</> 是 Fragment：把多个兄弟节点打包成一个返回值，但**不生成多余的 DOM 节点**。
     // （一个组件只能返回一个根节点，Fragment 就是用来绕开这条限制的。）
