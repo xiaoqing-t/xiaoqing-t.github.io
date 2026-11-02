@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BPE：模型眼里的词，是长出来的零件 · 学习笔记</title>
+  <meta name="description" content="词级词表太大、还有未登录词，字母级序列又太长。BPE 卡在中间：从字母开始，反复合并语料里最高频的相邻对，用一个算例走完四轮合并，再看词元数 15 到 14、切新词、增量更新与堆、WordPiece 与字节级 BPE 的区别。" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧩</text></svg>" />
+  <link rel="stylesheet" href="legacy-v1.css" />
+  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="book-shell.css" />
+  <link rel="stylesheet" href="katex/katex.min.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .back-link { display: inline-block; margin-bottom: 28px; font-size: 0.92rem; }
+
+    /* 公式：行间公式在窄屏可横向滚动，避免撑破页面 */
+    .article .katex { font-size: 1.03em; }
+    .article .katex-display {
+      margin: 20px 0;
+      padding: 2px 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+    .article .katex-display::-webkit-scrollbar { height: 6px; }
+    .article .katex-display::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+    .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+    .table-wrap table { margin-bottom: 0; }
+    .table-wrap td:first-child, .table-wrap th:first-child { white-space: nowrap; }
+
+    /* 竖屏短片：竖构图，宽度压到 340px 居中 */
+    .short-video { max-width: 340px; margin: 0 auto 32px; }
+    .short-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 9 / 16;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .short-video video::cue {
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.4;
+      color: #fffdf9;
+      background: rgba(33, 29, 25, 0.78);
+    }
+    .short-video figcaption {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">自然语言处理 · 词元切分</p>
+    <h1>BPE：模型眼里的词，是长出来的零件</h1>
+
+    <blockquote>
+      一句话主线：词级词表太大、还有未登录词；字母级词表很小，序列却太长。BPE 卡在中间——从字母出发，反复把语料里最高频的相邻对合并成一个新词元，词元数由迭代次数精确控制，任何词都有字母兜底。
+    </blockquote>
+
+    <figure class="short-video">
+      <video controls playsinline preload="metadata" width="1080" height="1920"
+             poster="media/bpe-poster.jpg">
+        <source src="media/bpe-5min.mp4" type="video/mp4" />
+        <track kind="captions" src="media/bpe-zh.vtt" srclang="zh" label="中文" default />
+        浏览器不支持内嵌视频，<a href="media/bpe-5min.mp4">点这里下载这段短片</a>。
+      </video>
+      <figcaption>配套短片 · 约 6 分钟 · 有口播和字幕：从 wider 的四块零件，到四轮合并的完整算例</figcaption>
+    </figure>
+
+    <p>记号约定：一个词写成符号序列，例如 <code>lowest_</code> 写成 <code>l o w e s t _</code>，末尾的下划线表示词边界。相邻的两个符号叫一个<strong>相邻对</strong>；合并后得到的新符号用拼接表示，例如 <code>r + _ → r_</code>。参数里的「词元」就是 token，本文不混用。</p>
+
+    <h2 id="word">0. 词级切分：三种麻烦</h2>
+
+    <p>最直觉的做法是按空格和标点切词。句子还行：</p>
+
+    <blockquote>You / are / what / you / eat / .</blockquote>
+
+    <p>但缩写就开始含糊。<code>I'm</code> 到底是一个词，还是 <code>I</code> 加 <code>'m</code>？两种都有道理，可下游只认一种。数字更糟：<code>$300,000,000</code> 按逗号切开，就变成 <code>$ / 300 / , / 000 / , / 000</code>，三亿的意义没了。</p>
+
+    <p>规则一条条补下去，总会漏：缩写一个例外、货币一个例外、网址一个例外、emoji 又一个例外。每换一个领域，规则都要重写一遍。<strong>规则是人工枚举，语料是开放的</strong>，这两件事天然对不上。</p>
+
+    <p>词级还有两个结构性问题：</p>
+
+    <ul>
+      <li><strong>词表太大</strong>。中等规模语料，不同的词就有三十到六十万；去掉罕见词，仍然超过十万。</li>
+      <li><strong>未登录词（OOV）</strong>。词表外的词，模型直接不认识。人名、地名、新词、拼写变体，永远补不完。</li>
+    </ul>
+
+    <p>更隐蔽的是联系被切断：<code>response</code>、<code>responsive</code>、<code>responsible</code>、<code>responsibility</code> 共享同一个词根，按整词存进词表，模型看到的是四个互不相干的编号，这层构词联系就丢了。</p>
+
+    <h2 id="char">1. 字母级：词表小了，序列长了</h2>
+
+    <p>那退到字母？字母表不到一百个，词表小到极限，也没有 OOV——任何词都是字母拼的。</p>
+
+    <p>代价是序列变长。一句话按词只有几个位置，按字母要几十个位置；注意力要跨更长的距离，训练和推理都更贵。「一个词占好多步」这件事，本身就把上下文窗口吃掉了。</p>
+
+    <p>把三档放进同一把对数尺子：词级词表在 $10^5$ 到 $10^6$，字母级只有几十到一两百，亚词（subword）正好卡在中间，量级是 $10^4$ 到 $10^5$。BPE 要做的，就是在这个中间档上自动长出一套词表。</p>
+
+    <h2 id="origin">2. 来历：从压缩算法到亚词切分</h2>
+
+    <p>BPE 全称 Byte Pair Encoding，字节对编码，1994 年作为<strong>数据压缩</strong>算法提出：把最常出现的相邻字节对，替换成一个新符号，重复下去，序列就变短了。</p>
+
+    <p>2016 年，Sennrich 等人把它拿来做神经机器翻译的罕见词处理：不再按整词查表，而是把词切成亚词单元，未见过的词也能由见过的片段拼出来。之后几乎所有大模型都沿用了这套思路。</p>
+
+    <p>关键在「顺序」：每一次合并都会记下来，形成一张有序的合并表。训练是从字母往上长词表，使用是拿这张表去切新词——<strong>同一套动作，方向相反</strong>。</p>
+
+    <h2 id="train">3. 训练：四轮合并的完整算例</h2>
+
+    <p>语料先做预分词，再按空格切成词，统计词频。为了讲清楚，用四个词：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>词</th><th>词频</th><th>符号序列</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>low_</code></td><td>5</td><td><code>l o w _</code></td></tr>
+          <tr><td><code>lowest_</code></td><td>2</td><td><code>l o w e s t _</code></td></tr>
+          <tr><td><code>newer_</code></td><td>3</td><td><code>n e w e r _</code></td></tr>
+          <tr><td><code>wider_</code></td><td>6</td><td><code>w i d e r _</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>每个词末尾加一个下划线，表示词边界，避免把相邻两个词的结尾和开头粘在一起。初始词表就是把出现过的单符号都收进来：<code>l o w e s t n r i d _</code>，一共 11 个。</p>
+
+    <h3>第一轮：数相邻对</h3>
+
+    <p>对每个词，数它内部相邻符号对，再乘以词频，汇总到全局：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>相邻对</th><th>来源</th><th>次数</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>(e, r)</code></td><td>newer 3 + wider 6</td><td><strong>9</strong></td></tr>
+          <tr><td><code>(r, _)</code></td><td>newer 3 + wider 6</td><td><strong>9</strong></td></tr>
+          <tr><td><code>(l, o)</code></td><td>low 5 + lowest 2</td><td>7</td></tr>
+          <tr><td><code>(o, w)</code></td><td>low 5 + lowest 2</td><td>7</td></tr>
+          <tr><td><code>(w, i)</code></td><td>wider 6</td><td>6</td></tr>
+          <tr><td><code>(i, d)</code></td><td>wider 6</td><td>6</td></tr>
+          <tr><td><code>(d, e)</code></td><td>wider 6</td><td>6</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>最高是 9，而且有两对并列。并列时任选一对都可以，BPE 的结果会因此不同，但都合法——这里先挑 <code>(r, _)</code>。</p>
+
+    <h3>第 1 次合并：<code>r + _ → r_</code></h3>
+
+    <p>凡是 <code>r</code> 后面紧跟 <code>_</code> 的位置，全部替换。这是<strong>全语料同步</strong>替换，不是只改一张卡：</p>
+
+    <p><code>newer_ → n e w e r_</code>，<code>wider_ → w i d e r_</code>，<code>low_</code> 和 <code>lowest_</code> 不动。</p>
+
+    <h3>第 2 次合并：<code>e + r_ → er_</code></h3>
+
+    <p>重新数：<code>(e, r_)</code> 出现 9 次，最高，合并。两个词变成 <code>n e w er_</code> 和 <code>w i d er_</code>。</p>
+
+    <h3>第 3、4 次合并：<code>l + o → lo</code>，<code>lo + w → low</code></h3>
+
+    <p>接下来 <code>(l, o)</code> 7 次最高，合并成 <code>lo</code>；再数，<code>(lo, w)</code> 还是 7 次，合并成 <code>low</code>。四轮之后：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>词</th><th>切分结果</th><th>读法</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>low_</code></td><td><code>low _</code></td><td>词根一个词元，加边界</td></tr>
+          <tr><td><code>lowest_</code></td><td><code>low e s t _</code></td><td>词根和词尾分开了</td></tr>
+          <tr><td><code>newer_</code></td><td><code>n e w er_</code></td><td><code>er_</code> 是比较级词尾</td></tr>
+          <tr><td><code>wider_</code></td><td><code>w i d er_</code></td><td>同样共享 <code>er_</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>注意 <code>low</code> 是自己长出来的，没有任何人告诉算法「low 是个词根」；它只是碰巧是出现次数最多的连续片段。<strong>BPE 学的是频次，不是语言学。</strong></p>
+
+    <h2 id="stop">4. 停在哪：词元数 15 与 14</h2>
+
+    <p>训练开始前设定合并次数 $M$，做完就停。词元数可以估成：</p>
+
+    <p>$$|V|\approx |V_0|+M$$</p>
+
+    <p>初始 11 个，四次合并，听起来是 15 个。但这里有个细节：<code>r_</code> 在第 2 次合并后并进了 <code>er_</code>，语料里再没有单独出现。词表里留着它也不会被任何词用到，实际有效词元只有 14 个。</p>
+
+    <p>所以准确的说法是：<strong>词元数不超过初始数加合并次数</strong>，被完全吸收的中间词元会被淘汰。$M$ 是超参数，要大词表就多合并，要细粒度就少合并。</p>
+
+    <h2 id="encode">5. 切新词：按顺序套合并表</h2>
+
+    <p>训练结束后留下的不是词表本身，而是<strong>有序的合并表</strong>：</p>
+
+    <p><code>① r + _ → r_　② e + r_ → er_　③ l + o → lo　④ lo + w → low</code></p>
+
+    <p>切新词时，先把它拆成字母，再按顺序一条条套：<code>wider</code> → <code>w i d e r _</code> → 套 ① 得 <code>w i d e r_</code> → 套 ② 得 <code>w i d er_</code>；③④ 用不上，结束。</p>
+
+    <p>顺序不能乱。如果先套 ② 再套 ①，<code>e</code> 后面还没有 <code>r_</code>，第二步就匹配不上，结果会不同。</p>
+
+    <p>兜底是字母：任何词都能表示，<strong>不存在 OOV</strong>。代价是没见过的组合会被切得很碎——生僻词可能变成一长串单字母，语义信息反而变弱。这是「覆盖一切」换来的账单。</p>
+
+    <h2 id="fast">6. 工程实现：不重扫全语料</h2>
+
+    <p>上面的算例只有四个词，实际语料是几十 GB。直接每轮重扫全部语料不可行，工程上有三个常规优化：</p>
+
+    <ol>
+      <li><strong>先合并相同的词，记住词频</strong>。语料里大量重复，只需遍历「词表」而不是每个词次。</li>
+      <li><strong>增量更新计数</strong>。合并只影响含这一对的词，其他词的相邻对计数不用动。</li>
+      <li><strong>用堆维护最高频</strong>。每轮取堆顶；被改过的相邻对重新入堆，避免全局排序。</li>
+    </ol>
+
+    <p>做到这三点，BPE 训练才从「理论上可行」变成「大语料上跑得动」。现代实现还会加并行预分词、缓存和更紧凑的数据结构，但骨架就是这三步。</p>
+
+    <h2 id="variants">7. 变体：BPE、WordPiece、字节级</h2>
+
+    <p>同一条「从下往上长词表」的路线，有几套常见变体：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>方法</th><th>合并准则</th><th>起步单位</th><th>常见工具</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>BPE</td><td>相邻对<strong>频次</strong>最高</td><td>字符</td><td>sentencepiece 的 BPE 模式</td></tr>
+          <tr><td>WordPiece</td><td>合并后<strong>似然增益</strong>最大</td><td>字符</td><td>BERT 系分词器</td></tr>
+          <tr><td>Unigram</td><td>从大词表里<strong>删</strong>掉最不划算的</td><td>初始大词表</td><td>sentencepiece 的 unigram 模式</td></tr>
+          <tr><td>字节级 BPE</td><td>频次最高</td><td>256 个字节</td><td>GPT 系分词器</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>字节级 BPE 把「字母」换成字节：UTF-8 下任何字符都能还原成字节序列，中文、emoji 都有兜底，词表从 256 起步，不会出现「这个字符不在词表里」的情况。代价是同一段文字在不同语言里的词元数差别很大。</p>
+
+    <p>WordPiece 的流程和 BPE 一样，只换了挑选准则：不是数频次，而是看「合并之后语料的对数似然增加多少」。所以两者切出来的结果常常不同，不能混为一谈。</p>
+
+    <h2 id="compare">8. 中英对比：切词与切词元</h2>
+
+    <p>中文分词的「词」和 BPE 的「亚词」不是一回事，但层级可以对齐：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>层级</th><th>中文</th><th>英文</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>句子</td><td>更新的模型</td><td>The newer model</td></tr>
+          <tr><td>词</td><td>更新 / 的 / 模型</td><td>newer</td></tr>
+          <tr><td>亚词</td><td>更新 | 的 | 模型</td><td>new | er</td></tr>
+          <tr><td>字 / 字母</td><td>更 新 的 模 型</td><td>n e w e r</td></tr>
+          <tr><td>笔画</td><td>一 丶 丿 …</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>中文分词对应的是<strong>词级</strong>切分：把字串切成词，需要处理切分歧义和未登录词。BPE 对应的是<strong>亚词级</strong>：不追求语言学意义上的词，只追求「常用片段」。中文在 BPE 里通常会先长出常用字和常用词，再长出多字片段。</p>
+
+    <p>工具上，<code>sentencepiece</code> 可以直接从整句学 BPE、不必先分词；<code>wordpiece</code> 一般是在词的基础上再往下切。前者更适合中文，后者是英文 BERT 的常见做法。</p>
+
+    <h2 id="pitfalls">9. 常见错误</h2>
+
+    <ol>
+      <li><strong>以为 BPE 学的是词根词缀</strong>。它只数频次；<code>er_</code> 像词尾，是因为数据里它常出现在词尾，不是语言学规则。</li>
+      <li><strong>忘了词尾边界符</strong>。不加 <code>_</code>，相邻词的结尾和开头会被当成一对，切分结果就乱了。</li>
+      <li><strong>以为合并是逐个词处理</strong>。每一轮都是全语料同步替换，所有出现位置一起改。</li>
+      <li><strong>把词元数写成「初始数 + 迭代次数」</strong>。被完全吸收的中间词元会消失，实际是「不超过」。</li>
+      <li><strong>切新词时乱序套规则</strong>。合并表是有序的，顺序错了就匹配不上。</li>
+      <li><strong>以为没有 OOV 就没有代价</strong>。兜底字母保证能表示，但生僻组合会被切碎，语义变弱。</li>
+      <li><strong>把 BPE 与 WordPiece 当成同一个算法</strong>。流程相同，合并准则不同（频次 vs 似然增益）。</li>
+      <li><strong>用字符数估算 token 数</strong>。不同分词器、不同语言差别很大，要看实际词表。</li>
+    </ol>
+
+    <h2 id="quiz">10. 自测 8 题</h2>
+
+    <ol>
+      <li>词级切分的两个结构性问题是什么？</li>
+      <li>为什么每个词末尾要加一个下划线？</li>
+      <li>算例里初始词表为什么是 11 个符号？</li>
+      <li>第一轮为什么挑 <code>(r, _)</code> 而不是 <code>(e, r)</code>？</li>
+      <li>四次合并后，词元数为什么是 14 而不是 15？</li>
+      <li>切 <code>wider</code> 时，合并规则为什么要按顺序套？</li>
+      <li>BPE 为什么能避免 OOV？代价是什么？</li>
+      <li>BPE 与 WordPiece 的核心区别是什么？</li>
+    </ol>
+
+    <details>
+      <summary>答案</summary>
+      <ol>
+        <li>词表太大（三十到六十万，去罕见词仍超十万）和未登录词；另外按整词存会切断共享词根的联系。</li>
+        <li>标记词边界，防止把前一个词的结尾和后一个词的开头合并成新的相邻对。</li>
+        <li>语料里出现过的单符号只有 <code>l o w e s t n r i d _</code> 这 11 个。</li>
+        <li>两者都是 9 次，并列；任选其一都合法，这里先挑 <code>(r, _)</code>，结果会因选择不同而不同。</li>
+        <li><code>r_</code> 后来并进了 <code>er_</code>，语料里不再单独出现，被淘汰；11 + 4 − 1 = 14。</li>
+        <li><code>wider</code> 要先有 <code>r_</code> 才能匹配 <code>e + r_ → er_</code>；顺序错了，第二步就没有可匹配的对象。</li>
+        <li>兜底是字母，任何词都能由有限词元拼出；代价是没见过的组合会被切得很碎，词元数变多、语义变弱。</li>
+        <li>流程相同（从字符往上合并），准则不同：BPE 按相邻对频次，WordPiece 按合并后的似然增益。</li>
+      </ol>
+    </details>
+
+    <h2 id="takeaway">11. 收尾</h2>
+
+    <p>四句话记住这条线：</p>
+
+    <ol>
+      <li><strong>词级</strong>的问题是词表太大和 OOV，还切断了词与词之间的构词联系。</li>
+      <li><strong>字母级</strong>词表最小、没有 OOV，但序列太长，上下文成本高。</li>
+      <li><strong>BPE</strong> 在中间：从字母开始，反复合并最高频的相邻对，词元数由迭代次数控制。</li>
+      <li><strong>使用时</strong>按有序合并表切新词，字母兜底；工程上靠词频归并、增量更新和堆才跑得动。</li>
+    </ol>
+
+    <p>如果只用一句话记住它：<strong>BPE 不发明词，它只是把语料里最常一起出现的片段，一层层粘成了词元。</strong>上一集《<a href="note-seg-crf.html">中文分词与 CRF</a>》讲的是中文怎么切词，这一集讲的是英文怎么切词元，两者在「词级 vs 亚词级」上正好对齐。</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+  <script defer src="book-shell.js?v=2"></script>
+  <script defer src="katex/katex.min.js"></script>
+  <script defer src="katex/auto-render.min.js"></script>
+  <script defer src="katex/render-math.js"></script>
+</body>
+</html>
