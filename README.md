@@ -12,8 +12,9 @@
 | `index.html` | Vite 的「壳」：只剩一个 `<div id="root">`，页面内容全在 `src/` |
 | `src/main.tsx` | 入口：把 `<App />` 渲染进 `#root` |
 | `src/App.tsx` | 页面骨架（谁在谁里面），想知道主页有什么看它 |
-| `src/components/*.tsx` | 9 个组件：Nav / Hero / Section / Reveal / About / Projects / Notes / Contact / Footer |
+| `src/components/*.tsx` | 10 个组件：Nav / Hero / Section / Reveal / About / Projects / Updates / Notes / Contact / Footer |
 | `src/data/site.tsx` | 站点文案、项目、「关于我」三张卡 ← 改文字只改它 |
+| `public/bci-updates.json` | **BCI 更新清单** ← 每周往里加几条，首页自动倒序、按月分组 |
 | `public/notes.json` | **笔记书目**（4 本书 / 7 篇，按阅读顺序）← 加笔记改它，首页和笔记页侧栏都读这一份 |
 | `src/styles/global.css` | 全站样式（设计变量在顶部 `:root`） |
 | `public/` | 原样保留的静态页：简历 2 页 + 7 篇笔记 + v1 主页冻结副本 + `robots.txt` / `sitemap.xml` / `404.html` / `notes.css`（笔记页配色覆盖）+ `book-shell.css/js`（笔记页侧栏）—— **URL 一个都没变** |
@@ -36,6 +37,18 @@ npm run preview  # 本地预览打包结果
 
 1. **简历**（求职向）— `public/resume.html`（网页版）+ `public/resume-print.html`（打印导出 PDF）
 2. **学习笔记发布出口** — `public/note-*.html` 7 篇（公式多的页面用 `public/katex/` 里自托管的 KaTeX 0.19.1 渲染，不依赖 CDN）
+
+## BCI 更新怎么维护（2026-11）
+
+`public/bci-updates.json` 是唯一数据源，改它不用碰组件：
+
+| 想做的事 | 改哪 |
+|---|---|
+| 加一条 | 往 `items` 里追加一个对象：`date`（`YYYY-MM-DD`）、`tag`、`title` 必填；`source`、`url`、`note` 可省（省了 `url` 就不出链接） |
+| 下架一条 / 调顺序 | 删掉那个对象；顺序无所谓，首页统一按日期倒序、按月分组 |
+| 这周不想更新 | `items` 留空数组，区块显示「这个星期还没更新」 |
+
+`tag` 建议限定在「论文 / 产业 / 会议 / 开源 / 实验室」几类；`note` 写的是你自己的判断（为什么值得看），不是摘要。顶部的「最近整理」读的是 `updated` 字段，整理完记得改。`_说明` 只给人看，代码不读它。
 
 ## 笔记怎么组织（2026-11）
 

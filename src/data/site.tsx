@@ -3,8 +3,9 @@
 // 组件负责怎么显示（布局、样式、交互），这个文件负责显示什么（文案、条目）。
 // 所以改文案、加项目，都只动这一个文件，不用碰任何 .tsx 组件。
 //
-// 唯一例外是笔记：它们的书目结构在 public/notes.json，
-// 因为笔记页（静态 HTML）的侧边栏也在运行时读同一份数据。加一篇笔记改那里。
+// 唯一例外是笔记和 BCI 更新：书目在 public/notes.json，
+// 因为笔记页（静态 HTML）的侧边栏也在运行时读同一份数据。加一篇笔记改那里；
+// BCI 更新在 public/bci-updates.json，每周往 items 里加几条就行。
 //
 // 示例：加一个项目 = 往下面的 projects 数组里再写一个 { ... }，保存即可。
 // 详见同目录上层的《React重构说明.md》第 4 节“增删改查速查”。
@@ -14,6 +15,7 @@
 import type { ReactNode } from 'react'
 
 import notesData from '../../public/notes.json'
+import bciData from '../../public/bci-updates.json'
 
 /** 一个链接：按钮、导航项、项目底部的外链都用它 */
 export interface Link {
@@ -69,6 +71,21 @@ export interface Book {
   notes: Note[]
 }
 
+/** 一条 BCI 更新 */
+export interface BciUpdate {
+  /** YYYY-MM-DD，首页按它倒序、按月分组 */
+  date: string
+  /** 分类：论文 / 产业 / 会议 / 开源 / 实验室 */
+  tag: string
+  title: string
+  /** 来源，如 "Nature"、"arXiv"，可省 */
+  source?: string
+  /** 原文链接，省了就不渲染成链接 */
+  url?: string
+  /** 一句话判断：为什么值得看（不是摘要） */
+  note?: string
+}
+
 /** 站点级信息：名字、邮箱、GitHub */
 export const profile = {
   name: 'Zhao Yunzhe',
@@ -81,6 +98,7 @@ export const profile = {
 export const navLinks: NavLink[] = [
   { label: '关于', href: '#about' },
   { label: '项目', href: '#projects' },
+  { label: 'BCI 更新', href: '#updates' },
   { label: '笔记', href: '#notes' },
   { label: '简历', href: 'resume.html' },
   { label: '联系我', href: '#contact', cta: true },
@@ -168,6 +186,11 @@ export const projects: Project[] = [
 
 /** 学习笔记：按书分组。增删改都在 public/notes.json 里做。 */
 export const books: Book[] = notesData.books
+
+/** BCI 更新：条目在 public/bci-updates.json，加一条改那里。 */
+export const bciUpdates: BciUpdate[] = bciData.items
+/** 这份清单最后一次整理的日子 */
+export const bciUpdated: string = bciData.updated
 
 /** 联系区 */
 export const contact = {
