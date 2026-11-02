@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="赵蕴哲 · Z">
+  <rect width="64" height="64" rx="12" fill="#211d19"/>
+  <rect x="16" y="16" width="32" height="8" fill="#faf7f1"/>
+  <rect x="16" y="40" width="32" height="8" fill="#faf7f1"/>
+  <path d="M40 24h8L24 40h-8z" fill="#faf7f1"/>
+</svg>
