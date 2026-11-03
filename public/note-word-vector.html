@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>词向量：把词变成一串数字 · 学习笔记</title>
+  <meta name="description" content="模型只认数字：词典释义长短不齐、独热向量没有远近；分布式表达把语义摊到几十维。用上下文训练：CBOW 从参数矩阵里抽向量，softmax 压成概率，交叉熵的误差改参数；Skip-gram 反过来猜邻居。最后看 word2vec、类比平移与动态词向量。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="legacy-v1.css" />
+  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="book-shell.css" />
+  <link rel="stylesheet" href="katex/katex.min.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .back-link { display: inline-block; margin-bottom: 28px; font-size: 0.92rem; }
+
+    .article .katex { font-size: 1.03em; }
+    .article .katex-display {
+      margin: 20px 0;
+      padding: 2px 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+    .article .katex-display::-webkit-scrollbar { height: 6px; }
+    .article .katex-display::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+    .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+    .table-wrap table { margin-bottom: 0; }
+    .table-wrap td:first-child, .table-wrap th:first-child { white-space: nowrap; }
+
+    .short-video { max-width: 340px; margin: 0 auto 32px; }
+    .short-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 9 / 16;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .short-video video::cue {
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.4;
+      color: #fffdf9;
+      background: rgba(33, 29, 25, 0.78);
+    }
+    .short-video figcaption {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#updates">BCI 更新</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">自然语言处理 · 词向量</p>
+    <h1>词向量：把词变成一串数字</h1>
+
+    <blockquote>
+      一句话主线：模型只认数字。词典解释不能直接算，独热能算却看不出远近；于是用上下文来训练——CBOW 从参数矩阵里抽出词向量，softmax 变成概率，交叉熵的误差改参数；Skip-gram 反过来猜邻居，最后得到能加减、也要跟着上下文变的向量。
+    </blockquote>
+
+    <figure class="short-video">
+      <video controls playsinline preload="metadata" width="1080" height="1920"
+             poster="media/word-vector-poster.jpg">
+        <source src="media/word-vector-5min.mp4" type="video/mp4" />
+        <track kind="captions" src="media/word-vector-zh.vtt" srclang="zh" label="中文" />
+        浏览器不支持内嵌视频，<a href="media/word-vector-5min.mp4">点这里下载这段短片</a>。
+      </video>
+      <figcaption>配套短片 · 约 6 分钟 · 有口播和字幕：从词典卡片碎成数字，到 CBOW 抽向量、softmax 压概率、交叉熵改参数，再到类比平移与动态词向量</figcaption>
+    </figure>
+
+    <p>先看一句话：<strong>我看见一只小猫快速跑进了教室</strong>。人能立刻分出「小猫」「教室」，也知道小猫和狗差不多、和教室完全不是一类。模型看到的只有几个符号，没有这层意思。词向量要做的，就是把每个词换成一串数字，让这串数字既好算，又能保留「谁和谁像」。</p>
+
+    <p>记号约定：词表记作 $\mathcal{V}$，词表大小 $|\mathcal{V}|$；词向量维度记作 $d$；词 $w$ 的向量记作 $\mathbf{u}_w$。模型里的两个参数矩阵统一写成 $U$（输入侧）和 $V$（输出侧），矩阵转置用 ${}^\top$。</p>
+
+    <h2 id="why">0. 三个要求</h2>
+
+    <p>把词变成数字，不是随便编一个编号就行。后面整个流程都依赖三件事：</p>
+
+    <ol>
+      <li><strong>等长。</strong>每个词都要变成同样长度的向量，模型才能成批地算。</li>
+      <li><strong>能算。</strong>向量之间要能比、能乘、能求距离，结果要能反馈到训练上。</li>
+      <li><strong>近义靠近。</strong>意思越近的词，向量应该越接近；这串数字要带语义。</li>
+    </ol>
+
+    <p>这三条正好对应接下来三种做法：词典释义卡在第一条，独热向量卡在第三条，分布式向量才把三条都补上。</p>
+
+    <h2 id="dict">1. 词典释义为什么不能直接用</h2>
+
+    <p>最直接的想法是查词典：</p>
+
+    <blockquote>狗：哺乳动物，听觉和嗅觉都很敏锐。</blockquote>
+
+    <p>这段解释给人看没问题，喂给模型就不行了：</p>
+
+    <ul>
+      <li><strong>长短不齐。</strong>「猫」的解释和「汽车」的解释字数差很多，没法排成一个固定宽度的输入；</li>
+      <li><strong>不能算。</strong>一段中文文字，本身没有可以相乘、求距离的数值结构；</li>
+      <li><strong>没有远近。</strong>把「狗」和「猫」的解释并排看，也说不清它们比「狗」和「汽车」近多少。</li>
+    </ul>
+
+    <p>所以模型要的不是一段文字，而是<strong>一组固定长度的数字</strong>。难点在于：这组数字还必须带着语义。</p>
+
+    <h2 id="onehot">2. 独热向量：能算，但没有远近</h2>
+
+    <p>最早也最简单的办法是<strong>独热向量</strong>（one-hot）：给词表里每个词分配一个位置，词表有几个词，向量就有几维；某个词在哪一位，哪一位就是 1，其余全是 0。</p>
+
+    <p>只取前四个词「我、爱、小猫、跑」举例：</p>
+
+    <p>$$\mathbf{x}_{\text{我}}=(1,0,0,0)^\top,\quad
+       \mathbf{x}_{\text{爱}}=(0,1,0,0)^\top,\quad
+       \mathbf{x}_{\text{猫}}=(0,0,1,0)^\top$$</p>
+
+    <p>这个表示能直接进模型：向量长度固定，也能做乘法。但它有两个致命毛病。</p>
+
+    <h3>2.1 任意两个词的距离都一样</h3>
+
+    <p>独热向量任意两维都不同，差向量里正好有两个 1，于是欧氏距离恒为：</p>
+
+    <p>$$\lVert \mathbf{x}_i-\mathbf{x}_j\rVert_2=\sqrt{1^2+(-1)^2}=\sqrt{2}$$</p>
+
+    <p>「小狗」和「小猫」的距离是 $\sqrt{2}$，「小狗」和「微积分」的距离也是 $\sqrt{2}$。所有词两两等距，等于没有远近——上面第三条要求直接落空。内积也一样：不同词之间恒为 0。</p>
+
+    <h3>2.2 维度跟着词表爆炸</h3>
+
+    <p>词表有 $|\mathcal{V}|$ 个词，向量就有 $|\mathcal{V}|$ 维，而其中只有一个 1。真实词表动辄十万、几十万，向量就跟着变成十万维，并且 $99.999\%$ 的位置是 0。这种向量叫<strong>稀疏</strong>：存储浪费，计算也浪费，可用的信息却只有「这是第几个词」。</p>
+
+    <p>所以独热能算，但没语义。要让它有远近，就得让每一维都放上数值，而不是只放一个 1。</p>
+
+    <h2 id="dist">3. 分布式表达：语义摊在多个维度</h2>
+
+    <p>换一种写法：每个词用一小串小数表示，比如五维，每一维都取 0 到 1 之间的数：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>词</th><th>第 1 维</th><th>第 2 维</th><th>第 3 维</th><th>第 4 维</th><th>第 5 维</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>小猫</td><td>0.94</td><td>0.45</td><td>0.25</td><td>0.71</td><td>0.12</td></tr>
+          <tr><td>小狗</td><td>0.89</td><td>0.51</td><td>0.30</td><td>0.66</td><td>0.18</td></tr>
+          <tr><td>汽车</td><td>0.21</td><td>0.83</td><td>0.55</td><td>0.10</td><td>0.62</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>这叫<strong>分布式表达</strong>（distributed representation）：一个词的语义分散在多个维度里，而不是只压在一个位置上。单看某一维说不出它代表什么，但整串小数合起来就能区分词义。</p>
+
+    <p>它把独热的两个毛病一起解决了：</p>
+
+    <ul>
+      <li><strong>维度不跟词表走。</strong>几十万词照样可以用 50 维、100 维、300 维来表示，长度固定且短；</li>
+      <li><strong>有远近。</strong>小猫和小狗的五个数都很接近，汽车差得远，距离自然分出层次；</li>
+      <li><strong>稠密可学。</strong>每一维都是有意义的实数，可以求梯度、可以被训练一点点改。</li>
+    </ul>
+
+    <p>剩下的唯一问题是：这串小数从哪来？人显然没法给每个词手写 50 个数。</p>
+
+    <h2 id="firth">4. 分布假设：看它常和谁做伴</h2>
+
+    <p>语言学家弗斯（J. R. Firth）有一句话：</p>
+
+    <blockquote>You shall know a word by the company it keeps.<br />看一个词，就看它常和谁做伴。</blockquote>
+
+    <p>这就是<strong>分布假设</strong>：同一个词常出现在相似的上下文里，反过来，上下文相似的词，意思也相近。看两句：</p>
+
+    <blockquote>我看见一只<strong>小猫</strong>快速跑进了<strong>教室</strong><br />我发现一只<strong>小狗</strong>快速跑进了<strong>屋里</strong></blockquote>
+
+    <p>小猫和小狗，左边都是「一只」，右边都是「快速跑进了」；「看见 / 发现」「教室 / 屋里」也一一对应。既然周围的词几乎一样，它们的向量也应该很接近。</p>
+
+    <p>关键在于，这句话把问题从「人去定义词义」变成了「从语料里统计共现」：训练时拿一个词去预测它周围的词（或者反过来），预测得越准，向量就越贴近真实的用法。语料本身就是监督信号，不需要人工标注。</p>
+
+    <h2 id="two">5. 两种训练方向</h2>
+
+    <p>顺着「用上下文训练」这条路，有两种相反的做法：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>模型</th><th>输入</th><th>输出</th><th>一句话</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>CBOW（连续词袋）</td><td>窗口里左右两边的词</td><td>中间被盖住的词</td><td>看邻居，猜中间</td></tr>
+          <tr><td>Skip-gram（跳字）</td><td>中间一个词</td><td>左右若干个邻居</td><td>看中间，猜邻居</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>两者用的是同一套网络结构，区别只在输入和输出对调。先把 CBOW 简化成「只有一个上文词」走一遍，整个训练过程就清楚了。</p>
+
+    <h2 id="cbow">6. CBOW：词向量藏在参数矩阵里</h2>
+
+    <p>三层结构：输入层是独热向量，隐层很窄（维度 $d$），输出层和词表一样宽。</p>
+
+    <ol>
+      <li>输入词 $w$ 的独热向量 $\mathbf{x}\in\{0,1\}^{|\mathcal{V}|}$，只有它的位置是 1；</li>
+      <li>乘一个参数矩阵 $U\in\mathbb{R}^{|\mathcal{V}|\times d}$（每一行是一个词的向量），得到隐层：$\mathbf{h}=U^\top\mathbf{x}$；</li>
+      <li>再乘第二个矩阵 $V\in\mathbb{R}^{|\mathcal{V}|\times d}$，得到输出分数 $\mathbf{o}=V\mathbf{h}$。</li>
+    </ol>
+
+    <p>第一步值得停一下：独热向量只有第 $k$ 位是 1，所以 $U^\top\mathbf{x}$ 恰好取到 $U^\top$ 的第 $k$ 列，也就是矩阵 $U$ 的第 $k$ 行——这个矩阵里属于这个词的那条向量。</p>
+
+    <p>$$\mathbf{h}=U^\top\mathbf{x}=\text{第 }k\text{ 行}$$
+
+    <p>换句话说，<strong>词向量不是另外存的一份表，它就藏在参数矩阵里</strong>。所谓「查词向量」，实际是从矩阵里取出对应的一行；所谓「训练词向量」，改的就是这些数。这也是神经网络词向量和「查表」最本质的区别：表是死的，参数是跟着损失一起优化的。</p>
+
+    <h2 id="softmax">7. softmax：把分数变成概率</h2>
+
+    <p>$\mathbf{o}=V\mathbf{h}$ 是一个和词表一样长的分数向量，每个位置对应一个词。分数有正有负、大小不一，还不是概率。用 softmax 压一下：</p>
+
+    <p>$$p_k=\frac{\exp(o_k)}{\sum_{j=1}^{|\mathcal{V}|}\exp(o_j)}$$</p>
+
+    <p>三条性质：每一项都变成正数；所有项加起来等于 1；大小顺序不变（分数高的词概率也高）。于是 $p_k$ 可以读成「下一个位置出现第 $k$ 个词的概率」。</p>
+
+    <p>代价也在这里：分母要把整个词表扫一遍。词表十万，这一步就要算十万次指数；词表越大，越慢。</p>
+
+    <h2 id="loss">8. 交叉熵与误差向量</h2>
+
+    <p>训练目标很朴素：让正确那个词的概率尽量大。损失用<strong>交叉熵</strong>，只有正确词那一项留下来：</p>
+
+    <p>$$E=-\log p_{c}$$</p>
+
+    <p>$p_c$ 是正确词的概率。$p_c$ 越接近 1，$-\log p_c$ 越接近 0；$p_c$ 越小，损失越大。这条曲线正好把「预测得差」换算成一个可以求导的数。</p>
+
+    <p>对输出分数求导，会得到一个非常干净的误差向量：</p>
+
+    <p>$$\frac{\partial E}{\partial \mathbf{o}}=\hat{\mathbf{y}}-\mathbf{y}$$</p>
+
+    <p>$\hat{\mathbf{y}}$ 是预测的概率，$\mathbf{y}$ 是正确词的独热标签。以四个词为例，正确词是「小猫」：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>词</th><th>预测概率 $\hat{y}$</th><th>标签 $y$</th><th>误差 $\hat{y}-y$</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>我</td><td>0.10</td><td>0</td><td>+0.10</td></tr>
+          <tr><td>爱</td><td>0.15</td><td>0</td><td>+0.15</td></tr>
+          <tr><td>小猫</td><td>0.70</td><td>1</td><td>−0.30</td></tr>
+          <tr><td>跑</td><td>0.05</td><td>0</td><td>+0.05</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>正确位置为负，其余为正，而且所有项加起来正好是 0。更新时沿梯度的反方向走：<strong>减掉这个误差</strong>，负的位置相当于加，分数被抬高；正的位置被减，分数被压低。</p>
+
+    <p>由于 $\mathbf{o}=V\mathbf{h}$ 且 $\mathbf{h}=U^\top\mathbf{x}$，这个误差会同时传到输出矩阵 $V$ 和输入矩阵 $U$ 上。正确词对应的那一行被往上抬，其余行被压低。行里的数一变，那个词的向量就跟着变——这就是「训练改的是向量」的具体过程。</p>
+
+    <p>反复迭代，误差趋近于 0，向量就慢慢稳住了。</p>
+
+    <h2 id="context">9. 上下文不止一个词</h2>
+
+    <p>真实句子里，上文从来不止一个词。做法很直接：把窗口里每个上下文词的向量求平均，再送进同一套网络。</p>
+
+    <p>$$\mathbf{h}=\frac{1}{C}\sum_{i=1}^{C}U^\top\mathbf{x}_i$$</p>
+
+    <p>其中 $C$ 是窗口里的上下文词数。这一步等于先用每个词自己的独热向量取出矩阵里的列，再逐项平均。</p>
+
+    <p>更新时，输出那一侧完全不变；输入这一侧，每个上下文词都拿到同样的更新量。注意这里的「平均」不是最终目的，它只是一个让多个上下文共同影响同一个预测的折中：信息被摊平了，但训练简单、稳定，足够学出可用的向量。</p>
+
+    <h2 id="skip">10. Skip-gram：反过来猜邻居</h2>
+
+    <p>Skip-gram 把方向对调：输入中间一个词，输出要预测左右若干个位置。每个位置各算一个概率，损失是把它们全部取对数再求和，前面加负号：</p>
+
+    <p>$$E=-\sum_{j=-m,\ j\neq 0}^{m}\log P(w_{t+j}\mid w_t)$$</p>
+
+    <p>连乘变成连加，是为了数值稳定，也方便求导——概率连乘容易下溢，取对数之后既好算又单调。结构上，它和 CBOW 共用同一套网络，只是「一进一出」变成了「一进多出」。</p>
+
+    <p>效果上的差别：一个词要同时照顾左右邻居，信息量更分散，在小语料上往往学得更细；代价是每个中心词都要算多个输出，训练更慢。</p>
+
+    <h2 id="mikolov">11. word2vec：一次训练，整表可用</h2>
+
+    <p>这套方法在 2013 年由米科洛夫（Tomas Mikolov）做成工具，名字叫 <strong>word2vec</strong>，很快就流行起来。原因很实际：</p>
+
+    <ul>
+      <li><strong>训练一次，得到整个词表的向量。</strong>后面的分类、检索、聚类拿来就能用，不必为每个任务重学；</li>
+      <li><strong>不需要人工标注。</strong>监督信号来自语料本身，语料有多少就能用多少；</li>
+      <li><strong>向量本身有结构。</strong>相似度、类比关系都直接体现在数值上（下一节）。</li>
+    </ul>
+
+    <p>但词表动辄几十万，softmax 每一步都要扫一遍，计算量随词表线性增长。这正是后来各种加速办法出现的原因：负采样只更新少数几个「负例」词，层次 softmax 把词表组织成树、只走一条路径。它们的共同思路是把「扫全表」换成「只碰一部分」，向量本身的性质基本保留。</p>
+
+    <h2 id="analogy">12. 类比：方向里编码了关系</h2>
+
+    <p>训练出来的向量，最让人意外的是能做加减法。经典例子：</p>
+
+    <p>$$\mathbf{u}_{\text{king}}-\mathbf{u}_{\text{man}}+\mathbf{u}_{\text{woman}}\approx\mathbf{u}_{\text{queen}}$$</p>
+
+    <p>换个写法更清楚：国王减男人，约等于王后减女人；法国减巴黎，约等于英国减伦敦。两组箭头在向量空间里<strong>平行且等长</strong>：</p>
+
+    <p>$$\mathbf{u}_{\text{queen}}-\mathbf{u}_{\text{woman}}\approx\mathbf{u}_{\text{king}}-\mathbf{u}_{\text{man}}$$</p>
+
+    <p>$$\mathbf{u}_{\text{England}}-\mathbf{u}_{\text{London}}\approx\mathbf{u}_{\text{France}}-\mathbf{u}_{\text{Paris}}$$</p>
+
+    <p>这说明向量里不只有相似度，还编码了「性别」「首都」这类关系：<strong>方向一致，平移就对得上</strong>。所以「国王 − 男人 + 女人」会落在「王后」附近，而不是随便一个词附近。</p>
+
+    <p>要注意这是<strong>近似</strong>，不是恒等式：距离最近的那个词未必总是正确答案，类比题的正确率通常在七成上下，而且对低频词更差。它说明的是结构存在，不是代数严格成立。</p>
+
+    <h2 id="dyn">13. 一个词不止一个意思</h2>
+
+    <p>但一个词只给一个向量，很快会碰到麻烦。看两句：</p>
+
+    <blockquote>他手里拿了一个<strong>苹果</strong>正在吃<br />他手里拿了一个<strong>苹果</strong>，然后插上了充电器</blockquote>
+
+    <p>两个「苹果」不是一个意思：一个是水果，一个是手机。难点有两层：</p>
+
+    <ol>
+      <li>训练的时候，没人告诉模型一个词到底有几个意思；</li>
+      <li>就算知道有多个意思，也不知道眼前这句话用的是哪一个。</li>
+    </ol>
+
+    <p>静态词向量的做法是把这些用法压进同一个向量里，结果是两个意思被平均掉，谁都不像。后来的办法是<strong>动态词向量</strong>：不再给词一个固定向量，而是把整句话喂进去，让模型根据上下文现场算。同一个「苹果」，在两句话里拿到两个不同的向量。</p>
+
+    <p>这也是预训练模型的起点：词向量从「查表得到的固定值」，变成「随上下文变化的中间结果」。</p>
+
+    <h2 id="pitfalls">14. 常见错误</h2>
+
+    <ol>
+      <li><strong>以为独热的维度可以自己定。</strong>独热维度等于词表大小，词表一变维度就变。</li>
+      <li><strong>以为独热向量有远近。</strong>任意两个独热向量的欧氏距离都是 $\sqrt{2}$，内积都是 0。</li>
+      <li><strong>把分布式理解成「把词拆成字」。</strong>分布式说的是语义摊在多个维度上，和分词、拆字没关系。</li>
+      <li><strong>以为词向量是单独存储的一张表。</strong>它就是参数矩阵里的一行，训练时和矩阵一起被改。</li>
+      <li><strong>混淆两次矩阵乘。</strong>$U^\top\mathbf{x}$ 取输入向量，$V\mathbf{h}$ 出分数；前者窄，后者和词表一样宽。</li>
+      <li><strong>以为 softmax 会改变排序。</strong>它只做指数化和归一化，分数谁高概率还是谁高。</li>
+      <li><strong>误差向量符号写反。</strong>$\hat{\mathbf{y}}-\mathbf{y}$ 在正确位置是负的，更新时要减掉它（减负等于加）。</li>
+      <li><strong>以为 CBOW 的输入直接是词向量。</strong>输入仍是独热，词向量是乘矩阵之后取出来的那一行。</li>
+      <li><strong>以为 Skip-gram 更快。</strong>它一个词要预测多个位置，通常比 CBOW 慢，但在小语料上更细。</li>
+      <li><strong>把类比等式当成精确代数。</strong>它是近似关系，正确答案是「最近邻」，不是解方程。</li>
+    </ol>
+
+    <h2 id="quiz">15. 自测 8 题</h2>
+
+    <ol>
+      <li>为什么词典释义不能直接作为模型输入？列出三条。</li>
+      <li>独热向量为什么看不出词的远近？用距离算一遍。</li>
+      <li>分布式表达解决了独热的哪两个问题？维度由什么决定？</li>
+      <li>分布假设说了什么？它为什么能代替人工标注？</li>
+      <li>CBOW 里 $U^\top\mathbf{x}$ 等于什么？为什么说词向量「藏在矩阵里」？</li>
+      <li>softmax 的三条性质是什么？它为什么慢？</li>
+      <li>交叉熵的梯度 $\hat{\mathbf{y}}-\mathbf{y}$ 在正确位置是正还是负？更新时怎么处理？</li>
+      <li>Skip-gram 和 CBOW 的结构差别在哪？损失为什么要取对数？</li>
+    </ol>
+
+    <details>
+      <summary>答案</summary>
+      <ol>
+        <li>长短不固定、不能做数值运算、说不出词与词的远近。</li>
+        <li>任意两个独热向量只在两维上不同，差向量含两个 1，欧氏距离恒为 $\sqrt{2}$，所以所有词等距。</li>
+        <li>维度爆炸和没有远近。维度由人为设定（如 50、100、300 维），不再跟着词表走。</li>
+        <li>上下文相似的词，意思也相近。训练时用「预测邻居」当任务，语料自己提供监督信号，不用人工标注。</li>
+        <li>等于 $U^\top$ 中属于该词的那一列，也就是矩阵 $U$ 的第 $k$ 行。词向量就是这一行，训练改的是矩阵里的数。</li>
+        <li>正值、和为 1、保序。分母要扫整个词表，词表越大越慢。</li>
+        <li>正确位置为负（预测概率减 1），其余为正，各项和为 0。更新时减掉误差，负的位置相当于加，分数被抬高。</li>
+        <li>CBOW 多进一出，Skip-gram 一进多出。取对数把概率连乘变成连加，避免下溢，也方便求导。</li>
+      </ol>
+    </details>
+
+    <h2 id="takeaway">16. 收尾</h2>
+
+    <p>五句话记住这条线：</p>
+
+    <ol>
+      <li><strong>词典</strong>是给人看的，长短不齐；模型要固定长度的数字。</li>
+      <li><strong>独热</strong>能算，但维度爆炸、所有词等距；<strong>分布式</strong>用几十维小数把语义摊开。</li>
+      <li><strong>分布假设</strong>是训练信号的来源：看一个词，就看它常和谁做伴。</li>
+      <li><strong>CBOW</strong> 从参数矩阵里抽出向量，softmax 变成概率，交叉熵的误差沿梯度改参数；<strong>Skip-gram</strong> 反过来一进多出。</li>
+      <li><strong>word2vec</strong> 让整表一次可训练；向量因此有了相似与平移，也暴露出「一词一向量」的局限，于是有了动态词向量。</li>
+    </ol>
+
+    <p>如果只用一句话记住它：<strong>词向量不是查出来的，是训练出来的；它的语义来自上下文，它的数值来自参数矩阵。</strong>上一集《<a href="note-syntax.html">句法分析</a>》用规则给句子画树，这一集给词找到可计算的表示；再往前，是《<a href="note-bpe.html">BPE</a>》《<a href="note-seg-crf.html">中文分词与 CRF</a>》和《<a href="note-pos-hmm.html">词性标注与 HMM</a>》。</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+  <script defer src="book-shell.js?v=2"></script>
+  <script defer src="katex/katex.min.js"></script>
+  <script defer src="katex/auto-render.min.js"></script>
+  <script defer src="katex/render-math.js"></script>
+</body>
+</html>

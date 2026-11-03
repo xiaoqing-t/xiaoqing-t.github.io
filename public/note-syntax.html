@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>句法分析：给句子画一棵树 · 学习笔记</title>
+  <meta name="description" content="一句话的结构从哪来？成分、规则、词典三块搭起一棵树；规则从树库抄，先统一成乔姆斯基范式，再用 CKY 三角表填表。歧义交给 PCFG 的规则概率和连乘，评价看成分的 P/R/F1，最后看工具、96.38 的天花板与规则路线的三个死穴。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="legacy-v1.css" />
+  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="book-shell.css" />
+  <link rel="stylesheet" href="katex/katex.min.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .back-link { display: inline-block; margin-bottom: 28px; font-size: 0.92rem; }
+
+    .article .katex { font-size: 1.03em; }
+    .article .katex-display {
+      margin: 20px 0;
+      padding: 2px 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+    .article .katex-display::-webkit-scrollbar { height: 6px; }
+    .article .katex-display::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+    .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+    .table-wrap table { margin-bottom: 0; }
+    .table-wrap td:first-child, .table-wrap th:first-child { white-space: nowrap; }
+
+    .short-video { max-width: 340px; margin: 0 auto 32px; }
+    .short-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 9 / 16;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .short-video video::cue {
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.4;
+      color: #fffdf9;
+      background: rgba(33, 29, 25, 0.78);
+    }
+    .short-video figcaption {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#updates">BCI 更新</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">自然语言处理 · 句法分析</p>
+    <h1>句法分析：给句子画一棵树</h1>
+
+    <blockquote>
+      一句话主线：句法分析就是给每句话找一棵树。树只有三样东西——成分、规则、词典；规则从树库抄出来，统一成乔姆斯基范式后用 CKY 三角表拼树；歧义交给 PCFG 的规则概率，评价看成分的 P/R/F1。
+    </blockquote>
+
+    <figure class="short-video">
+      <video controls playsinline preload="metadata" width="1080" height="1920"
+             poster="media/syntax-poster.jpg">
+        <source src="media/syntax-5min.mp4" type="video/mp4" />
+        <track kind="captions" src="media/syntax-zh.vtt" srclang="zh" label="中文" />
+        浏览器不支持内嵌视频，<a href="media/syntax-5min.mp4">点这里下载这段短片</a>。
+      </video>
+      <figcaption>配套短片 · 约 6 分钟 · 有口播和字幕：从一行词长成树，到 CKY 填表、PCFG 选树、成分 F1</figcaption>
+    </figure>
+
+    <p>记号约定：非终结符用大写，比如 <code>S</code>、<code>NP</code>、<code>VP</code>；终结符就是具体的词，比如 <code>the</code>、<code>flight</code>。规则写成 <code>A → B C</code>，箭头右边是展开后的样子。中文里对应的是「句子」「名词短语」「动词短语」「冠词」，本文第一次出现时写全称，之后用符号。</p>
+
+    <h2 id="why">0. 一排词看不出结构</h2>
+
+    <p>先看一句话：</p>
+
+    <blockquote>I prefer a morning flight.</blockquote>
+
+    <p>把词一个个排开，只知道有五个词，看不出谁和谁是一伙的。画成树，结构立刻清楚：主语是 <code>I</code>，谓语是 <code>prefer</code>，宾语是 <code>a morning flight</code>；而 <code>morning flight</code> 本身又是一个整体，不是两个互不相干的词。</p>
+
+    <p>这句话的一棵简化树是：</p>
+
+    <pre><code>S
+├── NP
+│   └── Pronoun → I
+└── VP
+    ├── Verb → prefer
+    └── NP
+        ├── Det → a
+        └── Nominal
+            ├── Noun → morning
+            └── Noun → flight</code></pre>
+
+    <p><strong>句法分析（syntactic parsing）要做的，就是给定一句话和一套语法，找出这棵树。</strong>树有两个作用：向上，它说明整句话怎么组成；向下，它把每个成分覆盖的词标出来，后面的任务可以直接用。</p>
+
+    <h2 id="parts">1. 一棵树只有三样东西</h2>
+
+    <p>树不是凭空画出来的，它由三块搭起来：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>部分</th><th>作用</th><th>例子</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>语法成分</td><td>句子里的一个整体单位</td><td><code>NP</code>、<code>VP</code>、<code>Det</code></td></tr>
+          <tr><td>语法规则</td><td>一个成分能由什么组成</td><td><code>S → NP VP</code></td></tr>
+          <tr><td>词典</td><td>一个成分能由哪个词充当</td><td><code>Det → a / an / the</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>树的节点分两类：</p>
+
+    <ul>
+      <li><strong>非终结符</strong>是中间节点，只能放成分，比如 <code>S</code>、<code>NP</code>、<code>VP</code>；</li>
+      <li><strong>终结符</strong>是叶子，只能放具体的词，比如 <code>the</code>、<code>cat</code>。</li>
+    </ul>
+
+    <p>这两类不能混：中间节点写一个词，或者叶子写一个成分，都不是合法的树。树的最上面是根，通常是 <code>S</code>；从根往下每一层都是成分；最底下的叶子才是词。</p>
+
+    <h2 id="cfg">2. 上下文无关，还是上下文相关</h2>
+
+    <p>规则有一个关键约束：<strong>箭头左边只能是一个成分</strong>。</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>写法</th><th>左边</th><th>类型</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>NP → Det Nominal</code></td><td>一个符号</td><td>上下文无关语法（CFG）</td></tr>
+          <tr><td><code>VP NP → VP Nominal</code></td><td>两个符号</td><td>上下文相关语法（CSG）</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>「上下文无关」的白话是：<strong>一个成分怎么展开，只看它自己长什么样，不看左右邻居。</strong>「上下文相关」允许规则带条件，比如「只有当 <code>VP</code> 右边跟着一个 <code>NP</code> 时，才这样展开」。</p>
+
+    <p>上下文相关更贴近语言事实，但解析难度高很多。工程上的句法分析几乎都停在上下文无关这一档：表达能力够用，算法也成熟。</p>
+
+    <h2 id="bank">3. 规则从树库里抄</h2>
+
+    <p>规则不是人一条条想出来的。最常见的做法，是从<strong>树库（treebank）</strong>里抄：树库是一批句子，每句话都有人工画好的树。</p>
+
+    <p>最著名的是宾夕法尼亚树库（Penn Treebank），大约一百万词，主要来自华尔街日报。它的用法很直接：</p>
+
+    <ol>
+      <li>对每棵树，沿每条父子边抄一条规则，比如 <code>S → NP VP</code>、<code>NP → Det Nominal</code>；</li>
+      <li>把相同的规则合并，记下出现次数；</li>
+      <li>整个树库能抄出一万七千多条不同的规则，光名词短语就上千条。</li>
+    </ol>
+
+    <p>注意「树库」不是「语料库」。语料库是原始文本；树库是在文本上又加了一层句法标注，成本高得多。后面讲 PCFG 时，规则概率也正是从这张计数表来的。</p>
+
+    <h2 id="cnf">4. 先统一格式：乔姆斯基范式</h2>
+
+    <p>规则一多，形状就杂，算法不好写。于是先做一步标准化，统一成<strong>乔姆斯基范式（CNF）</strong>。它只允许两种形状：</p>
+
+    <ul>
+      <li><code>A → B C</code>：一个成分拆成两个成分；</li>
+      <li><code>A → word</code>：一个成分改写成一个词。</li>
+    </ul>
+
+    <p>下面三种都要先改写掉：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>不合格的规则</th><th>问题</th><th>改法</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>A → B C D</code></td><td>右边三个成分</td><td>拆成 <code>A → B X</code>，<code>X → C D</code></td></tr>
+          <tr><td><code>A → B</code></td><td>一个成分换一个成分</td><td>把 <code>B</code> 的展开直接并进 <code>A</code></td></tr>
+          <tr><td><code>A → word word</code></td><td>右边两个词</td><td>先引入词性节点，再用二元规则</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>改完以后，<strong>句子集合不变，但树会变</strong>。这种「生成能力一样、树结构可能不同」的关系叫<strong>弱等价</strong>；如果树也一一对应，才叫强等价。</p>
+
+    <p>这一步是后面 CKY 能写成统一递推的前提：每个格子只考虑「左一半 + 右一半」这一种拼法。</p>
+
+    <h2 id="cky">5. CKY：三角表按跨度生长</h2>
+
+    <p>有了二元规则，就可以用一张三角形的表把树拼出来。以八个词为例：</p>
+
+    <blockquote>the man saw the dog with a telescope</blockquote>
+
+    <p>表的每一格代表<strong>一段连续的字</strong>，格子里放这段字能构成的成分。填充顺序只有一条：<strong>按跨度从小到大</strong>。</p>
+
+    <ol>
+      <li><strong>跨度 1</strong>：对角线，一个词一格，填入词性，比如 <code>Det</code>、<code>N</code>、<code>V</code>；</li>
+      <li><strong>跨度 2</strong>：两格拼一格，看哪条规则能把左右两个成分合成一个；</li>
+      <li><strong>跨度 3、4……</strong>：一路往上，直到最上面一格覆盖整句。</li>
+    </ol>
+
+    <p>每一格的算法是：枚举所有切分点 $k$，把左半格 $[i,k]$ 和右半格 $[k+1,j]$ 的成分拿来，查规则表；能合成 $A$，就把 $A$ 写进 $[i,j]$。</p>
+
+    <p>举例：<code>[saw]</code> 是 <code>V</code>，<code>[the dog]</code> 是 <code>NP</code>，规则表里有 <code>VP → V NP</code>，于是 <code>[saw the dog]</code> 这一格可以填 <code>VP</code>。</p>
+
+    <p>如果最右上角那一格装着 <code>S</code>，说明整句分析成功；如果空着，就说明这套语法生成不了这句话。复杂度是 $O(n^3|G|)$：三层循环分别枚举起点、终点和切分点。CKY 由 Cocke、Kasami、Younger 三人在 1970 年前后提出，名字就是三个人姓氏的首字母。</p>
+
+    <h2 id="ambig">6. 同一句话，不止一棵树</h2>
+
+    <p>可现实是，一句话往往能画出好几棵树。经典例子：</p>
+
+    <blockquote>the man saw the dog with a telescope</blockquote>
+
+    <p><code>with a telescope</code> 这个介词短语，可以挂在 <code>dog</code> 下面——「带着望远镜的那条狗」；也可以挂在 <code>saw</code> 下面——「用望远镜看见了那条狗」。两种理解都合法，两棵树都成立。</p>
+
+    <p>只用规则，没法替我们选：规则只回答「能不能」，不回答「有多可能」。歧义是句法分析绕不开的核心问题，也是后面引入概率的动机。</p>
+
+    <h2 id="pcfg">7. PCFG：给规则加概率</h2>
+
+    <p>给每条规则加一个条件概率：给定左边的成分 $A$，它按这条规则展开的可能性有多大。</p>
+
+    <p>$$P(A \to \beta \mid A)=\frac{\mathrm{count}(A \to \beta)}{\mathrm{count}(A)}$$</p>
+
+    <p>分母是「左边为 $A$ 的所有规则出现次数之和」，分子是「这一条规则出现的次数」。因为分子分母同源，<strong>同一个左边的所有规则，概率加起来正好等于 1</strong>：</p>
+
+    <p>$$\sum_{\beta} P(A \to \beta \mid A)=1$$</p>
+
+    <p>概率不是人拍的，是从树库里数出来的。下面是一张示意表：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>规则</th><th>概率</th><th>说明</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>S → NP VP</code></td><td>1.00</td><td>句子只有这一种拆法</td></tr>
+          <tr><td><code>NP → Pronoun</code></td><td>0.30</td><td rowspan="3">左边都是 <code>NP</code>，三条加起来 = 1.00</td></tr>
+          <tr><td><code>NP → Det Nominal</code></td><td>0.40</td></tr>
+          <tr><td><code>NP → ProperNoun</code></td><td>0.20</td></tr>
+          <tr><td><code>VP → Verb NP</code></td><td>0.20</td><td rowspan="2">左边都是 <code>VP</code>，这里只列两条，其余规则合计 0.30</td></tr>
+          <tr><td><code>VP → Verb</code></td><td>0.50</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>语法就从「能或不能」，变成了「有多可能」。这套带概率的上下文无关语法叫 <strong>PCFG</strong>（概率化上下文无关语法）。</p>
+
+    <h2 id="prob">8. 树概率是规则概率连乘</h2>
+
+    <p>一棵树的概率，是它用到的所有规则概率的连乘。假设树 $T$ 的规则是 $r_1,\dots,r_m$，那么：</p>
+
+    <p>$$P(T)=\prod_{i=1}^{m} P(r_i \mid \mathrm{LHS}(r_i))$$</p>
+
+    <p>同一句话的两棵树，用同一套 PCFG 算出来，数值会差很多。以 <code>the man saw the dog with a telescope</code> 为例：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>树</th><th>挂靠方式</th><th>概率</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>A</td><td><code>with a telescope</code> 修饰 <code>dog</code></td><td>$2.2\times10^{-6}$</td></tr>
+          <tr><td>B</td><td><code>with a telescope</code> 修饰 <code>saw</code></td><td>$6.1\times10^{-7}$</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>两者相差约 <strong>3.5 倍</strong>。概率大的那棵，就是模型给出的答案。注意这不是「语法上谁对谁错」，而是「在树库的统计下谁更常见」。</p>
+
+    <h2 id="pcky">9. 概率版 CKY：每格多一行</h2>
+
+    <p>算法几乎不用改：表格照旧，只是每格多记一个概率。合并的时候，把左右两半的概率相乘，再乘上这条规则自己的概率，然后和已经有的候选比大小，留下大的那个：</p>
+
+    <p>$$P(i,j,A)=\max_{k,\ A\to BC}\Big[P(i,k,B)\cdot P(k+1,j,C)\cdot P(A\to BC\mid A)\Big]$$</p>
+
+    <p>被淘汰的分支直接变灰，不用再展开。这样扫一遍，最右上角留下的就是概率最大的那棵树——和 HMM 里维特比的做法是同一个思路：<strong>每个状态只保留当前最优，不保留所有历史</strong>。</p>
+
+    <p>区别在于：普通 CKY 只问「这一格能不能装下 $A$」，概率版 CKY 还要问「装下 $A$ 的最好方式有多好」。前者是布尔值，后者是实数。</p>
+
+    <h2 id="eval">10. 怎么评价：看成分，不看整棵树</h2>
+
+    <p>整棵树完全匹配太苛刻：错一条边，整棵树就判错。实践中看<strong>成分</strong>：如果模型给出的某个成分，和标准树里的某个成分覆盖同一段词、标签也一样，就算匹配。</p>
+
+    <p>把模型提出的成分集合记作 $P$，标准树的成分集合记作 $G$：</p>
+
+    <p>$$\mathrm{Precision}=\frac{|P\cap G|}{|P|},\qquad \mathrm{Recall}=\frac{|P\cap G|}{|G|}$$</p>
+
+    <p>$$F_1=\frac{2PR}{P+R}$$</p>
+
+    <p>只看覆盖范围、不管标签，叫<strong>无标签 F1</strong>（unlabeled）；范围和标签一起看，叫<strong>有标签 F1</strong>（labeled）。有标签更严格，数值通常低几个点。</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>情况</th><th>范围</th><th>标签</th><th>算不算匹配</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>绿色</td><td>相同</td><td>相同</td><td>有标签、无标签都算</td></tr>
+          <tr><td>黄色</td><td>相同</td><td>不同</td><td>只有无标签算</td></tr>
+          <tr><td>灰色</td><td>不同</td><td>—</td><td>都不算</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>F1 是准确率和召回率的调和平均，两个都高才算好。只看准确率，模型可以只提极少、极有把握的成分；只看召回率，模型可以把所有可能范围都报一遍。</p>
+
+    <h2 id="tools">11. 工具与现状</h2>
+
+    <p>工程上早就有现成工具。伯克利的神经句法分析器（Berkeley Neural Parser）、斯坦福的分析工具（Stanford Parser），都是输入一句话，直接给出树；网上也有在线演示，粘贴一句就能看结果。</p>
+
+    <p>工具通常还会给出<strong>成分跨度</strong>：每个成分覆盖第几个词到第几个词。后面的任务——关系抽取、机器翻译、问答——需要的往往就是这个跨度，而不是整棵树的形状。</p>
+
+    <p>在这些标准数据上，现在最好的模型，有标签 F1 已经到 <strong>96.38</strong>。这个数字已经很高，但要注意它的边界：换个领域、换个标注规范，或者遇到口语、长句、嵌套结构，性能会明显下降。</p>
+
+    <h2 id="limit">12. 规则路线的三个死穴</h2>
+
+    <p>不过这条路有三个绕不开的问题：</p>
+
+    <ol>
+      <li><strong>规则永远抄不全。</strong>树库里没出现过的搭配，分析器就分析不出来；语言是开放的，规则是封闭的。</li>
+      <li><strong>歧义靠概率，概率错了就选错树。</strong>PCFG 的独立性假设很强，它不看词与词之间的具体搭配，只数规则。</li>
+      <li><strong>树库标注成本极高。</strong>每句话都要人画树，规模上不去；标注规范还容易不一致。</li>
+    </ol>
+
+    <p>所以后来，特征和概率都交给了神经网络：不再手写规则，也不再把结构限制在上下文无关这一档，而是让模型从数据里学表示和结构。这条线的下一站，是词向量。</p>
+
+    <h2 id="pipeline">13. 放回流水线</h2>
+
+    <p>句法分析是传统 NLP 流水线的最后一站：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>阶段</th><th>输入 → 输出</th><th>解决什么</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>分词</td><td>字串 → 词</td><td>切分歧义、未登录词</td></tr>
+          <tr><td>词性标注</td><td>词序列 → 词性序列</td><td>兼类词消歧</td></tr>
+          <tr><td>句法分析</td><td>词序列 → 树</td><td>成分边界、句法结构</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>它和分词、词性标注一起，构成了传统自然语言处理的完整流水线。每一站的输出都是下一站的输入，错误也会一路传下去——这也是后来端到端神经网络要解决的问题之一。</p>
+
+    <h2 id="pitfalls">14. 常见错误</h2>
+
+    <ol>
+      <li><strong>把中间节点写成词。</strong>中间节点只能放成分；叶子只能放词，两类不能混。</li>
+      <li><strong>以为 CFG 的箭头左边可以写多个符号。</strong>左边多个符号就是上下文相关语法，不是 CFG。</li>
+      <li><strong>把树库叫成语料库。</strong>树库带句法标注，成本远高于原始语料。</li>
+      <li><strong>以为 CNF 只是换写法、树不变。</strong>句子集合不变，但树会变，这是弱等价。</li>
+      <li><strong>CKY 填充顺序乱。</strong>必须按跨度从小到大；先填长跨度，短跨度还没算出来。</li>
+      <li><strong>以为 PCFG 的概率是人工设定。</strong>概率来自树库计数：该规则次数 ÷ 同一个左边的总次数。</li>
+      <li><strong>算树概率只乘叶子规则。</strong>树里每条规则都要乘，包括 <code>S → NP VP</code> 这种概率为 1 的。</li>
+      <li><strong>用整棵树匹配来评价。</strong>错一条边就全错；应按成分算 P/R/F1。</li>
+      <li><strong>混淆无标签与有标签 F1。</strong>前者只看范围，后者范围加标签，数值不能直接比。</li>
+      <li><strong>以为规则越多越好。</strong>规则多能覆盖更多句子，但也更容易过拟合树库，泛化未必更好。</li>
+    </ol>
+
+    <h2 id="quiz">15. 自测 8 题</h2>
+
+    <ol>
+      <li>一棵句法树由哪三样东西搭起来？中间节点和叶子分别放什么？</li>
+      <li>CFG 和 CSG 的区别是什么？为什么工程上多用 CFG？</li>
+      <li>树库里的规则是怎么「抄」出来的？为什么光名词短语就有上千条？</li>
+      <li>乔姆斯基范式允许哪两种形状？改写后句子集合和树分别变不变？</li>
+      <li>CKY 的填充顺序为什么必须按跨度从小到大？最右上角装着什么才算成功？</li>
+      <li>PCFG 里同一左边的规则概率为什么加起来等于 1？概率从哪来？</li>
+      <li>一棵树的概率怎么算？两棵树 $2.2\times10^{-6}$ 与 $6.1\times10^{-7}$ 相差约几倍？</li>
+      <li>有标签 F1 和无标签 F1 差在哪？F1 为什么用调和平均？</li>
+    </ol>
+
+    <details>
+      <summary>答案</summary>
+      <ol>
+        <li>语法成分、语法规则、词典。中间节点放成分（非终结符），叶子放具体的词（终结符）。</li>
+        <li>CFG 的箭头左边只能有一个成分；CSG 允许左边带多个符号或上下文条件。CSG 更贴近语言，但解析难得多，工程上几乎都停在 CFG。</li>
+        <li>沿每棵树的每条父子边抄一条规则，再把相同的规则合并计数。名词短语规则数量多，是因为名词短语的修饰结构非常多样。</li>
+        <li>只允许 <code>A → B C</code> 和 <code>A → word</code>。改写后句子集合不变，树会变，这叫弱等价。</li>
+        <li>因为每一格由左半格和右半格拼成，短跨度没算出来，长跨度就没有输入。最右上角装着 <code>S</code> 才算整句分析成功。</li>
+        <li>每条规则的概率是「该规则次数 ÷ 同一个左边的总次数」，同一个左边的所有规则共享分母，所以加起来等于 1。概率从树库统计来。</li>
+        <li>把所有用到的规则概率连乘。$2.2\times10^{-6} \div 6.1\times10^{-7}\approx3.6$，约 3.5 倍。</li>
+        <li>无标签只看覆盖范围，有标签还要标签相同。F1 是 P 和 R 的调和平均，任何一项低都会把 F1 拉低，避免只看单项。</li>
+      </ol>
+    </details>
+
+    <h2 id="takeaway">16. 收尾</h2>
+
+    <p>五句话记住这条线：</p>
+
+    <ol>
+      <li><strong>树</strong>由成分、规则、词典搭起来；中间放成分，叶子放词。</li>
+      <li><strong>规则</strong>从树库抄，先统一成乔姆斯基范式，句子集合不变、树会变（弱等价）。</li>
+      <li><strong>CKY</strong> 用三角表按跨度生长，每格由左格 + 右格 + 规则拼成。</li>
+      <li><strong>PCFG</strong> 给规则加概率，树概率是规则概率连乘，概率版 CKY 每格取最大。</li>
+      <li><strong>评价</strong>看成分的 P/R/F1；规则路线的尽头是覆盖、歧义和标注成本，后来交给神经网络。</li>
+    </ol>
+
+    <p>如果只用一句话记住它：<strong>句法分析不是背语法，而是拿一套从树库学来的规则，给每句话找出最可能的那棵树。</strong>上一集《<a href="note-bpe.html">BPE</a>》把词切成词元，这一集把词拼成结构；再往前，是《<a href="note-seg-crf.html">中文分词与 CRF</a>》和《<a href="note-pos-hmm.html">词性标注与 HMM</a>》。</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+  <script defer src="book-shell.js?v=2"></script>
+  <script defer src="katex/katex.min.js"></script>
+  <script defer src="katex/auto-render.min.js"></script>
+  <script defer src="katex/render-math.js"></script>
+</body>
+</html>
