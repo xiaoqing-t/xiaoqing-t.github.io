@@ -1,0 +1,326 @@
+/* 两页 Archify 流程图的「新手导读 + 逐步读图」层。
+   颜色全部取自页面已有的主题变量，深浅色和三种 preset 都不用单独写。 */
+
+.sg-guide {
+  grid-column: 1 / -1;
+  margin: 0 0 1rem;
+  padding: 1rem 1.25rem 1.1rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 1rem;
+  background: var(--panel);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.sg-eyebrow {
+  display: inline-block;
+  margin-bottom: 0.2rem;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--frontend-stroke);
+}
+
+.sg-guide-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: start;
+}
+
+.sg-headline {
+  margin: 0.1rem 0 0.35rem;
+  color: var(--text);
+  font-size: 1.02rem;
+  font-weight: 650;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.sg-lead {
+  max-width: 62rem;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  line-height: 1.65;
+}
+
+.sg-facts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.sg-fact {
+  min-width: 6.4rem;
+  padding: 0.45rem 0.65rem 0.5rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+}
+
+.sg-fact span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+}
+
+.sg-fact strong {
+  display: block;
+  margin-top: 0.08rem;
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.98rem;
+  line-height: 1.25;
+}
+
+.sg-fact small {
+  display: block;
+  margin-top: 0.1rem;
+  color: var(--text-faint);
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+.sg-fact-gap strong { color: var(--arrow-emphasis); }
+
+.sg-stepbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+  padding-top: 0.8rem;
+  border-top: 1px dashed var(--panel-border);
+}
+
+.sg-step-copy { flex: 1 1 18rem; min-width: 0; }
+
+.sg-step-count {
+  color: var(--arrow-emphasis);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+}
+
+.sg-step-text {
+  margin: 0.15rem 0 0;
+  color: var(--text);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.sg-step-buttons {
+  display: flex;
+  flex: none;
+  gap: 0.4rem;
+}
+
+.sg-btn {
+  appearance: none;
+  padding: 0.42rem 0.7rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 0.45rem;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.76rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.sg-btn:hover:not(:disabled) {
+  border-color: var(--frontend-stroke);
+  color: var(--frontend-stroke);
+}
+
+.sg-btn:focus-visible {
+  outline: 2px solid var(--frontend-stroke);
+  outline-offset: 2px;
+}
+
+.sg-btn:disabled { opacity: 0.34; cursor: default; }
+
+.sg-btn-primary {
+  border-color: var(--arrow-emphasis);
+  background: var(--arrow-emphasis);
+  color: var(--bg);
+  font-weight: 650;
+}
+
+.sg-btn-primary:hover:not(:disabled) {
+  background: var(--arrow-emphasis);
+  color: var(--bg);
+  filter: brightness(1.08);
+}
+
+/* SVG 序号徽标：跟着缩放走，导出 SVG 时也会一起带上 */
+.sg-badge { pointer-events: none; }
+
+.sg-badge circle {
+  fill: var(--arrow-emphasis);
+  stroke: var(--panel);
+  stroke-width: 2;
+}
+
+.sg-badge text {
+  fill: var(--bg);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 9px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.sg-step-mode [data-node-id],
+.sg-step-mode [data-edge-id] { transition: opacity 0.22s ease; }
+
+.sg-step-mode .sg-dim { opacity: 0.3; }
+
+.sg-step-mode .sg-active {
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--arrow-emphasis) 65%, transparent));
+}
+
+.sg-step-mode .sg-active path {
+  stroke: var(--arrow-emphasis);
+  stroke-width: 2.6;
+}
+
+.sg-step-mode .sg-active text { fill: var(--text); }
+
+/* 右侧分步卡片跟着当前步骤一起亮 */
+.cards.sg-step-mode .card {
+  transition: opacity 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cards.sg-step-mode .card.sg-card-on {
+  opacity: 1;
+  background: color-mix(in srgb, var(--arrow-emphasis) 9%, transparent);
+  box-shadow: inset 2px 0 0 var(--arrow-emphasis);
+}
+
+.cards.sg-step-mode .card:not(.sg-card-on) { opacity: 0.45; }
+
+/* ===== 启动页时间条 ===== */
+.sg-time {
+  grid-column: 1;
+  margin-top: 1rem;
+  padding: 1rem 1.25rem 1.1rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 1rem;
+  background: var(--panel);
+}
+
+.sg-time h3 {
+  margin: 0.1rem 0 0;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.sg-bars {
+  display: grid;
+  grid-template-columns: 5.2rem minmax(0, 1fr) 3.4rem;
+  gap: 0.55rem 0.75rem;
+  align-items: center;
+  margin-top: 0.8rem;
+}
+
+.sg-bar-label,
+.sg-bar-value {
+  color: var(--text-muted);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.7rem;
+}
+
+.sg-bar-label { text-align: right; }
+.sg-bar-value { text-align: right; color: var(--text); }
+
+.sg-bar-track {
+  position: relative;
+  height: 1.55rem;
+  overflow: hidden;
+  border: 1px solid var(--panel-border);
+  border-radius: 0.35rem;
+  background: var(--lane-fill);
+}
+
+.sg-bar-fill { height: 100%; }
+
+.sg-bar-fill.qemu { background: var(--frontend-stroke); }
+.sg-bar-fill.strato { background: var(--backend-stroke); }
+
+.sg-gap {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-left: 1px dashed var(--arrow-emphasis);
+  background: repeating-linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--arrow-emphasis) 20%, transparent) 0 5px,
+    transparent 5px 10px
+  );
+  color: var(--arrow-emphasis);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.64rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sg-time-note {
+  margin: 0.8rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  line-height: 1.6;
+}
+
+.sg-segments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+}
+
+.sg-seg {
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 0.4rem;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.sg-seg strong { color: var(--text); }
+.sg-seg small { display: block; color: var(--text-faint); font-size: 0.68rem; }
+
+html[data-present="true"] .sg-guide,
+html[data-present="true"] .sg-time { display: none; }
+
+@media (max-width: 720px) {
+  .sg-guide { padding: 0.9rem 1rem 1rem; }
+  .sg-guide-grid { grid-template-columns: 1fr; }
+  .sg-facts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.4rem;
+  }
+  .sg-fact { min-width: 0; padding: 0.4rem 0.5rem 0.45rem; }
+  .sg-fact strong { font-size: 0.9rem; }
+  .sg-fact small { font-size: 0.62rem; }
+  .sg-step-copy { flex-basis: 100%; order: -1; }
+  .sg-bars { grid-template-columns: 4.2rem minmax(0, 1fr) 3rem; }
+  /* 图在手机上整体缩小，徽标按用户单位放大，免得只剩一个小点 */
+  .sg-badge circle { r: 10.5px; }
+  .sg-badge text { font-size: 11px; }
+}
+
+@media print {
+  .sg-stepbar { display: none; }
+  .sg-step-mode .sg-dim,
+  .cards.sg-step-mode .card:not(.sg-card-on) { opacity: 1; }
+}
