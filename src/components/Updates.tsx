@@ -44,12 +44,6 @@ export default function Updates() {
         最近整理 {bciUpdated} · 共 {sorted.length} 条
       </p>
 
-      <a className="updates-route" href="note-bci-routes.html">
-        <span className="updates-route-tag">技术路线</span>
-        视觉神经解码 × 脑电基座模型：背景、做法与论文清单
-        <span aria-hidden="true">→</span>
-      </a>
-
       {groups.length === 0 ? (
         <div className="updates-empty card">
           <p>这个星期还没更新。</p>
