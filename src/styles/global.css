@@ -470,6 +470,34 @@ a.update-title:hover { color: var(--accent); text-decoration: none; }
 
 .updates-empty { padding: 28px 24px; text-align: center; color: var(--ink-faint); }
 
+/* 路线总览入口：放在状态行下面，和更新列表拉开一点距离 */
+.updates-route {
+  display: block;
+  margin: -6px 0 26px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-alt);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--ink-soft);
+  text-decoration: none;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+.updates-route:hover { border-color: var(--accent); color: var(--ink); }
+.updates-route-tag {
+  display: inline-block;
+  margin-right: 8px;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+.updates-route > span:last-child { color: var(--accent); }
+
 /* ===== 联系 ===== */
 .contact-lead { color: var(--ink-soft); margin-bottom: 28px; }
 .contact-links { display: flex; gap: 14px; flex-wrap: wrap; }

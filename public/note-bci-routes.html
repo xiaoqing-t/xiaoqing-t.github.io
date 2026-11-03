@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>视觉神经解码与 EEG 基座模型</title>
+  <meta name="description" content="视觉神经解码与 EEG 基座模型：研究背景、已有做法、当前主流方法和论文清单。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="legacy-v1.css" />
+  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="book-shell.css" />
+  <style>
+    .article {
+      max-width: 880px;
+      margin-inline: auto;
+      padding: 52px 0 72px;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-bottom: 28px;
+      font-size: 0.9rem;
+    }
+
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      color: var(--ink-faint);
+      margin-bottom: 10px;
+    }
+
+    .article h1 {
+      font-size: clamp(1.7rem, 4vw, 2.2rem);
+      line-height: 1.35;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 16px;
+    }
+
+    .intro {
+      color: var(--ink-soft);
+      font-size: 0.96rem;
+      line-height: 1.85;
+      margin-bottom: 8px;
+      max-width: 720px;
+    }
+
+    .article h2 {
+      font-size: 1.28rem;
+      font-weight: 700;
+      margin: 48px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .article h3 {
+      font-size: 0.96rem;
+      font-weight: 700;
+      margin: 26px 0 6px;
+    }
+
+    .article p { color: var(--ink-soft); line-height: 1.85; margin-bottom: 12px; }
+    .article a { color: var(--accent); }
+
+    .num {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      font-weight: 400;
+    }
+
+
+    /* ---------- 漏斗 ---------- */
+    .funnel-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 34px;
+      margin: 26px 0 0;
+    }
+
+    .funnel-col { min-width: 0; }
+
+    .funnel-col .col-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      padding-bottom: 7px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .funnel-col .col-head span {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      font-weight: 400;
+      color: var(--ink-faint);
+    }
+
+    .step {
+      width: var(--w);
+      margin: 0 auto 7px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fffdf9;
+      text-align: center;
+      font-size: 0.84rem;
+      line-height: 1.5;
+      color: var(--ink-soft);
+    }
+
+    .step b {
+      font-weight: 700;
+      color: var(--ink);
+      margin-right: 6px;
+    }
+
+    /* ---------- 论文清单 ---------- */
+    .papers {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 10px;
+    }
+
+    .papers li {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      align-items: baseline;
+      gap: 4px 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .p-name {
+      font-size: 0.91rem;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .p-title {
+      display: block;
+      font-size: 0.79rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      margin-top: 2px;
+    }
+
+    .venue {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--ink-soft);
+      white-space: nowrap;
+    }
+
+    .p-link {
+      font-size: 0.76rem;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+
+    .p-link:hover { text-decoration: underline; }
+
+    .gen-label {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin: 26px 0 2px;
+    }
+
+    /* 背景与方法：事实清单，不写成长段 */
+    .env {
+      margin: 8px 0 20px;
+      padding-left: 1.2em;
+    }
+
+    .env li {
+      font-size: 0.9rem;
+      line-height: 1.8;
+      color: var(--ink-soft);
+      margin-bottom: 6px;
+    }
+
+    .env b { color: var(--ink); font-weight: 600; margin-right: 4px; }
+
+    .refs {
+      list-style: none;
+      padding: 0;
+      margin: 6px 0 0;
+    }
+
+    .refs li {
+      display: flex;
+      align-items: baseline;
+      gap: 4px 12px;
+      flex-wrap: wrap;
+      padding: 6px 0;
+      border-bottom: 1px dashed var(--line);
+      font-size: 0.82rem;
+      line-height: 1.7;
+      color: var(--ink-soft);
+    }
+
+    .refs .r-year {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--ink-faint);
+    }
+
+    .refs a { margin-left: auto; font-size: 0.76rem; }
+
+    /* ---------- 对比维度 ---------- */
+    .dims {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 8px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .dims li {
+      font-size: 0.8rem;
+      color: var(--ink-soft);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 3px 8px;
+      background: var(--bg-alt);
+    }
+
+    /* ---------- 概念卡 ---------- */
+    .terms {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 0 24px;
+      list-style: none;
+      padding: 0;
+      margin: 10px 0 0;
+    }
+
+    .terms li {
+      font-size: 0.88rem;
+      color: var(--ink-soft);
+      padding: 8px 0;
+      border-bottom: 1px dashed var(--line);
+    }
+
+    /* ---------- 阅读顺序 ---------- */
+    .steps {
+      padding-left: 1.3em;
+      margin: 10px 0 0;
+    }
+
+    .steps li {
+      font-size: 0.9rem;
+      line-height: 1.8;
+      color: var(--ink-soft);
+      margin-bottom: 6px;
+    }
+
+    .steps b { color: var(--ink); font-weight: 600; }
+
+    @media (max-width: 760px) {
+      .funnel-pair { grid-template-columns: 1fr; gap: 30px; }
+      .step { width: 100% !important; }
+      .papers li { grid-template-columns: 1fr; gap: 3px; }
+      .p-link { justify-self: start; }
+      .article { padding: 38px 0 60px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#updates">BCI 更新</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article">
+    <a class="back-link" href="index.html#updates">← 返回 BCI 更新</a>
+    <p class="article-meta">整理 · 2026-11</p>
+    <h1>视觉神经解码与 EEG 基座模型</h1>
+    <p class="intro">视觉神经解码和 EEG 基座模型两条路线。每条先交代研究背景、此前的主要做法和当前的主流方法，再按方法分组列出综述与代表论文，最后是相关概念和阅读顺序。</p>
+
+    <div class="funnel-pair">
+      <div class="funnel-col">
+        <div class="col-head">视觉神经解码 <span>fMRI → 图像 / 语义</span></div>
+        <div class="step" style="--w: 100%"><b>背景</b>反问题</div>
+        <div class="step" style="--w: 88%"><b>G1</b>编码模型</div>
+        <div class="step" style="--w: 76%"><b>G2</b>生成先验</div>
+        <div class="step" style="--w: 64%"><b>G3</b>共享空间</div>
+        <div class="step" style="--w: 52%"><b>G4</b>语义与时序</div>
+      </div>
+
+      <div class="funnel-col">
+        <div class="col-head">EEG 基座模型 <span>任意 montage → 通用表征</span></div>
+        <div class="step" style="--w: 100%"><b>背景</b>异质与低信噪</div>
+        <div class="step" style="--w: 88%"><b>G1</b>任务专用</div>
+        <div class="step" style="--w: 76%"><b>G2</b>掩码重建</div>
+        <div class="step" style="--w: 64%"><b>G3</b>潜空间预测</div>
+        <div class="step" style="--w: 52%"><b>G4</b>评测与适配</div>
+      </div>
+    </div>
+
+    <h2><span class="num">01</span>视觉神经解码</h2>
+
+    <h3>研究背景</h3>
+    <ul class="env">
+      <li><b>信号</b>fMRI 记录血氧变化（BOLD），空间分辨率高，时间分辨率低，单试次噪声大。</li>
+      <li><b>任务</b>被试被动看图像或视频，从脑活动还原看到的内容。这是个反问题：同一个刺激会有很多组响应，解码是在候选里找最可能的那一个。</li>
+      <li><b>数据</b>NSD 是现在的基准，7T，8 名被试，全库约 7 万张图，每人 9000 训练 / 1000 测试。更早的 Vim-1（2008，2 人，1750 张）、GOD、BOLD、DIR 常用来测跨数据集泛化，视频有 VER、DNV、STNS。</li>
+      <li><b>难点</b>配对数据少，跨被试脑区对不齐，高维噪声到像素的映射不稳定，生成结果容易语义漂移。</li>
+    </ul>
+
+    <h3>之前做了什么</h3>
+    <ul class="env">
+      <li><b>编码 + 反解</b>先用 Gabor 等特征拟合体素响应，建立编码模型，再在候选图库里反解出最匹配的一张。Kay 2008、Nishimoto 2011 走的是这条路线。</li>
+      <li><b>生成先验</b>VAE、GAN、自回归模型先后被直接用来生成图像，画质逐年提升，但语义经常跑偏。</li>
+      <li><b>问题</b>早期依赖少量被试和少量图片，换个被试或数据集性能就掉，评价也主要看像素相似度。</li>
+    </ul>
+
+    <h3>现在主流怎么做</h3>
+    <ul class="env">
+      <li><b>三段流程</b>fMRI 编码、特征对齐（CLIP 等共享空间）、生成（以 latent diffusion 为主）。几篇综述都按这个拆。</li>
+      <li><b>大数据</b>用 NSD 这类大规模数据训练，编码器常用 MAE 式自监督预训练。</li>
+      <li><b>评价</b>从像素误差转向语义指标，如 CLIP 相似度、分类和检索准确率，再加人工判断。</li>
+      <li><b>还在做</b>跨被试与零样本跨被试、语义一致性和幻觉、视频时序、检索与重建的统一。</li>
+    </ul>
+
+    <h4 class="gen-label">参考综述</h4>
+    <ul class="refs">
+      <li><span>A Survey of fMRI to Image Reconstruction</span><span class="r-year">2025</span><a href="https://arxiv.org/abs/2502.16861" target="_blank" rel="noopener">arXiv ↗</a></li>
+      <li><span>A Survey on fMRI-based Brain Decoding for Reconstructing Multimodal Stimuli</span><span class="r-year">2025</span><a href="https://arxiv.org/abs/2503.15978" target="_blank" rel="noopener">arXiv ↗</a></li>
+      <li><span>Diffusion Models for Computational Neuroimaging: A Survey</span><span class="r-year">2025</span><a href="https://arxiv.org/abs/2502.06552" target="_blank" rel="noopener">arXiv ↗</a></li>
+    </ul>
+
+    <h3>论文</h3>
+
+    <h4 class="gen-label">G1 · 编码模型与反解</h4>
+    <ul class="papers">
+      <li>
+        <div>
+          <span class="p-name">Kay et al. 2008</span>
+          <span class="p-title">Identifying natural images from human brain activity</span>
+        </div>
+        <span class="venue">Nat. Neurosci.</span>
+      </li>
+      <li>
+        <div>
+          <span class="p-name">Nishimoto et al. 2011</span>
+          <span class="p-title">Reconstructing visual experiences from brain activity evoked by natural movies</span>
+        </div>
+        <span class="venue">Curr. Biol.</span>
+      </li>
+    </ul>
+
+    <h4 class="gen-label">G2 · 生成先验</h4>
+    <ul class="papers">
+      <li>
+        <div>
+          <span class="p-name">Takagi &amp; Nishimoto 2023</span>
+          <span class="p-title">High-resolution image reconstruction with latent diffusion models from human brain activity</span>
+        </div>
+        <span class="venue">CVPR</span>
+      </li>
+    </ul>
+
+    <h4 class="gen-label">G3 · 共享空间</h4>
+    <ul class="papers">
+      <li>
+        <div>
+          <span class="p-name">Retrieval-Based Brain Decoding</span>
+          <span class="p-title">Retrieval-Based Brain Decoding by Alignment, not Complexity</span>
+        </div>
+        <span class="venue">arXiv 2606.19081</span>
+        <a class="p-link" href="https://arxiv.org/abs/2606.19081" target="_blank" rel="noopener">arXiv ↗</a>
+      </li>
+      <li>
+        <div>
+          <span class="p-name">BRAID-fMRI</span>
+          <span class="p-title">Many Brains, One Geometry: A Shared Visual-Semantic Space for Cross-Dataset fMRI Decoding</span>
+        </div>
+        <span class="venue">arXiv 2610.09352</span>
+        <a class="p-link" href="https://arxiv.org/abs/2610.09352" target="_blank" rel="noopener">arXiv ↗</a>
+      </li>
+      <li>
+        <div>
+          <span class="p-name">ZEBRA</span>
+          <span class="p-title">Towards Zero-Shot Cross-Subject Generalization for Universal Brain Visual Decoding</span>
+        </div>
+        <span class="venue">NeurIPS 2025</span>
+        <a class="p-link" href="https://arxiv.org/abs/2510.27128" target="_blank" rel="noopener">arXiv ↗</a>
+      </li>
+    </ul>
+
+    <h4 class="gen-label">G4 · 语义与时序</h4>
+    <ul class="papers">
+      <li>
+        <div>
+          <span class="p-name">SynMind</span>
+          <span class="p-title">Reducing Semantic Hallucination in fMRI-Based Image Reconstruction</span>
+        </div>
+        <span class="venue">arXiv 2601.17857</span>
+        <a class="p-link" href="https://arxiv.org/abs/2601.17857" target="_blank" rel="noopener">arXiv ↗</a>
+      </li>
+      <li>
+        <div>
+          <span class="p-name">SemVideo</span>
+          <span class="p-title">Reconstructs What You Watch from Brain Activity via Hierarchical Semantic Guidance</span>
+        </div>
+        <span class="venue">arXiv 2602.21819</span>
+        <a class="p-link" href="https://arxiv.org/abs/2602.21819" target="_blank" rel="noopener">arXiv ↗</a>
+      </li>
+      <li>
+        <div>
+          <span class="p-name">Neurons++</span>
+          <span class="p-title">A Unified Visual-Stream Framework for Image and Video Reconstruction from fMRI with Neural-to-Visual Interpretability</span>
+        </div>
+        <span class="venue">arXiv 2610.13763</span>
+        <a class="p-link" href="https://arxiv.org/abs/2610.13763" target="_blank" rel="noopener">arXiv ↗</a>
+      </li>
+    </ul>
+
+    <h3>横向对比</h3>
+    <ul class="dims">
+      <li>解码目标</li>
+      <li>生成先验</li>
+      <li>跨被试</li>
+      <li>评价方式</li>
+      <li>可复用的接口</li>
+    </ul>
+
+    <h2><span class="num">02</span>EEG 基座模型</h2>
+
+    <h3>研究背景</h3>
+    <ul class="env">
+      <li><b>信号</b>头皮电极记录电压，时间分辨率高，空间分辨率低，信噪比低，非平稳，个体之间差异大。</li>
+      <li><b>任务</b>运动想象、情绪识别、疾病检测、意图识别等，多数还是闭集分类。</li>
+      <li><b>标注</b>标注要专家，成本高；标签在不同被试之间还会漂移，同一套范式换个人不一定成立。</li>
+      <li><b>跨被试</b>每个被试可以看成一个域，训练集本身就是多源域。模型很容易学被试身份：2026 年的跨被试综述引用了一个实验，普通 CNN 在 40 人身份识别上到 62.6%，随机是 2.5%；未对齐的嵌入按被试聚类，而不是按任务聚类。</li>
+    </ul>
+
+    <h3>之前做了什么</h3>
+    <ul class="env">
+      <li><b>手工特征</b>功率谱、CSP、黎曼几何等，配合 SVM 等传统分类器，换数据集要重新设计特征。</li>
+      <li><b>端到端</b>CNN / RNN / Transformer / GNN 直接从原始信号学特征，多数仍在单个数据集上单独训练，标注量不够时容易过拟合。</li>
+      <li><b>问题</b>闭集分类、单数据集评测，模型学到被试特征，换人部署就掉点。</li>
+    </ul>
+
+    <h3>现在主流怎么做</h3>
+    <ul class="env">
+      <li><b>自监督预训练</b>标注不够就先用无标签数据预训练，pretext 任务大致分预测式、生成式、对比式、图式四类。</li>
+      <li><b>跨被试</b>特征对齐、对抗学习、特征解耦、对比学习等方法族，另有元学习和不变 / 因果表征；评测要求 subject-independent 协议。</li>
+      <li><b>处理异质</b>把信号切成 patch，用灵活的通道位置编码和电极几何适配不同 montage，目标是任意电极数都能用。</li>
+      <li><b>基座模型</b>任务从闭集分类转向开放生成和跨模态对齐，按输出模态分：纯 EEG 解码、EEG-text、EEG-vision、EEG-audio、多模态融合。</li>
+      <li><b>还在做</b>跨被试的域偏移没有被真正解决，电极布局和评测协议也还不统一。</li>
+    </ul>
+
+    <h4 class="gen-label">参考综述</h4>
+    <ul class="refs">
+      <li><span>Cross-Subject Generalization for EEG Decoding: A Survey of Deep Learning Methods</span><span class="r-year">2026</span><a href="https://arxiv.org/abs/2604.27033" target="_blank" rel="noopener">arXiv ↗</a></li>
+      <li><span>Self-supervised Learning for Electroencephalogram: A Systematic Survey</span><span class="r-year">2024</span><a href="https://arxiv.org/abs/2401.05446" target="_blank" rel="noopener">arXiv ↗</a></li>
+      <li><span>Foundation Models for Cross-Domain EEG Analysis Application: A Survey</span><span class="r-year">2025</span><a href="https://arxiv.org/abs/2508.15716" target="_blank" rel="noopener">arXiv ↗</a></li>
+    </ul>
+
+    <h3>论文</h3>
+
+    <h4 class="gen-label">G1 · 任务专用监督</h4>
+    <ul class="env">
+      <li>早期模型按任务各训一套：运动想象、情绪识别、癫痫检测都有单独的模型，数据量小，换被试或换数据集要重新训练。后来的基座模型一般以这些结果作对照。</li>
+    </ul>
+
+    <h4 class="gen-label">G2 · 重建式预训练</h4>
+    <ul class="papers">
+      <li>
+        <div>
+          <span class="p-name">LaBraM</span>
+          <span class="p-title">Large Brain Model for Learning Generic Representations with Tremendous EEG Data in BCI</span>
+        </div>
+        <span class="venue">ICLR 2024</span>
+        <a class="p-link" href="https://arxiv.org/abs/2405.18765" target="_blank" rel="noopener">arXiv ↗</a>
+      </li>
+      <li>
+        <div>
+          <span class="p-name">CBraMod</span>
+          <span class="p-title">A Criss-Cross Brain Foundation Model for EEG Decoding</span>
+        </div>
+        <span class="venue">ICLR 2025</span>
+        <a class="p-link" href="https://arxiv.org/abs/2412.07236" target="_blank" rel="noopener">arXiv ↗</a>
+      </li>
+      <li>
+        <div>
+          <span class="p-name">REVE</span>
+          <span class="p-title">A Foundation Model for EEG — Adapting to Any Setup with Large-Scale Pretraining on 25,000 Subjects</span>
+        </div>
+        <span class="venue">arXiv 2510.21585</span>
+        <a class="p-link" href="https://arxiv.org/abs/2510.21585" target="_blank" rel="noopener">arXiv ↗</a>
+      </li>
+    </ul>
+
+    <h4 class="gen-label">G3 · 潜空间预测</h4>
+    <ul class="papers">
+      <li>
+        <div>
+          <span class="p-name">EEG-JEPA</span>
+          <span class="p-title">Structured Latent Prediction for EEG Foundation Models</span>
+        </div>
+        <span class="venue">arXiv 2608.00114</span>
+        <a class="p-link" href="https://arxiv.org/abs/2608.00114" target="_blank" rel="noopener">arXiv ↗</a>
+      </li>
+      <li>
+        <div>
+          <span class="p-name">SPERA</span>
+          <span class="p-title">Spherical Prior EEG Foundation Model with Geometry- and Frequency-Aware Latent Prediction</span>
+        </div>
+        <span class="venue">arXiv 2610.10571</span>
+        <a class="p-link" href="https://arxiv.org/abs/2610.10571" target="_blank" rel="noopener">arXiv ↗</a>
+      </li>
+      <li>
+        <div>
+          <span class="p-name">MANAS-2</span>
+          <span class="p-title">Constrained Reconstruction for EEG Foundation Models</span>
+        </div>
+        <span class="venue">arXiv 2609.13717</span>
+        <a class="p-link" href="https://arxiv.org/abs/2609.13717" target="_blank" rel="noopener">arXiv ↗</a>
+      </li>
+    </ul>
+
+    <h4 class="gen-label">G4 · 评测与适配</h4>
+    <ul class="papers">
+      <li>
+        <div>
+          <span class="p-name">EEG-Arena</span>
+          <span class="p-title">Benchmarking EEG Foundation Models at Scale: Lessons from 20,000 Evaluations</span>
+        </div>
+        <span class="venue">arXiv 2609.32743</span>
+        <a class="p-link" href="https://arxiv.org/abs/2609.32743" target="_blank" rel="noopener">arXiv ↗</a>
+      </li>
+      <li>
+        <div>
+          <span class="p-name">Controlled Evaluation</span>
+          <span class="p-title">Controlled Evaluation of EEG Foundation Models: Random Initialisation, Band-Power and Validation-Selected Probes</span>
+        </div>
+        <span class="venue">arXiv 2610.32067</span>
+        <a class="p-link" href="https://arxiv.org/abs/2610.32067" target="_blank" rel="noopener">arXiv ↗</a>
+      </li>
+      <li>
+        <div>
+          <span class="p-name">DEFT</span>
+          <span class="p-title">Disentanglement-Enhanced Fine-Tuning for EEG Foundation Models</span>
+        </div>
+        <span class="venue">arXiv 2610.14497</span>
+        <a class="p-link" href="https://arxiv.org/abs/2610.14497" target="_blank" rel="noopener">arXiv ↗</a>
+      </li>
+      <li>
+        <div>
+          <span class="p-name">SAE</span>
+          <span class="p-title">Mechanistic Interpretability of EEG Foundation Models via Sparse Autoencoders</span>
+        </div>
+        <span class="venue">arXiv 2605.13930</span>
+        <a class="p-link" href="https://arxiv.org/abs/2605.13930" target="_blank" rel="noopener">arXiv ↗</a>
+      </li>
+    </ul>
+
+    <h3>横向对比</h3>
+    <ul class="dims">
+      <li>预训练目标</li>
+      <li>处理异质</li>
+      <li>规模</li>
+      <li>结论与局限</li>
+      <li>可复用的接口</li>
+    </ul>
+
+    <h2><span class="num">03</span>概念卡</h2>
+
+    <ul class="terms">
+      <li>CLIP</li>
+      <li>对比学习 / InfoNCE</li>
+      <li>Latent / VAE</li>
+      <li>Latent diffusion</li>
+      <li>Encoding model</li>
+      <li>岭回归 / Linear probe</li>
+      <li>Masked modeling / MAE</li>
+      <li>VQ codebook</li>
+      <li>JEPA</li>
+      <li>Adapter / LoRA</li>
+      <li>Montage / 10-20 系统</li>
+      <li>SAE</li>
+    </ul>
+
+    <h2><span class="num">04</span>阅读顺序</h2>
+
+    <ol class="steps">
+      <li><b>解码为什么不是分类</b></li>
+      <li><b>生成先验补了什么</b></li>
+      <li><b>共享空间怎么定义</b></li>
+      <li><b>语义和外观怎么分工</b></li>
+      <li><b>EEG 基座难在哪</b></li>
+      <li><b>该预测什么</b></li>
+      <li><b>增益是真的吗</b></li>
+    </ol>
+
+    <h2><span class="num">05</span>开放问题</h2>
+    <ul class="env">
+      <li><b>语义一致性</b>视觉重建的像素指标和语义指标经常对不上，幻觉怎么量化还没有统一做法。</li>
+      <li><b>零样本跨被试</b>不做个体校准，模型能否直接用到新被试上。</li>
+      <li><b>可比性</b>EEG 的电极布局和评测协议不统一，不同基座模型的结果难以直接比较。</li>
+      <li><b>增益来源</b>在随机初始化和线性探针这类严格对照下，预训练到底带来多少真实增益。</li>
+    </ul>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+  <script defer src="book-shell.js?v=2"></script>
+</body>
+</html>
