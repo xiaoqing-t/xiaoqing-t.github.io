@@ -46,9 +46,8 @@ export default function Notes() {
   return (
     <Section
       id="notes"
-      num="04"
+      num="03"
       title="学习笔记"
-      alt
       lead="读论文的方法、踩过的坑、做过的排查，都写在这里。同一主题的按阅读顺序编成书，从第一章往下读。"
     >
       <div className="notes-tools">

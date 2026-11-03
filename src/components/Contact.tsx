@@ -9,7 +9,7 @@ const isExternal = (href: string) => href.startsWith('http')
 
 export default function Contact() {
   return (
-    <Section id="contact" num="05" title="联系我">
+    <Section id="contact" num="04" title="联系我">
       <p className="contact-lead">{contact.lead}</p>
 
       <div className="contact-links">

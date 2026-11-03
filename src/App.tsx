@@ -6,7 +6,6 @@
 //   main
 //     ├── About     关于我      #about
 //     ├── Projects  项目        #projects
-//     ├── Updates   BCI 更新    #updates
 //     ├── Notes     学习笔记    #notes
 //     └── Contact   联系我      #contact
 //   Footer（页脚）
@@ -17,7 +16,6 @@ import Nav from './components/Nav'
 import Hero from './components/Hero'
 import About from './components/About'
 import Projects from './components/Projects'
-import Updates from './components/Updates'
 import Notes from './components/Notes'
 import Contact from './components/Contact'
 import Footer from './components/Footer'
@@ -46,7 +44,6 @@ export default function App() {
       <main id="main" tabIndex={-1}>
         <About />
         <Projects />
-        <Updates />
         <Notes />
         <Contact />
       </main>
