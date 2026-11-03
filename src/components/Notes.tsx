@@ -12,9 +12,17 @@ import { books } from '../data/site'
 
 const total = books.reduce((sum, book) => sum + book.notes.length, 0)
 
+// 书卡先列这么多章，其余折起来，主页不会随章节数一直变长
+const COLLAPSED = 4
+
 export default function Notes() {
   const [query, setQuery] = useState('')
   const [bookId, setBookId] = useState('all')
+  const [openBooks, setOpenBooks] = useState<string[]>([])
+
+  function toggleBook(id: string) {
+    setOpenBooks((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+  }
 
   const q = query.trim().toLowerCase()
 
@@ -98,37 +106,55 @@ export default function Notes() {
       </p>
 
       <Reveal className="books">
-        {visible.map(({ book, notes }) => (
-          <article className="book-card card" key={book.id}>
-            <header className="book-head">
-              <div>
-                <p className="book-kicker">
-                  书 · {String(books.indexOf(book) + 1).padStart(2, '0')}
-                </p>
-                <h3 className="book-title">{book.title}</h3>
-                <p className="book-tagline">{book.tagline}</p>
-              </div>
-              <span className="book-count">{notes.length} 篇</span>
-            </header>
+        {visible.map(({ book, notes }) => {
+          // 搜索或按书筛选时全展开，别把命中的章节藏在折叠下面
+          const expanded = filtering || openBooks.includes(book.id)
+          const listed = expanded ? notes : notes.slice(0, COLLAPSED)
 
-            <ol className="book-chapters">
-              {notes.map((note) => (
-                <li key={note.href}>
-                  <a href={note.href}>
-                    <span className="chapter-num">
-                      {String(book.notes.indexOf(note) + 1).padStart(2, '0')}
-                    </span>
-                    <span className="chapter-main">
-                      <span className="chapter-title">{note.title}</span>
-                      <span className="chapter-desc">{note.desc}</span>
-                    </span>
-                    <span className="chapter-meta">{note.meta}</span>
-                  </a>
-                </li>
-              ))}
-            </ol>
-          </article>
-        ))}
+          return (
+            <article className="book-card card" key={book.id}>
+              <header className="book-head">
+                <div>
+                  <p className="book-kicker">
+                    书 · {String(books.indexOf(book) + 1).padStart(2, '0')}
+                  </p>
+                  <h3 className="book-title">{book.title}</h3>
+                  <p className="book-tagline">{book.tagline}</p>
+                </div>
+                <span className="book-count">{notes.length} 篇</span>
+              </header>
+
+              <ol className="book-chapters" id={`chapters-${book.id}`}>
+                {listed.map((note) => (
+                  <li key={note.href}>
+                    <a href={note.href}>
+                      <span className="chapter-num">
+                        {String(book.notes.indexOf(note) + 1).padStart(2, '0')}
+                      </span>
+                      <span className="chapter-main">
+                        <span className="chapter-title">{note.title}</span>
+                        <span className="chapter-desc">{note.desc}</span>
+                      </span>
+                      <span className="chapter-meta">{note.meta}</span>
+                    </a>
+                  </li>
+                ))}
+              </ol>
+
+              {!filtering && notes.length > COLLAPSED && (
+                <button
+                  type="button"
+                  className="chapters-toggle"
+                  aria-expanded={expanded}
+                  aria-controls={`chapters-${book.id}`}
+                  onClick={() => toggleBook(book.id)}
+                >
+                  {expanded ? '收起' : `展开其余 ${notes.length - COLLAPSED} 篇`}
+                </button>
+              )}
+            </article>
+          )
+        })}
 
         {shown === 0 && (
           <div className="notes-empty card">

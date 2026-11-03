@@ -405,6 +405,22 @@ a:hover { text-decoration: underline; }
   color: var(--ink-faint);
   white-space: nowrap;
 }
+/* 折叠条紧接着章节列表，整行可点，和上面的分隔虚线接上 */
+.chapters-toggle {
+  display: block;
+  width: 100%;
+  padding: 12px 24px;
+  border: 0;
+  border-top: 1px dashed var(--line);
+  background: transparent;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  color: var(--accent);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.chapters-toggle:hover { background: var(--bg-alt); }
 
 .notes-empty { padding: 32px 24px; text-align: center; color: var(--ink-faint); }
 .notes-empty p { margin-bottom: 12px; }
@@ -479,6 +495,7 @@ a:hover { text-decoration: underline; }
   .book-head { padding: 16px 18px 12px; }
   .book-chapters a { grid-template-columns: 1.6rem minmax(0, 1fr); padding: 12px 18px; }
   .chapter-meta { display: none; }
+  .chapters-toggle { padding: 12px 18px; }
 }
 
 @media (max-width: 560px) {
