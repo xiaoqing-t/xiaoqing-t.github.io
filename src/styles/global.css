@@ -388,6 +388,7 @@ a:hover { text-decoration: underline; }
 .book-chapters a:hover { background: var(--bg-alt); text-decoration: none; }
 .book-chapters a:hover .chapter-title { color: var(--accent); }
 .chapter-num { font-family: var(--mono); font-size: 0.78rem; color: var(--accent); opacity: 0.8; }
+.section-num, .chapter-num, .chapter-meta, .hero-meta { font-variant-numeric: tabular-nums; }
 .chapter-main { min-width: 0; }
 .chapter-title { font-weight: 600; font-size: 0.95rem; transition: color 0.15s; }
 .chapter-desc {

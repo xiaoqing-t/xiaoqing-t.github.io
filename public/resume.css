@@ -88,7 +88,7 @@
   margin-bottom: 8px;
 }
 .resume-item-head h3 { font-size: 1.02rem; font-weight: 700; }
-.resume-date { font-size: 0.82rem; color: var(--ink-faint); font-family: var(--mono); white-space: nowrap; }
+.resume-date { font-size: 0.82rem; color: var(--ink-faint); font-family: var(--mono); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .resume-link { font-size: 0.82rem; font-weight: 600; color: var(--accent); }
 .resume-link:hover { text-decoration: underline; }
 

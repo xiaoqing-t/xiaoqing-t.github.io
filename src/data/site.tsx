@@ -103,7 +103,7 @@ export const hero = {
     { label: '看看我的项目', href: '#projects', primary: true },
     { label: '了解更多', href: '#about' },
   ] as Action[],
-  meta: ['📍 中国', '🎓 CS + BCI', '✍️ 笔记常写'],
+  meta: ['中国', 'CS + BCI', '笔记常写'],
 }
 
 /** “关于我”区块的三张卡 */

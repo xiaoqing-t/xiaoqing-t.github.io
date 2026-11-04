@@ -16,3 +16,9 @@
 /* legacy-v1.css 里导航底色是写死的白 */
 .nav { background: rgba(250, 247, 241, 0.88); }
 .nav.scrolled { box-shadow: 0 4px 18px rgba(80, 60, 40, 0.09); }
+
+/* 数字等宽：表格里的概率、计数按列对齐，不随数字宽窄抖动 */
+.article table,
+.article th,
+.article td,
+.article .article-meta { font-variant-numeric: tabular-nums; }
