@@ -14,9 +14,9 @@
 | `src/App.tsx` | 页面骨架（谁在谁里面），想知道主页有什么看它 |
 | `src/components/*.tsx` | 9 个组件：Nav / Hero / Section / Reveal / About / Projects / Notes / Contact / Footer |
 | `src/data/site.tsx` | 站点文案、项目、「关于我」三张卡 ← 改文字只改它 |
-| `public/notes.json` | **笔记书目**（4 本书 / 12 篇，按阅读顺序）← 加笔记改它，首页和笔记页侧栏都读这一份 |
+| `public/notes.json` | **笔记书目**（4 本书 / 13 篇，按阅读顺序）← 加笔记改它，首页和笔记页侧栏都读这一份 |
 | `src/styles/global.css` | 全站样式（设计变量在顶部 `:root`） |
-| `public/` | 原样保留的静态页：简历 2 页 + 12 篇笔记 + v1 主页冻结副本 + `robots.txt` / `sitemap.xml` / `404.html` / `notes.css`（笔记页配色覆盖）+ `book-shell.css/js`（笔记页侧栏）—— **URL 一个都没变** |
+| `public/` | 原样保留的静态页：简历 2 页 + 13 篇笔记 + v1 主页冻结副本 + `robots.txt` / `sitemap.xml` / `404.html` / `notes.css`（笔记页配色覆盖）+ `book-shell.css/js`（笔记页侧栏）—— **URL 一个都没变** |
 | **`React重构说明.md`** | **讲解 + 增删改查手册** ← 想改东西先看它 |
 
 ## 命令
@@ -35,7 +35,7 @@ npm run preview  # 本地预览打包结果
 ## 两个用途（没变）
 
 1. **简历**（求职向）— `public/resume.html`（网页版）+ `public/resume-print.html`（打印导出 PDF）
-2. **学习笔记发布出口** — `public/note-*.html` 12 篇（公式多的页面用 `public/katex/` 里自托管的 KaTeX 0.19.1 渲染，不依赖 CDN）
+2. **学习笔记发布出口** — `public/note-*.html` 13 篇（公式多的页面用 `public/katex/` 里自托管的 KaTeX 0.19.1 渲染，不依赖 CDN）
 
 ## 笔记怎么组织（2026-11）
 

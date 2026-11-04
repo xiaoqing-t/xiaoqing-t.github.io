@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>机器翻译：从查词典到学分布 · 学习笔记</title>
+  <meta name="description" content="机器翻译不是逐词替换：多义、换位、拆分和增删都要重新组织。三条规则路线之后，统计时代用噪声信道把翻译写成反推，用双语语料估词翻译表，再用 IBM 模型一和 EM 把词对齐一起学出来；短语翻译把局部语序交给短语表，解码用覆盖状态和假设合并找最优路径。2014 年后，编码器-解码器端到端训练，注意力让每一步都能回看源句，最后走向 Transformer 和预训练模型。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="legacy-v1.css" />
+  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="book-shell.css" />
+  <link rel="stylesheet" href="katex/katex.min.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .back-link { display: inline-block; margin-bottom: 28px; font-size: 0.92rem; }
+
+    .article .katex { font-size: 1.03em; }
+    .article .katex-display {
+      margin: 20px 0;
+      padding: 2px 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+    .article .katex-display::-webkit-scrollbar { height: 6px; }
+    .article .katex-display::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+    .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+    .table-wrap table { margin-bottom: 0; }
+    .table-wrap td:first-child, .table-wrap th:first-child { white-space: nowrap; }
+
+    .short-video { max-width: 340px; margin: 0 auto 32px; }
+    .short-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 9 / 16;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .short-video video::cue {
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.4;
+      color: #fffdf9;
+      background: rgba(33, 29, 25, 0.78);
+    }
+    .short-video figcaption {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">自然语言处理 · 机器翻译</p>
+    <h1>机器翻译：从查词典到学分布</h1>
+
+    <blockquote>
+      一句话主线：翻译不是把词一个个换掉，而是把一整句重新组织。规则时代想把语言结构写清楚，统计时代换了个问法——给定源句，哪种译文最可能？噪声信道把它拆成翻译模型和语言模型，IBM 模型一用一张词对表描述整句概率，EM 把对齐和概率一起估出来；再往上是短语和解码。神经时代把整条流水线换成一个编码器加一个解码器，注意力让解码器每一步都能回看源句，翻译从此从查表变成学分布。
+    </blockquote>
+
+    <figure class="short-video">
+      <video controls playsinline preload="metadata" width="1080" height="1920"
+             poster="media/machine-translation-poster.jpg">
+        <source src="media/machine-translation-5min.mp4" type="video/mp4" />
+        <track kind="captions" src="media/machine-translation-zh.vtt" srclang="zh" label="中文" />
+        浏览器不支持内嵌视频，<a href="media/machine-translation-5min.mp4">点这里下载这段短片</a>。
+      </video>
+      <figcaption>配套短片 · 约 6 分钟 · 有口播和字幕：从逐词替换的四个难点，到噪声信道、IBM 模型一、EM、短语与解码，再到编码器-解码器和注意力</figcaption>
+    </figure>
+
+    <p>巴别塔只是传说，语言不通却是每天都会遇到的事。机器翻译要做的，是让计算机自动把一种语言变成另一种。这一页不按年代罗列系统，而是按「问题怎么被一步步拆开」来讲：先看逐词替换为什么会失败，再看规则路线卡在哪，然后进入统计翻译的四个零件——词表、对齐、模型、解码，最后看神经方法怎么把这些零件换成一个端到端模型。</p>
+
+    <h2 id="task">0. 任务：把源句变成目标句</h2>
+
+    <p>给定源语言句子 $S=s_1s_2\cdots s_m$，要输出目标语言句子 $T=t_1t_2\cdots t_l$。这里的 $S$ 和 $T$ 是两套词表、两种语序，长度也不一定相同。</p>
+
+    <p>最朴素的想法是查词典：每个 $s_j$ 找一个对应的 $t_i$，按原顺序拼起来。但词典给的是「这个词可能有哪些译法」，不是「这句话该怎么说」。同一句话可以有很多种译法，机器要选的不是「每个词都对」，而是「整句最像人话」。</p>
+
+    <p>所以机器翻译的输出从来不是一个确定答案，而是一个概率分布上的选择。后面所有模型，本质上都在回答同一个问题：</p>
+
+    <p>$$T^{*}=\arg\max_{T}P(T\mid S)$$</p>
+
+    <p>差别只在 $P(T\mid S)$ 怎么建、参数怎么学、搜索怎么做。</p>
+
+    <h2 id="hard">1. 为什么不能逐词替换</h2>
+
+    <p>拿德语 Haus 举例。它可以是 house，可以是 building，也可以是蜗牛壳（Schneckenhaus 的词根）。离开句子，词典只能把几个候选都列出来；进了句子，才可能知道该选哪个。</p>
+
+    <p>逐词替换至少会碰到四类问题：</p>
+
+    <ul>
+      <li><strong>多义</strong>：同一个词在不同上下文里对应不同译法，选错一个，整句意思就偏了。</li>
+      <li><strong>换位</strong>：德语把宾语或动词放在英语习惯之外的位置，逐词照搬会得到一串语序错误的词。</li>
+      <li><strong>拆分</strong>：一个源词可能要译成两个目标词，或者一个短语要拆开处理。</li>
+      <li><strong>增删</strong>：德语冠词 das 在英语里常常不译；英语的 just 在德语里可能没有直接对应，只能由上下文补出来。</li>
+    </ul>
+
+    <p>这四件事合起来说明：翻译的单位不是词，而是<strong>重新组织后的整句</strong>。词的对应关系仍然重要，但它只是原料，不是成品。</p>
+
+    <h2 id="routes">2. 三条规则路线：直接、句法转换、中间语言</h2>
+
+    <p>在统计方法之前，机器翻译主要沿三条路线走，分析一层比一层深：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>路线</th><th>怎么做</th><th>优点</th><th>难点</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>直接翻译</td><td>逐词替换，再用规则改语序</td><td>结构最简单，早期就能跑</td><td>规则越写越多，换语言对要重写</td></tr>
+          <tr><td>句法转换</td><td>先分析源句结构，再按结构生成目标句</td><td>能处理语序和结构差异</td><td>两套语法加转换规则，维护成本高</td></tr>
+          <tr><td>中间语言</td><td>先把意思抽成中立表示，再由它生成目标语言</td><td>加一门语言只写两个方向</td><td>中立表示最难定义，实际系统很少走到</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>层次越高，需要写的规则越少，因为语言差异被集中到「分析」和「生成」两端；但中间层的抽象也越难做对。实际系统大多停在句法转换这一层：比逐词替换强，又不必发明一套完全中立的语义表示。</p>
+
+    <h2 id="history">3. 历史：从解码类比到统计翻译</h2>
+
+    <p><strong>背景。</strong>1949 年，韦弗在一份备忘录里把翻译类比成解码：俄语看起来像英语用另一套密码写成的文本，那么翻译就是破译。这个类比很吸引人，因为它把语言问题变成了工程问题。1954 年有了第一次公开演示，系统只有 250 个俄语词和 6 条语法规则，规模很小，却让很多人相信这条路很快能走通。</p>
+
+    <p><strong>之前的困境。</strong>1966 年的一份报告给热潮浇了冷水：机器翻译撞上语义障碍，靠词典和语法规则绕不过去，研究进入低谷。问题不在于机器算得慢，而在于「意义」没有被写进规则里；规则越补越多，覆盖却始终有限。</p>
+
+    <p><strong>主流转向。</strong>1990 年代，IBM 的研究者换了一种做法：不再手写规则，而是从双语语料里统计对应关系。统计翻译登场后，系统性能随着语料规模稳定上升，机器翻译从「语言学工程」变成了「数据加概率」。</p>
+
+    <p>2014 年又出现一次转向：神经机器翻译把编码器、解码器接成一个网络，端到端训练。2017 年的 Transformer 进一步用自注意力替掉循环结构，之后是预训练模型。三条路线的分界，不是谁彻底否定谁，而是「知识写在哪」发生了变化：从人写规则，到从语料估参数，到让网络自己学表示。</p>
+
+    <h2 id="eval">4. 评价：信达雅与自动指标</h2>
+
+    <p>严复提过「信、达、雅」：准确、通顺、得体。这三条对应三个不同层面——意思不能错、目标语言要顺、语体要合适。人工评价最可靠，但慢，而且不同标注者的尺度不容易统一；系统只提升一两个点，人也未必看得出来。</p>
+
+    <p>自动指标解决的是「快速、稳定地比较两个系统」。最常用的是 BLEU：它把候选译文和参考译文切成 $n$ 元词串，统计候选里有多少词串在参考中出现过。$n$ 通常取 1 到 4，各阶精确率取几何平均，再乘一个长度惩罚：</p>
+
+    <p>$$\mathrm{BLEU}=\mathrm{BP}\cdot\exp\!\left(\sum_{n=1}^{4}w_n\log p_n\right)$$</p>
+
+    <p>其中 $p_n$ 是裁剪后的 $n$ 元精确率，$w_n$ 一般取 $1/4$。裁剪很关键：一个词在候选里出现三次、参考里只出现一次，最多只能算一次命中，否则重复同一个词就能刷高分。</p>
+
+    <p>长度惩罚 $\mathrm{BP}$ 用来压住「只译有把握的短句」这种投机：</p>
+
+    <p>$$\mathrm{BP}=\exp\!\left(\min\!\left(0,\ 1-\frac{r}{c}\right)\right)$$</p>
+
+    <p>$c$ 是候选长度，$r$ 是参考长度。候选比参考短时，惩罚小于 1；长度够或偏长时不额外奖励。</p>
+
+    <p>BLEU 的局限也要记住：它只看词串重合，不看语序是否合理、意思是否等价；参考译文只有一两份时，合理的同义改写会被判低分；不同分词、不同语料上的分数不能直接比较。它是一个便宜且稳定的相对指标，不是「翻译质量」本身。</p>
+
+    <h2 id="channel">5. 噪声信道：把翻译写成反推</h2>
+
+    <p>统计翻译借用了通信里的噪声信道模型。把目标语言 $T$ 想成原始信号，它经过一个「翻译信道」被噪声弄乱，变成了我们看到的源语言 $S$。翻译就是从收到的 $S$ 反推最可能发出的 $T$。</p>
+
+    <p>用贝叶斯公式展开：</p>
+
+    <p>$$P(T\mid S)=\frac{P(T)P(S\mid T)}{P(S)}$$</p>
+
+    <p>分母 $P(S)$ 与候选 $T$ 无关，求最大值时可以丢掉：</p>
+
+    <p>$$T^{*}=\arg\max_{T}P(T)\,P(S\mid T)$$</p>
+
+    <p>两个因子分工很清楚：</p>
+
+    <ul>
+      <li>$P(S\mid T)$ 是<strong>翻译模型</strong>：给定目标句，它生成源句的可能性有多大，管「翻得像不像」；</li>
+      <li>$P(T)$ 是<strong>语言模型</strong>：目标句本身顺不顺，管「像不像人话」。</li>
+    </ul>
+
+    <p>上一集的神经网络语言模型就是在这里接进来的：它不需要和翻译模型共享结构，只负责给候选译文打分。实际计算在对数域做，连乘变连加：</p>
+
+    <p>$$T^{*}=\arg\max_{T}\left[\log P(T)+\log P(S\mid T)\right]$$</p>
+
+    <p>注意方向：信道是从 $T$ 到 $S$，所以翻译模型写的是 $P(S\mid T)$，不是 $P(T\mid S)$。方向写反，整个分解就不成立。</p>
+
+    <h2 id="word">6. 词翻译表：数频次估概率</h2>
+
+    <p>翻译模型的第一块零件，是「一个源词译成某个目标词的概率」。最直接的估计仍然是数频次。假设双语语料里德语 Haus 一共出现 84 次，其中译成 house 62 次、building 18 次、shell 4 次，那么最大似然估计就是：</p>
+
+    <p>$$p(\mathrm{house}\mid\mathrm{Haus})=\frac{62}{84}\approx0.74$$</p>
+
+    <p>$$p(\mathrm{building}\mid\mathrm{Haus})=\frac{18}{84}\approx0.21,\qquad p(\mathrm{shell}\mid\mathrm{Haus})=\frac{4}{84}\approx0.05$$</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>源词</th><th>目标词</th><th>共现次数</th><th>概率</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Haus</td><td>house</td><td>62</td><td>0.74</td></tr>
+          <tr><td>Haus</td><td>building</td><td>18</td><td>0.21</td></tr>
+          <tr><td>Haus</td><td>shell</td><td>4</td><td>0.05</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>把语料里所有词对都这样估一遍，就得到一张词对词的表。注意这里的条件方向是「给定源词，目标词的概率」，即 $p(t\mid s)$。后面 IBM 模型按生成方向写，会换成相反的条件 $t(s\mid t)$；两张表互为条件概率，数值并不相同，混用时必须看清方向。</p>
+
+    <p>这张表只解决「词可能译成什么」，还没解决「这句话里该选哪个」。要回答后者，需要知道词和词之间怎么对应——也就是对齐。</p>
+
+    <h2 id="align">7. 词对齐：给每个目标词标一个源位置</h2>
+
+    <p>句子不是词对词排好的。以德语 Das Haus ist schön 和英语 house is beautiful 为例：das 没有对应的英语词，schön 对应 beautiful 但位置变了，Haus 在两边都是一对一。若目标词是插入的，还要允许它对齐到一个「空标记」 $\varnothing$。</p>
+
+    <p>形式化地，给每个目标位置 $j$ 指定一个源位置：</p>
+
+    <p>$$a_j=i,\qquad i\in\{0,1,\dots,m\}$$</p>
+
+    <p>$i=0$ 表示空标记，专门接收目标语言里多出来的词。整句的对齐记作 $A=a_1a_2\cdots a_l$。常见形态有四类：</p>
+
+    <ul>
+      <li><strong>一对一</strong>：Haus 对 house；</li>
+      <li><strong>一对多</strong>：一个源词对应两个目标词；</li>
+      <li><strong>省略</strong>：源词在目标句里没有译出，例如 das；</li>
+      <li><strong>插入</strong>：目标词在源句里没有对应，例如 just，只能挂到空标记上。</li>
+    </ul>
+
+    <p>再加上换位：对齐线可以交叉，位置顺序不必一致。对齐不是翻译的副产品，而是统计翻译的基础——词表、短语表、训练信号，都要靠它把两种语言的词连起来。</p>
+
+    <h2 id="ibm1">8. IBM 模型一：只看词对，不看位置</h2>
+
+    <p>IBM 模型一把假设简化到极致：<strong>每个目标词都独立地由某一个源词翻译过来，位置不影响概率。</strong>给定对齐 $A$，整句的翻译概率就是各词对概率的连乘：</p>
+
+    <p>$$P(S\mid T,A)=\prod_{j=1}^{l}t(s_j\mid t_{a_j})$$</p>
+
+    <p>但对齐本身是未知的。模型一对所有对齐一视同仁：长度为 $m$ 的源句，每个目标词都有 $m+1$ 个可选位置（含空标记），所以每种对齐的先验概率都是 $P(A)=(m+1)^{-l}$。把所有对齐边缘化掉：</p>
+
+    <p>$$P(S\mid T)=\sum_{A}P(A)P(S\mid T,A)=\prod_{j=1}^{l}\frac{1}{m+1}\sum_{i=0}^{m}t(s_j\mid t_i)$$</p>
+
+    <p>这个式子有个很好的性质：求和与连乘可以按目标词拆开，每个目标词独立地选源词，所以整句概率仍然是一串因子的乘积。</p>
+
+    <p>模型一只需要学一张表 $t(s\mid t)$，参数量是「源词表 × 目标词表」，和句长、位置都无关。它不看语序，因此学不到调序；但在词对层面，它已经能给出不错的翻译概率，也是后面 IBM 模型二到五的起点。</p>
+
+    <h2 id="em">9. EM：对齐和概率一起估计</h2>
+
+    <p>问题来了：要估表 $t(s\mid t)$，需要知道对齐；要知道对齐，又需要表。两边都是未知的，这就是典型的隐变量问题。EM 的办法是「先给一个初值，再交替改进」。</p>
+
+    <p><strong>E 步：按当前表分配对齐。</strong>对每个目标词 $s_j$，计算它来自各个源位置的后验概率：</p>
+
+    <p>$$h(i\mid j)=\frac{t(s_j\mid t_i)}{\sum_{i'=0}^{m}t(s_j\mid t_{i'})}$$</p>
+
+    <p>$h(i\mid j)$ 可以读作「在当前参数下，第 $j$ 个目标词有多大比例该算到第 $i$ 个源词头上」。所有位置的后验加起来是 1。</p>
+
+    <p><strong>M 步：按后验统计词对，再归一化。</strong>把每次共现按后验加权累加，得到期望计数，然后重新估概率：</p>
+
+    <p>$$t(s\mid t)=\frac{\sum_{j}\sum_{i:\,t_i=t,\ s_j=s}h(i\mid j)}{\sum_{j}\sum_{i:\,t_i=t}h(i\mid j)}$$</p>
+
+    <p>分母是目标词 $t$ 在所有句对里出现的期望次数，分子是它和源词 $s$ 对齐的期望次数。一轮 E、一轮 M，拿新表再分配对齐，再统计，如此迭代。</p>
+
+    <p>以法语 la 和英语 the 为例：初始时 la 对 the、la 对 a 的后验差不多；几轮之后，语料里 la–the 的共现证据占上风，后验逐渐集中到 the 这一格。对齐不是谁教给模型的，而是从共现统计里自己浮现出来的。</p>
+
+    <p>两个必须记住的性质：第一，EM 每一轮都不会让似然变小，所以曲线单调上升；第二，它保证的是<strong>局部</strong>最优，初值不同可能收敛到不同结果。实践里通常从均匀分布起步，并跑固定轮数或等到变化足够小。</p>
+
+    <h2 id="phrase">10. 短语翻译：一次翻一段</h2>
+
+    <p>词对齐往上走一层，就是短语。这里的「短语」不要求符合句法，只要求是源句里连续的一段；它可能是一个固定搭配，也可能只是几个经常一起出现的词。</p>
+
+    <p>短语表从词对齐里抽：源句的一段连续区间和目标句的一段连续区间，如果两边的词只和对方区间内的词对齐、没有连线穿出边界，并且至少有一条对齐线，就算一个候选短语对。这样抽出来的短语对，天然带着局部语序信息。</p>
+
+    <p>翻译时，源句被切成若干段，每段整体查短语表，选出候选译文，再决定这些译文块按什么顺序排列。打分通常是一个对数线性模型，把几项特征加权相加：</p>
+
+    <p>$$\mathrm{score}(T\mid S)=\sum_{k}\lambda_k\phi_k(S,T)$$</p>
+
+    <p>常见的特征包括短语翻译概率（两个方向各一项）、词汇权重、语言模型分数、短语惩罚和调序惩罚。调序惩罚按相邻短语块在源句和目标句里的距离计算，距离越大扣得越多。</p>
+
+    <p>这一步的价值在于：固定搭配和局部语序交给短语，模型不必逐词硬拼；全局语序则由解码器在拼装时决定。</p>
+
+    <h2 id="decode">11. 解码：把源句盖满，取最优路径</h2>
+
+    <p>有了短语表和打分函数，还要在指数级的组合里找最优译文，这就是解码。可以把解码想成从左到右把源句「盖满」：</p>
+
+    <ul>
+      <li>状态用一个<strong>覆盖向量</strong>记录哪些源词已经被翻译，例如 1010 表示第 1、3 个词已覆盖；</li>
+      <li>每个<strong>假设</strong>包含已生成的译文、覆盖向量和当前分数；</li>
+      <li>每次扩展，选一个尚未覆盖的连续片段，查它的候选译文，接到假设后面并更新分数。</li>
+    </ul>
+
+    <p>如果两条路径覆盖了同一批源词、覆盖向量相同，并且语言模型看到的历史也相同，那么后面的选择只取决于当前状态，与怎么走到这里无关。这时可以<strong>合并假设</strong>，只保留分数高的那条。合并是剪枝的关键：没有它，路径数会随句长指数爆炸。</p>
+
+    <p>即使合并之后，状态数仍然很多，实际系统用束搜索：每层只保留分数最高的一批假设。盖满整句后，从最优终点沿指针回溯，读出整条译文。束越宽越接近精确解，代价是更慢；精确搜索在一般情况下是指数复杂度，所以工程上接受近似。</p>
+
+    <h2 id="nmt">12. 神经机器翻译：编码器加解码器</h2>
+
+    <p>2014 年，机器翻译换了一条路：不再显式建词表、对齐和短语表，而是用一个网络直接学 $P(T\mid S)$。结构分成两半：</p>
+
+    <ul>
+      <li><strong>编码器</strong>按顺序读源句，把每个位置变成一个隐藏状态，最后得到一个概括整句的状态；</li>
+      <li><strong>解码器</strong>从该状态出发，一个词一个词地生成译文，每一步都把上一步的输出作为下一步的输入。</li>
+    </ul>
+
+    <p>训练目标还是交叉熵：给定源句和已经生成的前缀，最大化正确下一个词的概率。整句概率按链式法则分解：</p>
+
+    <p>$$P(T\mid S)=\prod_{t=1}^{l}P(y_t\mid y_{&lt;t},S)$$</p>
+
+    <p>和统计翻译相比，神经方法没有独立的短语表，也没有显式的对齐变量；对齐信息如果有，也是藏在参数里。它的好处是整条流水线一起优化，不用手工设计特征；代价是需要大量平行语料和算力，而且早期的固定长度状态装不下长句。</p>
+
+    <h2 id="attention">13. 注意力：每一步回看编码器</h2>
+
+    <p>编码器-解码器的瓶颈很清楚：源句再长，也要压进最后一个状态。句子一复杂，信息就装不下。注意力机制的做法是：解码器每生成一个词，都回头看一眼编码器的<strong>所有</strong>状态，而不是只看最后一个。</p>
+
+    <p>先算解码器当前状态和每个编码器状态的相关性分数，再归一化成权重：</p>
+
+    <p>$$e_{tj}=a(s_{t-1},h_j),\qquad \alpha_{tj}=\frac{\exp(e_{tj})}{\sum_{j'}\exp(e_{tj'})}$$</p>
+
+    <p>然后按权重把编码器状态加权求和，得到上下文向量：</p>
+
+    <p>$$c_t=\sum_{j}\alpha_{tj}h_j$$</p>
+
+    <p>$c_t$ 再和上一步的输出一起送进解码器，决定当前词。权重大的位置，就是这一步「在看」的源词；把每一步的权重排成矩阵，就得到一张软对齐图，对角线附近通常最亮。</p>
+
+    <p>注意力解决了两个问题：一是长句的信息不再被压进一个固定向量；二是相隔很远的词也能直接建立联系，不用经过很多步传递。它给出的对齐是软的、连续的，和统计时代的硬对齐不是一回事，但作用相通——都在告诉模型「这个词该看哪里」。</p>
+
+    <p>再往后，自注意力让序列内部每个位置都互相看，且可以并行计算；多头注意力从多个子空间同时看；Transformer 把这两件事堆叠起来，成为后来预训练模型的主干。这条线已经超出本页范围，但起点仍然是这里：翻译不再查表，而是在学一个分布。</p>
+
+    <h2 id="pitfalls">14. 常见错误</h2>
+
+    <ol>
+      <li><strong>把翻译当成逐词替换。</strong>多义、换位、拆分、增删四类问题都说明：词只是原料，整句要重新组织。</li>
+      <li><strong>混淆翻译模型和语言模型。</strong>$P(S\mid T)$ 管「翻得像不像」，$P(T)$ 管「目标句顺不顺」，两者相乘才是候选分数。</li>
+      <li><strong>把噪声信道的方向写反。</strong>信道是 $T$ 变成 $S$，所以分解成 $P(T)P(S\mid T)$；写成 $P(S)P(T\mid S)$ 就绕回去了。</li>
+      <li><strong>把两个方向的词表混用。</strong>$p(\mathrm{house}\mid\mathrm{Haus})$ 和 $t(\mathrm{Haus}\mid\mathrm{house})$ 互为条件概率，数值不同；IBM 模型一用的是后者。</li>
+      <li><strong>以为对齐必须一对一。</strong>一对多、省略、插入、换位都合法；空标记就是为插入准备的。</li>
+      <li><strong>以为 IBM 模型一看语序。</strong>它假设所有对齐等可能，位置不进概率；调序能力要到后续模型或短语方法才有。</li>
+      <li><strong>以为 EM 一定收敛到全局最优。</strong>它只保证似然不下降，结果是局部最优，和初值有关。</li>
+      <li><strong>以为短语必须按句法切。</strong>短语只是连续的词段，边界由对齐一致性决定，不需要句法树。</li>
+      <li><strong>解码合并条件写得太松。</strong>只看覆盖向量不够，语言模型的历史（以及上一个短语）也要一致，否则合并会丢掉影响后续打分的信息。</li>
+      <li><strong>算 BLEU 不做裁剪。</strong>不裁剪时，重复输出参考里已有的词就能抬高精确率；长度惩罚也要按候选与参考的长度比来算。</li>
+      <li><strong>跨语料、跨分词比较 BLEU。</strong>分词和参考集一变，分数就不可比；BLEU 高也不等于人读起来更好。</li>
+      <li><strong>以为神经模型没有对齐信息。</strong>注意力权重就是一张软对齐；只是它不被当成显式变量单独训练。</li>
+    </ol>
+
+    <h2 id="quiz">15. 自测 8 题</h2>
+
+    <ol>
+      <li>逐词替换会碰到哪四类问题？各举一个例子。</li>
+      <li>三条规则路线分别做到哪一层分析？为什么实际系统大多停在句法转换？</li>
+      <li>写出噪声信道的贝叶斯分解，并说明两个因子各管什么、方向为什么不能反。</li>
+      <li>Haus 共出现 84 次，译成 house 62 次，翻译概率是多少？分母为什么不是语料总词数？</li>
+      <li>词对齐里的空标记是干什么的？一对多、省略、插入、换位各是什么形态？</li>
+      <li>IBM 模型一为什么能把整句概率写成每个目标词因子的连乘？它只学哪张表？</li>
+      <li>EM 的 E 步和 M 步各做什么？为什么它不能保证全局最优？</li>
+      <li>短语解码里，覆盖向量和假设合并各解决什么问题？BLEU 的裁剪和长度惩罚分别防什么？</li>
+    </ol>
+
+    <details>
+      <summary>答案</summary>
+      <ol>
+        <li>多义（Haus 可译 house/building/shell）、换位（德语语序与英语不同）、拆分（一个词译成两个）、增删（das 不译、just 需要补出）。</li>
+        <li>直接翻译停在词和局部语序；句法转换做到句法结构；中间语言做到中立语义表示。中间语言最难定义，维护一套完整语义表示的成本远高于收益，所以多数系统停在句法转换。</li>
+        <li>$P(T\mid S)\propto P(T)P(S\mid T)$。$P(S\mid T)$ 是翻译模型，衡量目标句生成源句的可能性；$P(T)$ 是语言模型，衡量目标句本身是否通顺。信道方向是 $T\to S$，所以条件必须是 $S\mid T$。</li>
+        <li>$62/84\approx0.74$。分母是这个源词的出现次数，条件概率的分母必须是条件事件的总数，不能用整个语料的词数。</li>
+        <li>空标记接收目标语言里多出来的词，即插入。一对多是一个源词对多个目标词；省略是源词没有译出；插入是目标词在源句没有对应；换位是对齐线交叉、顺序改变。</li>
+        <li>因为模型假设每个目标词独立地选一个源词，对齐均匀且各目标词互不影响；把对齐边缘化后，每个目标词的因子是 $\frac{1}{m+1}\sum_i t(s_j\mid t_i)$，整句就是这些因子连乘。它只学一张表 $t(s\mid t)$。</li>
+        <li>E 步用当前表算每个目标词对齐到各源位置的后验；M 步按后验加权统计词对并重新归一化。EM 每轮只保证似然不下降，目标函数非凸，所以可能停在局部最优。</li>
+        <li>覆盖向量记录哪些源词已翻译，避免重复或漏译；假设合并把覆盖状态相同（且语言模型历史一致）的路径合成一条，控制搜索规模。BLEU 的裁剪防止重复词刷命中，长度惩罚防止靠输出短句投机。</li>
+      </ol>
+    </details>
+
+    <h2 id="takeaway">16. 收尾</h2>
+
+    <p>五句话记住这条线：</p>
+
+    <ol>
+      <li><strong>翻译是重新组织</strong>，不是逐词替换；多义、换位、拆分、增删四类问题决定了这一点。</li>
+      <li><strong>规则路线</strong>从直接翻译到句法转换再到中间语言，分析越深、规则越少，但中间表示最难落地。</li>
+      <li><strong>噪声信道</strong>把翻译写成 $\arg\max_T P(T)P(S\mid T)$，翻译模型和语言模型各管一头。</li>
+      <li><strong>统计翻译</strong>靠词表、对齐、IBM 模型一和 EM：一张词对表加均匀对齐假设，就能从双语语料里把隐藏结构学出来；短语和解码再补上局部语序与全局搜索。</li>
+      <li><strong>神经翻译</strong>用编码器-解码器端到端学习，注意力让每一步回看源句；再往前是 Transformer 和预训练模型——从查词典，变成学分布。</li>
+    </ol>
+
+    <p>如果只用一句话记住它：<strong>机器翻译换了三次「知识写在哪」——人写规则、从语料估参数、让网络自己学表示；任务没变，一直是给定源句找最可能的译文。</strong>上一集《<a href="note-neural-lm.html">神经网络语言模型</a>》讲循环网络怎么记住前文，这一集把它接成编码器和解码器；更早的《<a href="note-word-vector.html">词向量</a>》《<a href="note-syntax.html">句法分析</a>》《<a href="note-bpe.html">BPE</a>》《<a href="note-seg-crf.html">中文分词与 CRF</a>》和《<a href="note-pos-hmm.html">词性标注与 HMM</a>》，分别提供了表示、结构、切分和标注这几块基础。</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+  <script defer src="book-shell.js?v=2"></script>
+  <script defer src="katex/katex.min.js"></script>
+  <script defer src="katex/auto-render.min.js"></script>
+  <script defer src="katex/render-math.js"></script>
+</body>
+</html>
