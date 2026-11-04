@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>神经网络语言模型：从数频次到循环网络 · 学习笔记</title>
+  <meta name="description" content="语言模型的任务是给词序列打分并预测下一个词。n 元模型用频次估条件概率，却受限于存储、远距和稀疏；前馈网络把词向量拼接后送进隐层，仍被固定窗口卡住；把权重拆成输入与循环两块，就有了 RNN。再往下是 BPTT 的连乘、梯度消失与爆炸、裁剪，以及 LSTM 和 GRU 的门控。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="legacy-v1.css" />
+  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="book-shell.css" />
+  <link rel="stylesheet" href="katex/katex.min.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .back-link { display: inline-block; margin-bottom: 28px; font-size: 0.92rem; }
+
+    .article .katex { font-size: 1.03em; }
+    .article .katex-display {
+      margin: 20px 0;
+      padding: 2px 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+    .article .katex-display::-webkit-scrollbar { height: 6px; }
+    .article .katex-display::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+    .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+    .table-wrap table { margin-bottom: 0; }
+    .table-wrap td:first-child, .table-wrap th:first-child { white-space: nowrap; }
+
+    .short-video { max-width: 340px; margin: 0 auto 32px; }
+    .short-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 9 / 16;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .short-video video::cue {
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.4;
+      color: #fffdf9;
+      background: rgba(33, 29, 25, 0.78);
+    }
+    .short-video figcaption {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">自然语言处理 · 神经网络语言模型</p>
+    <h1>神经网络语言模型：从数频次到循环网络</h1>
+
+    <blockquote>
+      一句话主线：语言模型的任务只有一句话——给定前文，给下一个词一个概率。n 元模型直接用频次估这个概率，被存储、远距和稀疏三件事卡住；前馈网络改用词向量拼接加隐层，缓解了稀疏，却仍然只有固定窗口；把权重拆成「当前词」和「上一步」两块，参数就能沿时间共享，于是有了循环网络。循环网络的梯度要在时间上连乘，带来消失与爆炸；LSTM 和 GRU 用门把这条连乘路径改短，困惑度因此几乎砍半。
+    </blockquote>
+
+    <figure class="short-video">
+      <video controls playsinline preload="metadata" width="1080" height="1920"
+             poster="media/neural-lm-poster.jpg">
+        <source src="media/neural-lm-5min.mp4" type="video/mp4" />
+        <track kind="captions" src="media/neural-lm-zh.vtt" srclang="zh" label="中文" />
+        浏览器不支持内嵌视频，<a href="media/neural-lm-5min.mp4">点这里下载这段短片</a>。
+      </video>
+      <figcaption>配套短片 · 约 6 分钟 · 有口播和字幕：从 n 元模型的计数表，到前馈网络的拼接，再到 RNN、BPTT、梯度裁剪与 LSTM/GRU 的门控</figcaption>
+    </figure>
+
+    <p>手机输入法里打两个字，候选栏就往下跳「真不错」「怎么样」「有点冷」。这件事看着小，背后却是一个概率问题：在已经出现的前文条件下，下一个词是什么。语言模型就是专门回答这个问题的模型。这一页按「统计做法 → 前馈网络 → 循环网络 → 门控结构」的顺序，把每一步为什么发生、公式长什么样、又留下什么麻烦讲清楚。</p>
+
+    <h2 id="task">0. 先看任务：一句话的概率连乘</h2>
+
+    <p>把一句话记作 $w_{1:T}=w_1w_2\cdots w_T$。用链式法则，整句概率可以拆成每个位置上「给定前文」的条件概率：</p>
+
+    <p>$$P(w_{1:T})=\prod_{t=1}^{T}P(w_t\mid w_{&lt;t})$$</p>
+
+    <p>其中 $w_{&lt;t}=w_1\cdots w_{t-1}$。第一个词没有前文，通常补一个句首标记，把它当成条件。这个分解是恒等的，没有做任何近似；近似发生在后面——怎么算每一个 $P(w_t\mid w_{&lt;t})$。</p>
+
+    <p>以「自然 语言 处理」为例，三个位置的条件概率分别记作 $0.62$、$0.45$、$0.70$，整句概率就是三者相乘：</p>
+
+    <p>$$0.62\times0.45\times0.70=0.195$$</p>
+
+    <p>这个数有两个用处。一是<strong>补全</strong>：每一步取概率最高的词，就能接着往下写。二是<strong>打分</strong>：同一句话的不同候选，谁的概率高，模型就认为谁更自然。比如「我要上宁波大学」和「我腰上拧个大穴」读音一样，模型应该给前者更高的整句概率。</p>
+
+    <p>实际计算都在对数域做：连乘变成连加，避免长句子的概率下溢成 0。</p>
+
+    <p>$$\log P(w_{1:T})=\sum_{t=1}^{T}\log P(w_t\mid w_{&lt;t})$$</p>
+
+    <h2 id="ngram">1. n 元模型：用频次估条件概率</h2>
+
+    <p>最直接的办法是数频次。但 $w_{&lt;t}$ 可以很长，同一个前文在语料里未必出现过，所以 n 元模型做了一个<strong>马尔可夫假设</strong>：一个词只和前面 $n-1$ 个词有关。</p>
+
+    <p>$$P(w_t\mid w_{&lt;t})\approx P(w_t\mid w_{t-n+1}^{t-1})$$</p>
+
+    <p>条件概率用最大似然估计，就是「这个组合出现的次数 ÷ 前缀出现的次数」：</p>
+
+    <p>$$P(w_t\mid w_{t-n+1}^{t-1})=\frac{c(w_{t-n+1}^{t})}{c(w_{t-n+1}^{t-1})}$$</p>
+
+    <p>分子是「前缀加当前词」的计数，分母是「只有前缀」的计数。举个二元模型的例子：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>前缀</th><th>当前词</th><th>组合计数</th><th>前缀计数</th><th>条件概率</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>自然 语言</td><td>处理</td><td>620</td><td>1200</td><td>0.52</td></tr>
+          <tr><td>自然 语言</td><td>学</td><td>240</td><td>1200</td><td>0.20</td></tr>
+          <tr><td>自然 语言</td><td>模型</td><td>90</td><td>1200</td><td>0.075</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>注意分母是<strong>前缀计数</strong>，不是整个语料的词数。这一步经常被写错。</p>
+
+    <p>n 取多少是个取舍：$n=1$ 叫一元模型，每个词独立；$n=2$ 只看前一个词；$n=3$ 看前两个。n 越大，能利用的上下文越多，但组合数也涨得越快，稀疏问题越重。所谓「三元」「四元」「五元」，指的就是这个 n。</p>
+
+    <h2 id="flaws">2. 三个绕不开的问题</h2>
+
+    <p><strong>第一，存储。</strong>词表有 $V$ 个词，长度为 $n$ 的组合最多有 $V^n$ 种。$V=10^5$、$n=5$ 时是 $10^{25}$ 量级，任何机器都存不下。实际上大量组合不会出现，但「哪些会出现」事先并不知道，只能边统计边存，规模仍然随 n 迅速膨胀。</p>
+
+    <p><strong>第二，远距依赖。</strong>看一句「他在法国长大，所以法语说得很流利」。二元模型预测「流利」时，只看前一个词「很」，前面是法国还是中国，对概率没有影响。真正相关的「法国」隔了好几个词，窗口够不到。</p>
+
+    <p><strong>第三，稀疏。</strong>没见过的组合，计数是 0，条件概率直接为 0；低频组合的计数只有一两次，估出来的概率也很不稳。常见的补救是平滑、回退和插值：</p>
+
+    <ul>
+      <li><strong>加一平滑</strong>：给每个组合的计数加一个小的常数，避免 0 概率；</li>
+      <li><strong>回退</strong>：长组合没统计到时，退到短组合去估；</li>
+      <li><strong>插值</strong>：把不同阶的估计按权重混在一起。</li>
+    </ul>
+
+    <p>这些办法能把 0 填上，却补不回「没见过的组合到底该有多可能」。根本原因是：词被当成互不相干的符号，<strong>相似词之间的信息无法共享</strong>。要换一种表示。</p>
+
+    <h2 id="fnn">3. 前馈网络：拼接、隐层、softmax</h2>
+
+    <p>神经网络语言模型（feed-forward neural network LM）的做法分三步。</p>
+
+    <p><strong>第一步，查词向量。</strong>维护一个矩阵 $C\in\mathbb{R}^{V\times d}$，第 $k$ 行就是第 $k$ 个词的 $d$ 维向量：</p>
+
+    <p>$$\mathbf{e}(w)=C[w]\in\mathbb{R}^{d}$$</p>
+
+    <p><strong>第二步，拼接。</strong>取前 $n-1$ 个词，把它们的向量首尾接起来，得到一条长向量：</p>
+
+    <p>$$\mathbf{x}_t=[\mathbf{e}(w_{t-n+1});\ \cdots;\ \mathbf{e}(w_{t-1})]\in\mathbb{R}^{(n-1)d}$$</p>
+
+    <p>拼接保留了位置信息：第一个词和第二个词的向量放在不同位置，网络能区分。若改成相加或平均，位置就丢了。</p>
+
+    <p><strong>第三步，过隐层，再输出整个词表的分数。</strong></p>
+
+    <p>$$\mathbf{h}_t=\tanh(H\mathbf{x}_t+\mathbf{d})$$</p>
+
+    <p>$$\mathbf{y}_t=W\mathbf{h}_t+\mathbf{b}$$</p>
+
+    <p>$$\mathbf{p}_t=\operatorname{softmax}(\mathbf{y}_t)$$</p>
+
+    <p>$\mathbf{y}_t$ 的维度等于词表大小 $V$，softmax 把它压成一组概率，第 $k$ 项就是「下一个词是第 $k$ 个词」的概率。训练目标是最小化交叉熵，正确词的概率越大，损失越小。</p>
+
+    <p>参数大致分四块，可以逐项数出来：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>部分</th><th>形状</th><th>示例参数量（$V=10^4$，$d=100$，$H=200$，$n=4$）</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>词向量矩阵 $C$</td><td>$V\times d$</td><td>1,000,000</td></tr>
+          <tr><td>输入到隐层 $H$</td><td>$(n-1)d\times H$</td><td>60,000</td></tr>
+          <tr><td>隐层到输出 $W$</td><td>$H\times V$</td><td>2,000,000</td></tr>
+          <tr><td>偏置</td><td>$H+V$</td><td>10,200</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>可以看到，最大的一块是「隐层到输出」：它和词表宽度成正比。这也是后来各种输出层加速（负采样、层次 softmax）要处理的地方。</p>
+
+    <h2 id="fnnpros">4. 前馈网络解决了什么</h2>
+
+    <p><strong>稀疏问题缓解了。</strong>词向量是稠密的小数，相似的词在向量空间里靠得近，参数更新会互相影响。即使「小猫 吃 鱼」这样的组合没在训练集里出现过，只要「小猫」和「小狗」的向量接近，模型也能给一个合理的估计，而不是直接判 0 概率。</p>
+
+    <p><strong>存储从组合表变成了矩阵。</strong>不再需要为 $V^n$ 个组合各留一个计数格，只存 $V\times d$ 的词向量矩阵和几块权重，规模小得多。没见过的组合由网络现场算，不再依赖「表里有没有」。</p>
+
+    <p><strong>同一层内可以并行。</strong>给定窗口，每个位置的预测互不依赖，前馈网络可以一次算一批；这一点在后面的循环网络里会失去，因为循环网络必须一步一步往前走。</p>
+
+    <h2 id="fnncons">5. 两个硬伤：窗口固定、参数随 n 涨</h2>
+
+    <p><strong>第一，窗口是硬的。</strong>模型永远只看前 $n-1$ 个词。句子再长，窗口外的信息也进不来。想扩大视野，只能把 $n$ 调大。</p>
+
+    <p><strong>第二，参数随 n 线性增长。</strong>输入层每一块位置都有自己的一组权重，$n$ 从 2 加到 5，输入到隐层的参数就从 $dH$ 涨到 $4dH$。n 一大，参数和计算量一起涨，而远距依赖仍然只能靠「把窗口撑大」来对付。</p>
+
+    <p>更本质的一点：<strong>不同位置的权重各管各的</strong>，模型没有学到「把上一步的信息往下传」这件事。每预测一个位置，都要从头把窗口里所有词重新拼一遍。</p>
+
+    <p>所以下一步不是继续加大 n，而是改权重矩阵的结构。</p>
+
+    <h2 id="refactor">6. 拆开权重矩阵：从窗口到循环</h2>
+
+    <p>原来的输入权重是一整块，隐含「第几个历史位置」这件事。现在把它拆成两块：</p>
+
+    <ul>
+      <li>$W_x$：把<strong>当前词</strong>的向量变成输入；</li>
+      <li>$W_h$：把<strong>上一步的隐藏状态</strong>变成这一步的输入。</li>
+    </ul>
+
+    <p>于是第 $t$ 步不再需要「窗口里每个位置的独立权重」，只需要：</p>
+
+    <p>$$\mathbf{h}_t=\tanh(W_x\mathbf{x}_t+W_h\mathbf{h}_{t-1}+\mathbf{b})$$</p>
+
+    <p>$\mathbf{x}_t$ 是当前词的词向量，$\mathbf{h}_{t-1}$ 是上一步留下的隐藏状态。同一组 $W_x$、$W_h$ 在每一步反复使用，参数数量和句子长度无关，也不再随 n 增长。</p>
+
+    <p>这就是<strong>循环神经网络</strong>（recurrent neural network，RNN）的核心。它不是把「很多个前馈网络并排摆」，而是<strong>同一个网络沿时间重复使用</strong>：每一步读一个词，同时接收上一步的状态，算出新状态。</p>
+
+    <h2 id="rnn">7. 按时间展开：RNN 的四个式子</h2>
+
+    <p>把循环按时间展开，看起来像一条链：</p>
+
+    <p>$$\mathbf{h}_t=\tanh(W_x\mathbf{x}_t+W_h\mathbf{h}_{t-1}+\mathbf{b}_h)$$</p>
+
+    <p>$$\mathbf{y}_t=W_y\mathbf{h}_t+\mathbf{b}_y$$</p>
+
+    <p>$$\mathbf{p}_t=\operatorname{softmax}(\mathbf{y}_t)$$</p>
+
+    <p>$$\mathcal{L}=\sum_{t=1}^{T}\mathcal{L}_t,\qquad \mathcal{L}_t=-\log p_t(w_{t+1})$$</p>
+
+    <p>四个式子的分工：第一个更新记忆，第二个把记忆映射成词表分数，第三个变成概率，第四个把每个位置的损失加起来。训练时每个位置都预测下一个词，整句的损失是各位置之和。</p>
+
+    <p>参数量也固定下来了：词向量 $Vd$、输入权重 $dH$、循环权重 $H^2$、输出权重 $HV$，再加偏置。以 $V=10^4$、$d=100$、$H=200$ 为例，大约是 $1.0\text{M}+20\text{K}+40\text{K}+2.0\text{M}\approx3.07\text{M}$，和句子有 10 个词还是 100 个词无关。</p>
+
+    <p>代价是<strong>不能并行</strong>：$\mathbf{h}_t$ 依赖 $\mathbf{h}_{t-1}$，必须按顺序算。前馈网络能一次算完的位置，这里要一步一步走。</p>
+
+    <h2 id="bptt">8. 训练：损失累加与 BPTT</h2>
+
+    <p>RNN 的训练叫<strong>沿时间反向传播</strong>（backpropagation through time，BPTT）。把网络按时间展开之后，它就是一个很深的共享参数网络，反向传播照常做，只是梯度要穿过一串时间步。</p>
+
+    <p>对循环权重 $W_h$ 求梯度，链式法则会把每个时间步的贡献加起来：</p>
+
+    <p>$$\frac{\partial\mathcal{L}}{\partial W_h}=\sum_{t=1}^{T}\frac{\partial\mathcal{L}_t}{\partial W_h}$$</p>
+
+    <p>而从第 $t$ 步往回到第 $k$ 步，要连乘一串雅可比矩阵：</p>
+
+    <p>$$\frac{\partial\mathbf{h}_t}{\partial\mathbf{h}_{k}}=\prod_{i=k+1}^{t}\frac{\partial\mathbf{h}_i}{\partial\mathbf{h}_{i-1}}$$</p>
+
+    <p>对 $\tanh$ 隐层，单步的雅可比是：</p>
+
+    <p>$$\frac{\partial\mathbf{h}_i}{\partial\mathbf{h}_{i-1}}=\operatorname{diag}\!\left(1-\mathbf{h}_i^{2}\right)W_h$$</p>
+
+    <p>所以整条路径是「$W_h$ 连乘若干次，再逐元素乘上若干组 $1-\mathbf{h}^2$」。$1-\mathbf{h}^2$ 的取值在 0 到 1 之间，本身就会缩小梯度；$W_h$ 的连乘则可能放大，也可能缩小。问题就出在这条连乘上。</p>
+
+    <p>实践里常用<strong>截断 BPTT</strong>：只往回传固定步数，比如 20 步，再切断。省显存、稳梯度，代价是更远的依赖学不到。</p>
+
+    <h2 id="vanish">9. 梯度消失、爆炸与裁剪</h2>
+
+    <p>把连乘看成「每往回一步乘一次 $W_h$」。如果 $W_h$ 的谱范数普遍小于 1，乘的次数一多，梯度就指数式趋近于 0，这叫<strong>梯度消失</strong>；如果普遍大于 1，就会指数式变大，这叫<strong>梯度爆炸</strong>。</p>
+
+    <p>举个数量级的例子：每步乘 $0.9$，往回 50 步是 $0.9^{50}\approx0.005$；每步乘 $1.1$，50 步就是 $1.1^{50}\approx117$。50 步在句子里并不算长。</p>
+
+    <p><strong>消失的后果是记不住远处。</strong>一句话里，动词该和哪个名词一致，关键信息可能在好几个词之前；梯度传不回去，循环权重就学不到「该记住它」。这不是模型容量不够，而是训练信号在路上已经衰减没了。</p>
+
+    <p><strong>爆炸可以用裁剪压住。</strong>设梯度向量为 $\mathbf{g}$，阈值为 $\tau$，当 $\lVert\mathbf{g}\rVert>\tau$ 时把它按比例缩回去：</p>
+
+    <p>$$\mathbf{g}\leftarrow\frac{\tau}{\lVert\mathbf{g}\rVert}\,\mathbf{g}$$</p>
+
+    <p>方向不变，长度被限制在 $\tau$ 以内。这样更新不会一步跳飞，但注意：<strong>裁剪治的是爆炸，治不了消失。</strong>梯度已经接近 0 时，再怎么裁剪也变不出信息。消失要靠改结构，下一节的 LSTM 就是干这个的。</p>
+
+    <h2 id="lstm">10. LSTM：单元状态和三个门</h2>
+
+    <p>长短期记忆网络（long short-term memory，LSTM）把记忆分成两份：<strong>单元状态</strong> $\mathbf{c}_t$ 负责长期保存，<strong>隐藏状态</strong> $\mathbf{h}_t$ 负责短期输出。修改和读取都由门控制。</p>
+
+    <p><strong>门是一个同维向量</strong>，每个位置取 0 到 1：0 表示关，1 表示开。它由当前输入和上一步的隐藏状态一起算出来，所以每一步都在现算，不是固定开关。</p>
+
+    <p>三个门和候选内容：</p>
+
+    <p>$$\mathbf{f}_t=\sigma(W_f[\mathbf{h}_{t-1};\mathbf{x}_t]+\mathbf{b}_f)$$</p>
+
+    <p>$$\mathbf{i}_t=\sigma(W_i[\mathbf{h}_{t-1};\mathbf{x}_t]+\mathbf{b}_i)$$</p>
+
+    <p>$$\mathbf{o}_t=\sigma(W_o[\mathbf{h}_{t-1};\mathbf{x}_t]+\mathbf{b}_o)$$</p>
+
+    <p>$$\tilde{\mathbf{c}}_t=\tanh(W_c[\mathbf{h}_{t-1};\mathbf{x}_t]+\mathbf{b}_c)$$</p>
+
+    <p>然后更新单元状态、读出隐藏状态：</p>
+
+    <p>$$\mathbf{c}_t=\mathbf{f}_t\odot\mathbf{c}_{t-1}+\mathbf{i}_t\odot\tilde{\mathbf{c}}_t$$</p>
+
+    <p>$$\mathbf{h}_t=\mathbf{o}_t\odot\tanh(\mathbf{c}_t)$$</p>
+
+    <p>$\odot$ 是逐元素乘。三个门的分工很清楚：</p>
+
+    <ul>
+      <li><strong>遗忘门</strong> $\mathbf{f}_t$：旧记忆 $\mathbf{c}_{t-1}$ 留多少；</li>
+      <li><strong>输入门</strong> $\mathbf{i}_t$：候选内容 $\tilde{\mathbf{c}}_t$ 写多少；</li>
+      <li><strong>输出门</strong> $\mathbf{o}_t$：从 $\mathbf{c}_t$ 读出多少给 $\mathbf{h}_t$。</li>
+    </ul>
+
+    <p>为什么这样能缓解消失？看单元状态的梯度路径：</p>
+
+    <p>$$\frac{\partial\mathbf{c}_t}{\partial\mathbf{c}_{t-1}}=\operatorname{diag}(\mathbf{f}_t)+\text{门控项的额外贡献}$$</p>
+
+    <p>主导项是 $\mathbf{f}_t$，<strong>没有 $W_h$ 的连乘</strong>。只要遗忘门接近 1，梯度就能沿着传送带近似原样传回去；而「让 $\mathbf{f}$ 接近 1」比「让整个 $W_h$ 接近单位矩阵」容易学得多。这是 LSTM 的关键，不是「多了几个门」这么简单。</p>
+
+    <p>代价是参数变多：四个门各有一套 $[d+H]\to H$ 的权重。以 $d=H=200$ 为例，四个块约 32 万参数（不含词向量和输出层），比普通 RNN 的循环部分大得多。</p>
+
+    <h2 id="gru">11. GRU：两个门，参数更少</h2>
+
+    <p>门控循环单元（gated recurrent unit，GRU）是 LSTM 的简化版：去掉单独的单元状态，只留隐藏状态，门从三个减到两个。</p>
+
+    <p>$$\mathbf{z}_t=\sigma(W_z[\mathbf{h}_{t-1};\mathbf{x}_t]+\mathbf{b}_z)$$</p>
+
+    <p>$$\mathbf{r}_t=\sigma(W_r[\mathbf{h}_{t-1};\mathbf{x}_t]+\mathbf{b}_r)$$</p>
+
+    <p>$$\tilde{\mathbf{h}}_t=\tanh\!\left(W_h[\mathbf{r}_t\odot\mathbf{h}_{t-1};\mathbf{x}_t]+\mathbf{b}_h\right)$$</p>
+
+    <p>$$\mathbf{h}_t=(1-\mathbf{z}_t)\odot\mathbf{h}_{t-1}+\mathbf{z}_t\odot\tilde{\mathbf{h}}_t$$</p>
+
+    <p>按这里的写法，$\mathbf{z}_t$ 是<strong>更新门</strong>：它决定新候选占多少，$1-\mathbf{z}_t$ 决定旧状态留多少。$\mathbf{z}_t\to0$ 时 $\mathbf{h}_t=\mathbf{h}_{t-1}$，历史被完整保留；这和 LSTM 里「遗忘门全开、输入门关闭」是同一个效果。$\mathbf{r}_t$ 是<strong>重置门</strong>：它决定上一步的隐藏状态有多少参与候选计算，$\mathbf{r}_t\to0$ 时候选只看当前输入。</p>
+
+    <p>参数量上，GRU 是三套门权重，LSTM 是四套。以 $d=H=200$ 为例，GRU 约 24 万，约为 LSTM 的 75%。效果通常接近，具体谁好要看任务和数据，没有一边倒的结论。</p>
+
+    <p>要强调一点：门控结构是<strong>缓解</strong>长依赖，不是彻底解决。门也会饱和，特别长的依赖仍可能丢；后来的注意力机制走的是另一条路。</p>
+
+    <h2 id="ppl">12. 困惑度：在多宽的候选里犹豫</h2>
+
+    <p>语言模型常用的评价指标是<strong>困惑度</strong>（perplexity，PPL）。设测试集有 $N$ 个词，模型给每个正确词的概率为 $p_t$，则：</p>
+
+    <p>$$\mathrm{PPL}=\exp\!\left(-\frac{1}{N}\sum_{t=1}^{N}\log p_t\right)=\left(\prod_{t=1}^{N}\frac{1}{p_t}\right)^{1/N}$$</p>
+
+    <p>它就是「正确词概率倒数的几何平均」。直观读法：模型每预测一个词，平均在多少个等可能的候选里犹豫。如果模型在 $k$ 个词上均匀分布，PPL 正好是 $k$；模型越确定，PPL 越小，所以<strong>越低越好</strong>。</p>
+
+    <p>它和交叉熵是同一件事的两种写法。以 2 为底算交叉熵 $H$（单位 bit），有 $\mathrm{PPL}=2^{H}$；以自然对数算，就是 $\mathrm{PPL}=e^{H}$。</p>
+
+    <p>一组同一数据、同一词表下的对比：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>模型</th><th>困惑度</th><th>相对三元模型</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>三元</td><td>206.42</td><td>—</td></tr>
+          <tr><td>四元</td><td>160.68</td><td>降 22%</td></tr>
+          <tr><td>五元</td><td>172.63</td><td>反而回升</td></tr>
+          <tr><td>普通 RNN</td><td>147.57</td><td>降 29%</td></tr>
+          <tr><td>LSTM</td><td>78.63</td><td>降 62%</td></tr>
+          <tr><td>GRU</td><td>78.82</td><td>降 62%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>两个细节值得注意。第一，<strong>五元比四元差</strong>：阶数更高，组合更稀疏，估出来的概率更不稳，这就是第 2 节说的稀疏问题在数字上的体现。第二，LSTM 和 GRU 几乎打平，说明「门控」这个结构比「三门还是两门」更关键。</p>
+
+    <p>比较 PPL 有一个前提：<strong>词表和分词必须一致</strong>。词表不同，候选集合不同，PPL 不能直接横比；换了测试集也不能比。</p>
+
+    <h2 id="apps">13. 四类任务：同一个结构换输出</h2>
+
+    <p>循环网络不只用来算下一个词。换一下输出怎么取，就能落到不同任务上：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>任务</th><th>输入</th><th>输出怎么取</th><th>例子</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>语言模型</td><td>前文</td><td>每一步输出下一个词的概率</td><td>输入法补全、文本生成</td></tr>
+          <tr><td>文本分类</td><td>整句</td><td>取最后一步的隐藏状态，接线性层</td><td>情感分析、意图识别</td></tr>
+          <tr><td>序列标注</td><td>整句</td><td>每一步输出一个标签</td><td>词性标注、命名实体识别</td></tr>
+          <tr><td>序列到序列</td><td>源句</td><td>编码器读完，解码器逐步生成</td><td>机器翻译、摘要</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>分类只用最后一步，是因为它把整句信息都压进了 $\mathbf{h}_T$；标注要每一步都输出，因为每个词都有自己的标签；序列到序列则要两个循环网络接力，编码器把源句压成一个状态，解码器从这个状态开始往下写。</p>
+
+    <p>这条线走到这里，语言模型的任务没变，变的是「怎么表示历史」：从数频次，到拼接固定窗口，到共享参数的循环，再到用门控制记忆。下一集把序列到序列展开，看机器翻译怎么用这套结构。</p>
+
+    <h2 id="pitfalls">14. 常见错误</h2>
+
+    <ol>
+      <li><strong>把 n 元概率算成「组合计数 ÷ 总词数」。</strong>分母应该是前缀计数，条件概率才有意义。</li>
+      <li><strong>以为 n 越大越好。</strong>阶数越高，组合越稀疏，五元可能不如四元；存储也涨得更快。</li>
+      <li><strong>以为前馈网络解决了变长输入。</strong>它只是把窗口固定成 $n-1$，窗口外的信息仍然进不来。</li>
+      <li><strong>把词向量当成单独存储的查表结果。</strong>它就是参数矩阵 $C$ 的一行，训练时跟着矩阵一起改。</li>
+      <li><strong>混淆拼接和相加。</strong>前馈语言模型把窗口内向量<strong>拼接</strong>，保留位置；CBOW 才是求平均。</li>
+      <li><strong>以为 RNN 的参数随句长增长。</strong>同一组 $W_x$、$W_h$、$W_y$ 在所有时间步复用，参数量与 $T$ 无关。</li>
+      <li><strong>把 BPTT 当成「只对最后一步反传」。</strong>每个位置的损失都参与，梯度沿时间累加；实践里可以截断，但那是近似。</li>
+      <li><strong>以为裁剪能治梯度消失。</strong>裁剪只限制梯度范数，治的是爆炸；消失要靠门控或别的结构。</li>
+      <li><strong>以为 LSTM 彻底解决了长依赖。</strong>它把梯度路径改短、让遗忘门容易学成「常开」，但门会饱和，特别长的依赖仍会丢。</li>
+      <li><strong>跨词表比较困惑度。</strong>分词或词表不同，PPL 不可比；它也不是任务指标，PPL 低不等于下游效果好。</li>
+    </ol>
+
+    <h2 id="quiz">15. 自测 8 题</h2>
+
+    <ol>
+      <li>写出语言模型的链式分解，并说明 n 元模型在哪里做了近似。</li>
+      <li>n 元模型的三个问题分别是什么？各有什么缓解办法？</li>
+      <li>前馈语言模型的输入怎么构造？输出维度是多少？为什么输出层参数最大？</li>
+      <li>前馈网络的参数为什么随 n 增长？RNN 为什么与句长无关？</li>
+      <li>BPTT 的梯度为什么要连乘？什么情况下会消失，什么情况下会爆炸？</li>
+      <li>写出梯度裁剪的公式，并解释它为什么治不了消失。</li>
+      <li>LSTM 的三个门各控制什么？$\mathbf{c}_t$ 和 $\mathbf{h}_t$ 的分工是什么？</li>
+      <li>GRU 相比 LSTM 少了什么？更新门取 0 时是什么效果？PPL 该怎么读？</li>
+    </ol>
+
+    <details>
+      <summary>答案</summary>
+      <ol>
+        <li>$P(w_{1:T})=\prod_t P(w_t\mid w_{&lt;t})$。n 元模型假设 $w_t$ 只依赖前 $n-1$ 个词，把很长的前文截断成固定窗口。</li>
+        <li>存储：组合数 $V^n$ 爆炸，只能存实际出现的；远距：窗口够不到远处的相关信息，可以加大 n 但代价高；稀疏：没见过的组合概率为 0，用平滑、回退、插值补，但补不回真实的概率。</li>
+        <li>把前 $n-1$ 个词查成 $d$ 维向量再首尾拼接，得到 $(n-1)d$ 维输入。输出维度是词表大小 $V$。输出层是 $H\times V$，与词表宽度成正比，所以最大。</li>
+        <li>前馈网络每个历史位置各有一套输入权重，n 增加就多一套；RNN 把「当前词」和「上一步状态」的权重固定成 $W_x$、$W_h$，所有时间步共用，所以与句长和 n 都无关。</li>
+        <li>因为 $\mathbf{h}_t$ 依赖 $\mathbf{h}_{t-1}$，对更早状态的梯度要穿过每一步的雅可比。$W_h$ 的谱范数持续小于 1 会指数衰减，持续大于 1 会指数放大。</li>
+        <li>$\mathbf{g}\leftarrow\tau\mathbf{g}/\lVert\mathbf{g}\rVert$（当 $\lVert\mathbf{g}\rVert>\tau$）。它只按比例缩短梯度，保留方向；梯度已经接近 0 时，缩短或保留都无信息可传。</li>
+        <li>遗忘门控制旧单元状态保留多少，输入门控制新候选写入多少，输出门控制从单元状态读出多少给隐藏状态。$\mathbf{c}_t$ 长期保存，$\mathbf{h}_t$ 是当前步的短期输出。</li>
+        <li>少了单独的单元状态和一个门（三门变两门），参数量约为 LSTM 的 75%。更新门取 0 时 $\mathbf{h}_t=\mathbf{h}_{t-1}$，历史被完整保留。PPL 读作「平均在多少个等可能候选里犹豫」，越低越好，且只在同词表、同测试集下可比。</li>
+      </ol>
+    </details>
+
+    <h2 id="takeaway">16. 收尾</h2>
+
+    <p>五句话记住这条线：</p>
+
+    <ol>
+      <li><strong>语言模型</strong>给每个位置的条件概率，整句概率是连乘；它既能补全，也能打分。</li>
+      <li><strong>n 元模型</strong>用频次估条件概率，简单直接，但存储、远距、稀疏三件事绕不开。</li>
+      <li><strong>前馈网络</strong>用词向量拼接加隐层，缓解了稀疏和存储，却仍然只有固定窗口，参数随 n 涨。</li>
+      <li><strong>RNN</strong> 把权重拆成「当前词」和「上一步」两块，沿时间共享参数；训练要 BPTT，梯度连乘带来消失与爆炸，裁剪只压得住爆炸。</li>
+      <li><strong>LSTM/GRU</strong> 用门把单元状态的梯度路径改短，困惑度从 206 降到 78 左右；这是缓解，不是终点。</li>
+    </ol>
+
+    <p>如果只用一句话记住它：<strong>语言模型的任务一直没变，变的是「历史怎么表示」——从数频次，到拼接固定窗口，到共享参数的循环，再到用门控制记忆。</strong>上一集《<a href="note-word-vector.html">词向量</a>》解决的是「词怎么变成数字」，这一集把这些数字接进语言模型；再往前，是《<a href="note-syntax.html">句法分析</a>》《<a href="note-bpe.html">BPE</a>》《<a href="note-seg-crf.html">中文分词与 CRF</a>》和《<a href="note-pos-hmm.html">词性标注与 HMM</a>》。</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+  <script defer src="book-shell.js?v=2"></script>
+  <script defer src="katex/katex.min.js"></script>
+  <script defer src="katex/auto-render.min.js"></script>
+  <script defer src="katex/render-math.js"></script>
+</body>
+</html>
