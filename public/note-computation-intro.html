@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>计算理论：从业务到语言 · 学习笔记</title>
+  <meta name="description" content="计算理论先问三个问题：用哪种模型、有没有算法、要多少资源。从一条合法与非法命令的差别出发，把业务实例编码成字符串，把判定问题写成语言，再看有限自动机、下推自动机和图灵机三档记忆；有限状态能描述登录会话与经典正则，却记不住任意深度嵌套。最后把语法正确、行为正确和计算可行分开，给出整门课的路线。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="legacy-v1.css" />
+  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="book-shell.css" />
+  <link rel="stylesheet" href="katex/katex.min.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .back-link { display: inline-block; margin-bottom: 28px; font-size: 0.92rem; }
+
+    .article .katex { font-size: 1.03em; }
+    .article .katex-display {
+      margin: 20px 0;
+      padding: 2px 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+    .article .katex-display::-webkit-scrollbar { height: 6px; }
+    .article .katex-display::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+    .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+    .table-wrap table { margin-bottom: 0; }
+    .table-wrap td:first-child, .table-wrap th:first-child { white-space: nowrap; }
+
+    .short-video { max-width: 340px; margin: 0 auto 32px; }
+    .short-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 9 / 16;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .short-video video::cue {
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.4;
+      color: #fffdf9;
+      background: rgba(33, 29, 25, 0.78);
+    }
+    .short-video figcaption {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">计算理论 · 绪论</p>
+    <h1>计算理论：从业务到语言</h1>
+
+    <blockquote>
+      一句话主线：工程里那些「能不能保证」的问题，最后都会变成三个更基本的问题——用哪种模型描述它、有没有算法对每个输入都答对且停机、要花多少时间和内存。为了回答它们，先把业务实例编码成有限字符串，把判定问题写成语言，再比较有限状态、栈和无界带子三种记忆能力。语法正确、行为正确、计算可行是三套不同的论证，不能互相代替。
+    </blockquote>
+
+    <figure class="short-video">
+      <video controls playsinline preload="metadata" width="1080" height="1920"
+             poster="media/computation-poster.jpg">
+        <source src="media/computation-5min.mp4" type="video/mp4" />
+        <track kind="captions" src="media/computation-zh.vtt" srclang="zh" label="中文" />
+        浏览器不支持内嵌视频，<a href="media/computation-5min.mp4">点这里下载这段短片</a>。
+      </video>
+      <figcaption>配套短片 · 约 5 分钟 · 有口播和字幕：从一条命令的合法边界，到三个基本问题、判定问题与语言、三档记忆模型，再到约束解码与课程路线</figcaption>
+    </figure>
+
+    <p>计算理论常被当成一门「证明课」，但它起点很工程：你写了一条命令，为什么它合法；你上传一个规划程序，为什么不能保证它一定停；你在有限站点里找最优路线，为什么算得这么慢。这一页把这三个看似无关的麻烦收束成一套共同语言，后面几集都在上面加工具。</p>
+
+    <h2 id="task">0. 任务：把业务问题变成可证明的问题</h2>
+
+    <p>业务问题通常长这样：「这个请求格式对不对」「这个程序会不会停」「这条路线是不是最优」。它们都能用自然语言说清楚，却没法直接证明。要证明，就得先把问题写成精确的形式：什么算输入、什么算答案、允许哪些操作、结论在什么假设下成立。</p>
+
+    <p>计算理论给出的形式化路线是：把实例编码成有限字符串，把问题变成「这个字符串属不属于某个集合」，再把集合叫成语言。之后所有问题都变成同一个形状：</p>
+
+    <p>$$w\in L\ ?$$</p>
+
+    <p>模型负责描述「怎么算」，算法负责回答「能不能算」，复杂度负责回答「算起来贵不贵」。三者分开，才有机会说清楚边界。</p>
+
+    <h2 id="command">1. 一条命令：合法与非法只差一位</h2>
+
+    <p>先看两条命令：<code>ON:07</code> 和 <code>ON:7</code>。前者合法，后者少了一位。很多系统会在业务层写一堆 <code>if</code> 来检查，但检查的本质是：所有合法命令构成一个集合，输入必须落在这个集合里。</p>
+
+    <p>把字符表记作 $\Sigma$，所有长度有限、由 $\Sigma$ 中字符组成的串记作 $\Sigma^{*}$。合法命令的集合就是 $\Sigma^{*}$ 的一个子集，也就是一个语言。判断一条命令合不合法，就是判断这个串属不属于这个语言。</p>
+
+    <p>这一步看起来只是换了个说法，但它把「模型能力问题」变成了「语言问题」：模型要保证的不是「大概像」，而是「只生成属于这个语言的串」。后面看到的自动机、文法和图灵机，都是在用不同强度的记忆来描述这类集合。</p>
+
+    <h2 id="scenes">2. 四个场景：软件在大规模上做决定</h2>
+
+    <p>现代软件每天都在替人做决定，而且规模很大。四个典型场景：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>场景</th><th>在决定什么</th><th>理论关心什么</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>AI 助手</td><td>生成一段程序能解析的调用</td><td>解析：输出是否属于合法语法</td></tr>
+          <tr><td>云平台</td><td>执行一条访问策略</td><td>授权：策略语言是否可判定、是否安全</td></tr>
+          <tr><td>外卖平台</td><td>在一段时间内规划路线</td><td>时间预算：问题有多难、近似到什么程度</td></tr>
+          <tr><td>消息系统</td><td>挡住现实可行的攻击</td><td>攻击模型：在什么假设下安全</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>这些问题表面上是产品问题，底层却在问同一件事：<strong>能保证什么，在什么假设下，代价是多少。</strong>「保证」需要模型，「假设」需要写清楚输入范围，「代价」需要复杂度分析。三者缺一，结论就不完整。</p>
+
+    <h2 id="questions">3. 三个基本问题：模型、可解性、代价</h2>
+
+    <p>整门课围着三个问题转：</p>
+
+    <ol>
+      <li><strong>哪种计算模型</strong>能识别这种模式、描述这个过程？有限状态够不够，需不需要栈，还是需要一条无界带子？</li>
+      <li><strong>存不存在一个算法</strong>，对每个输入都答对，而且一定停机？注意「答对」和「一定停」是两个条件，少一个都不叫判定器。</li>
+      <li><strong>解决问题要花多少时间、多少内存</strong>？同一个可解问题，可能是线性、指数，甚至已知没有多项式算法。</li>
+    </ol>
+
+    <p>三个问题分别对应表示、可解性和资源成本。它们不能互相替代：一个模型表达能力强，不代表问题可判定；一个问题可判定，不代表算得起；一个问题算得起，也不代表模型选得对。</p>
+
+    <h2 id="service">4. 一个外卖服务里的三个问题</h2>
+
+    <p>用一个外卖规划服务把三件事串起来。它接收请求，跑规划器，返回路线。三个环节各藏着一个理论问题：</p>
+
+    <ul>
+      <li><strong>解析</strong>：请求格式对不对，括号嵌套能不能识别。这是语言识别问题，有限状态或下推自动机就能处理一部分。</li>
+      <li><strong>终止性</strong>：能不能写一个通用检查器，判断任何上传的规划程序都会停机。这是停机问题，一般不可判定。</li>
+      <li><strong>优化</strong>：有限个站点里找最优路线要花多少工作量。这是搜索与优化问题，难点在组合规模。</li>
+    </ul>
+
+    <p>同一个应用，三个问题的性质完全不同。把它们混在一起，就会出现「格式检查过了，所以程序一定安全」这类错误结论。</p>
+
+    <h2 id="formal">5. 形式化：实例、编码、判定问题</h2>
+
+    <p>形式化的第一步是编码。业务里的「一张道路网、两个地点、一个预算」是实例；把它写成有限字符串，才是算法的输入。这个区别很重要：</p>
+
+    <ul>
+      <li><strong>实例</strong>是业务对象，可以有图、表、程序等各种形态；</li>
+      <li><strong>输入</strong>是编码后的有限字符串；</li>
+      <li><strong>字符串</strong>是某个语言里的元素。</li>
+    </ul>
+
+    <p>判定问题只问是或否。例如：给定道路网、起点、终点和预算 $B$，问有没有总长不超过 $B$ 的路线。它的答案是「是」或「否」，不带路线本身。</p>
+
+    <p>把答案为「是」的所有输入收集起来，就得到这个判定问题对应的语言：</p>
+
+    <p>$$L=\{\,w\in\Sigma^{*}\mid w\text{ 是答案为「是」的输入}\,\}$$</p>
+
+    <p>于是「解这个判定问题」和「判断 $w\in L$」是同一件事。判定问题不是把问题变简单，而是把问题变得可比较：不同业务问题编码后，可以放进同一套语言理论里。</p>
+
+    <h2 id="language">6. 语言与判定器：共同语言的两端</h2>
+
+    <p>语言是集合，判定器是算法。一个语言可判定，意思是存在一台机器（或一个算法），对每个输入串都停机，并且正确回答它属不属于这个语言。</p>
+
+    <p>两个条件都要：只答对但可能不停，不叫判定；一定停但偶尔答错，也不叫判定。只要求「属于时停机接受、不属于时可能不停」的，叫<strong>可识别</strong>，比可判定弱。</p>
+
+    <p>停机问题是经典的分界线：不存在一个通用算法，对任意程序 $P$ 和输入 $x$，都能判定 $P$ 在 $x$ 上会不会停。但把范围缩小到某一类程序，判定又可能变可行。所以「不可判定」永远要带上输入范围，不能把「一般不可判定」说成「任何情况都做不到」。</p>
+
+    <h2 id="models">7. 三种记忆模型：有限状态、栈、带子</h2>
+
+    <p>模型按记忆能力排，三档最常用：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>模型</th><th>记忆</th><th>典型用途</th><th>表达边界</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>有限自动机（FA）</td><td>有限个状态</td><td>词法识别、协议状态、经典正则</td><td>记不住任意深度的嵌套与计数</td></tr>
+          <tr><td>下推自动机（PDA）</td><td>一个栈</td><td>嵌套语法、解析</td><td>比正则强，但仍不是一般算法</td></tr>
+          <tr><td>图灵机（TM）</td><td>一条无界读写带</td><td>一般算法、可计算性</td><td>能力上限（丘奇-图灵论题）</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>有限自动机可以写成一个五元组：</p>
+
+    <p>$$M=(Q,\ \Sigma,\ \delta,\ q_0,\ F)$$</p>
+
+    <p>$Q$ 是有限状态集，$\Sigma$ 是字母表，$\delta:Q\times\Sigma\to Q$ 是转移函数，$q_0$ 是初始状态，$F\subseteq Q$ 是接受状态集。它识别的语言是：</p>
+
+    <p>$$L(M)=\{\,w\in\Sigma^{*}\mid \delta^{*}(q_0,w)\in F\,\}$$</p>
+
+    <p>其中 $\delta^{*}$ 表示读完整个串后到达的状态。模型本身没有「计数」能力，只有「现在在哪个状态」；这正是它快、也正是它弱的原因。</p>
+
+    <p>下推自动机多一个栈，读入时可以压栈、弹栈，所以能记住「开了几个括号」。图灵机再多一条可以左右移动、无限延伸的带子，能模拟我们通常理解的算法。「无界」是数学抽象，不是物理机器真的有无限内存；它研究的是输入长度趋于无穷时的性质。</p>
+
+    <h2 id="session">8. 有限状态能做什么：登录会话</h2>
+
+    <p>一个登录会话可以画成三个状态：未登录、已登录、锁定。事件有登录成功、登出、连续失败。策略规定每个状态允许哪些动作。</p>
+
+    <p>这张图就是一个有限自动机：状态是有限的，事件是字母表，转移是策略。锁定状态的所有出边都指向自己——一次违规不能被后来的登录抹掉。这个「自环」不是装饰，它表达的是「无论发生什么，都留在锁定」。</p>
+
+    <p>同样的结构还能识别词法单元、协议状态和经典正则表达式。有限状态的好处是：判断一个串属不属于语言，只需要从左到右跑一遍，时间和输入长度成正比，内存只需要存当前状态。</p>
+
+    <h2 id="boundary">9. 有限状态的边界：嵌套、计数与经典正则</h2>
+
+    <p>有限状态记不住任意深度的括号嵌套。直观地说，它没有地方存「已经开了几层」；状态再多也是有限的，而嵌套深度可以任意大。</p>
+
+    <p>「不能计数」可以用鸽笼原理说明。假设某台有限自动机能识别 $\{0^n1^n\mid n\ge1\}$。读完 $0^i$ 和 $0^j$（$i\ne j$）后，如果到达同一个状态，那么再读 $i$ 个 1，两台「路径」会同时到达接受状态，于是 $0^j1^i$ 也被接受，矛盾。不同的 $i$ 必须落在不同状态，但状态只有有限个，$i$ 可以任意大，矛盾。</p>
+
+    <p>正式的工具是泵引理：若 $L$ 是正则语言，则存在长度 $p$，任何长度不小于 $p$ 的 $s\in L$ 都能写成 $s=xyz$，满足 $|xy|\le p$、$|y|>0$，且对所有 $k\ge0$，$xy^{k}z\in L$。它的意思是：足够长的串里一定有一段可以「泵」大或泵小，仍留在语言里；数 0 和 1 的个数这种全局约束做不到，所以不是正则。</p>
+
+    <p>工程里的「正则引擎」还要小心：很多实现加了反向引用、前后瞻，表达能力已经超出经典正则语言。说「这是正则」时，先确认说的是理论上的正则，还是某个引擎的方言。</p>
+
+    <h2 id="decode">10. 语言约束生成：语法合规不等于正确</h2>
+
+    <p>回到开头那条命令。把命令语言编译成自动机，生成时随着字符前进，跟踪当前状态。每一步只允许那些还能补成合法输出的下一个词元，并且只有接受状态才允许结束。这样能保证输出语法合规。</p>
+
+    <p>但语法对，不代表事实对、权限对。命令里的站点可能存在也可能不存在，用户可能没有权限，预算可能不够。这些是语义和业务约束，需要另外验证。自动机只负责「形状」，不负责「意思」。</p>
+
+    <p>这条思路在工程里很常见：结构化输出、SQL 生成、协议消息、配置校验，都可以先用一个自动机或文法约束词元的合法范围，再把语义检查交给下一层。</p>
+
+    <h2 id="decision">11. 判定、搜索与优化：同一个问题的三种问法</h2>
+
+    <p>「找一条不超过预算的路线」可以问成三种问题：</p>
+
+    <ul>
+      <li><strong>判定</strong>：存在总长不超过 $B$ 的路线吗？答案只有是或否。</li>
+      <li><strong>搜索</strong>：如果存在，把那条路线输出出来。</li>
+      <li><strong>优化</strong>：在所有路线里找总长最短的那条。</li>
+    </ul>
+
+    <p>三者关系很近：会解优化，就能回答判定（比较最优值和 $B$）；会解判定，也能通过二分预算逼出最优值（在整数长度下）。搜索则要在判定之外再保留一条路径。理论课通常先研究判定问题，因为它的答案最干净，归约和证明都方便。</p>
+
+    <p>但「判定可解」不等于「优化容易」。判定只要求一个存在性答案，优化要在指数级组合里找最好；很多问题判定是 NP 完全，优化自然更难。后面会用多项式归约把「难」从一个问题传到另一个问题。</p>
+
+    <h2 id="roadmap">12. 课程路线：建模型、证边界、析资源、说保证</h2>
+
+    <p>整门课按四层展开：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>阶段</th><th>做什么</th><th>关键词</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>建模型</td><td>把「计算」写成精确对象</td><td>有限自动机、文法、下推自动机、图灵机</td></tr>
+          <tr><td>证边界</td><td>证明模型能做什么、不能做什么</td><td>构造、闭包、泵引理、不可判定性归约</td></tr>
+          <tr><td>析资源</td><td>给算法分类，比较难度</td><td>时间空间、多项式归约、NP 完全</td></tr>
+          <tr><td>说保证</td><td>写清楚结论的适用范围</td><td>假设、输入类别、结论范围</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>这条路线不是按历史顺序排的，而是按论证依赖排的：没有模型，谈不上能力；没有能力边界，谈不上不可判定；没有可判定性，复杂度分类也无从谈起。每一步都要说清楚假设和输入类别，否则结论会被误用。</p>
+
+    <h2 id="layers">13. 三条结论不能混</h2>
+
+    <p>整门课最重要的分界，是把三件事分开：</p>
+
+    <ol>
+      <li><strong>表达得出来</strong>：选定的模型能不能描述这个问题？</li>
+      <li><strong>有通用算法</strong>：存不存在对每个输入都答对且一定停机的算法？</li>
+      <li><strong>算得起</strong>：算法要花多少时间、多少内存？</li>
+    </ol>
+
+    <p>三者之间没有自动的蕴含关系。模型表达力强，可能反而带来不可判定；问题可判定，可能只有指数算法；算法很快，也可能只适用于很窄的输入类别。语法正确、行为正确、计算可行，是三套不同的论证。</p>
+
+    <h2 id="pitfalls">14. 常见错误</h2>
+
+    <ol>
+      <li><strong>把实例和输入混为一谈。</strong>实例是业务对象，输入是编码后的有限字符串；复杂度按编码长度算。</li>
+      <li><strong>把判定问题和优化问题混为一谈。</strong>判定只回答是或否；优化要给出最优值，难度可以不同。</li>
+      <li><strong>把「可识别」和「可判定」混用。</strong>可识别允许在「不属于」的输入上不停；可判定要求每个输入都停机并答对。</li>
+      <li><strong>以为有限状态能数任意深度。</strong>状态数有限，嵌套深度无界；要栈。</li>
+      <li><strong>把工程正则当成经典正则。</strong>反向引用、前后瞻已经超出经典正则语言，泵引理不能直接套。</li>
+      <li><strong>以为语法正确就等于语义正确。</strong>自动机只管形状，事实、权限、预算要另外验证。</li>
+      <li><strong>把「一般不可判定」说成「任何情况都做不到」。</strong>停机问题对一般程序不可判定，但对特定类别的程序可能有判定算法。</li>
+      <li><strong>以为模型越强越好。</strong>表达力越强，判定和资源性质往往越差；选模型要看问题需要什么。</li>
+      <li><strong>忽略输入编码。</strong>同一个问题换一种编码，输入长度会变，复杂度结论的表述也要跟着变。</li>
+      <li><strong>把「算法」定义得太松。</strong>算法必须是有限步、有效可执行的操作；「想一想」「猜一猜」不算。</li>
+    </ol>
+
+    <h2 id="quiz">15. 自测 8 题</h2>
+
+    <ol>
+      <li>为什么说「命令合不合法」是一个语言问题？</li>
+      <li>整门课的三个基本问题是什么？它们分别对应哪类结论？</li>
+      <li>实例、输入、字符串三者有什么区别？判定问题的答案长什么样？</li>
+      <li>判定器和「只会答对的机器」差在哪？可识别与可判定是什么关系？</li>
+      <li>有限自动机的五元组各是什么？它为什么记不住任意深度的括号？</li>
+      <li>用鸽笼原理说明有限状态不能识别 $\{0^n1^n\mid n\ge1\}$。</li>
+      <li>泵引理的三条结论是什么？它能用来证明什么、不能证明什么？</li>
+      <li>语法合规、事实正确、权限正确为什么是三件事？判定、搜索、优化又差在哪？</li>
+    </ol>
+
+    <details>
+      <summary>答案</summary>
+      <ol>
+        <li>所有合法命令构成 $\Sigma^{*}$ 的一个子集，也就是一个语言；判断命令合不合法就是判断串属不属于这个语言。</li>
+        <li>用哪种模型、有没有算法（对每个输入答对且停机）、要多少时间和内存。分别对应表示、可解性、资源成本。</li>
+        <li>实例是业务对象；输入是实例编码后的有限字符串；字符串是语言里的元素。判定问题只回答是或否。</li>
+        <li>判定器要求每个输入都停机并且答对；只要求「属于时停机接受」的是识别器。可判定强于可识别，可识别不一定可判定。</li>
+        <li>$M=(Q,\Sigma,\delta,q_0,F)$：有限状态集、字母表、转移函数、初始状态、接受状态集。状态数有限，无法记录无界的嵌套深度。</li>
+        <li>若读完 $0^i$ 和 $0^j$ 到同一状态，再读 $i$ 个 1 会让 $0^j1^i$ 也被接受，矛盾；不同 $i$ 必须对应不同状态，而状态只有有限个。</li>
+        <li>存在 $p$，任意足够长的 $s\in L$ 可写成 $xyz$，满足 $|xy|\le p$、$|y|>0$、$xy^kz\in L$。它只能证明「不正则」，不能证明「正则」；满足泵引理也不一定是正则。</li>
+        <li>自动机只验证语法形状；事实、权限、预算属于语义和业务约束。判定只回答存在性，搜索要输出路径，优化要找最优值。</li>
+      </ol>
+    </details>
+
+    <h2 id="takeaway">16. 收尾</h2>
+
+    <p>五句话记住这条线：</p>
+
+    <ol>
+      <li><strong>先形式化</strong>：实例编码成字符串，判定问题写成语言，算法才有明确的输入和答案。</li>
+      <li><strong>三个问题</strong>：哪种模型、有没有算法、要多少资源；分别对应表示、可解性、代价。</li>
+      <li><strong>三档记忆</strong>：有限状态、栈、无界带子；能力递增，边界也随之变化。</li>
+      <li><strong>有限状态有边界</strong>：登录会话、词法、经典正则可以；任意深度嵌套和计数不行，需要栈。</li>
+      <li><strong>三套论证</strong>：语法正确、行为正确、计算可行不能互相代替；说结论必须带假设和输入类别。</li>
+    </ol>
+
+    <p>如果只用一句话记住它：<strong>计算理论不是先问「怎么算得快」，而是先问「这个问题到底是什么形状、有没有算法、代价是多少」。</strong>下一集《边界与代价》会把停机问题和复杂度展开；再下一站，从最简单的有限记忆开始，进入有限自动机。</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+  <script defer src="book-shell.js?v=2"></script>
+  <script defer src="katex/katex.min.js"></script>
+  <script defer src="katex/auto-render.min.js"></script>
+  <script defer src="katex/render-math.js"></script>
+</body>
+</html>

@@ -53,7 +53,7 @@ src/data/site.tsx  ──import──▶  组件  ──return JSX──▶  Rea
 | `hero` | Hero | 首屏标题、副标题、两颗按钮、下方三个小标签 |
 | `aboutCards` | About | 「关于我」三张卡 |
 | `projects` | Projects | 4 张项目卡 |
-| `books` | Notes | 4 本书 / 13 篇（数据来自 `public/notes.json`） |
+| `books` | Notes | 5 本书 / 14 篇（数据来自 `public/notes.json`） |
 | `contact` | Contact | 联系区的两个按钮 |
 | `siteOwner` | Footer | 页脚署名（年份自动算） |
 
