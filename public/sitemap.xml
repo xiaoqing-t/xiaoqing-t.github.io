@@ -80,4 +80,19 @@
     <lastmod>2026-11-05</lastmod>
     <priority>0.6</priority>
   </url>
+  <url>
+    <loc>https://xiaoqing-t.github.io/note-boundaries-cost.html</loc>
+    <lastmod>2026-11-07</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://xiaoqing-t.github.io/note-dfa-nfa.html</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://xiaoqing-t.github.io/note-regex-pump.html</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.6</priority>
+  </url>
 </urlset>

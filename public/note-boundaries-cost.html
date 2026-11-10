@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>计算理论：边界与代价 · 学习笔记</title>
+  <meta name="description" content="不是算得慢，是根本没有通用算法。从停机问题和对角线论证出发，看逻辑障碍与三扇现实小门；再把代价写成增长率，区分 P、NP 与 NP 完全，理解归约、旅行商与最短路；最后把难度当成资源，放进密码学、AI 与量子计算，收束成表达、可判定、资源三类边界和五步分析法。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="legacy-v1.css" />
+  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="book-shell.css" />
+  <link rel="stylesheet" href="katex/katex.min.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article pre {
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      overflow-x: auto;
+      margin-bottom: 18px;
+    }
+    .article pre code {
+      background: none;
+      border: 0;
+      padding: 0;
+      font-size: 0.86rem;
+      line-height: 1.6;
+    }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .back-link { display: inline-block; margin-bottom: 28px; font-size: 0.92rem; }
+
+    .article .katex { font-size: 1.03em; }
+    .article .katex-display {
+      margin: 20px 0;
+      padding: 2px 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+    .article .katex-display::-webkit-scrollbar { height: 6px; }
+    .article .katex-display::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+    .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+    .table-wrap table { margin-bottom: 0; }
+    .table-wrap td:first-child, .table-wrap th:first-child { white-space: nowrap; }
+
+    .short-video { max-width: 340px; margin: 0 auto 32px; }
+    .short-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 9 / 16;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .short-video video::cue {
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.4;
+      color: #fffdf9;
+      background: rgba(33, 29, 25, 0.78);
+    }
+    .short-video figcaption {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">计算理论 · 第 2 集</p>
+    <h1>计算理论：边界与代价</h1>
+
+    <blockquote>
+      一句话主线：上一集把业务问题写成了语言，这一集回答两件事——哪些问题根本没有通用算法，有算法又要花多少资源。停机问题说明逻辑边界不能靠更快的硬件绕过；增长率说明多项式时间只是一个基准；P、NP、NP 完全和归约把难度分层；密码学把「难」当成资源；最后收束成表达、可判定、资源三类边界，以及一套五步分析法。
+    </blockquote>
+
+    <figure class="short-video">
+      <video controls playsinline preload="metadata" width="1080" height="1920"
+             poster="media/boundaries-poster.jpg">
+        <source src="media/boundaries-5min.mp4" type="video/mp4" />
+        <track kind="captions" src="media/boundaries-zh.vtt" srclang="zh" label="中文" />
+        浏览器不支持内嵌视频，<a href="media/boundaries-5min.mp4">点这里下载这段短片</a>。
+      </video>
+      <figcaption>配套短片 · 约 4 分半 · 有口播和字幕：停机问题、逻辑障碍、SMT 验证、增长率、P/NP、最短路与环游、密码学难度、AI 与量子，最后落到三类边界与五步法</figcaption>
+    </figure>
+
+    <p>第 1 集结束时留下一个悬念：同一份需求，可能卡在模型表达不够，也可能卡在没有通用算法，还可能卡在算不起。这一集按这个顺序往下走，先看最硬的逻辑边界，再看代价怎么增长，最后把三类限制分开。</p>
+
+    <h2 id="task">0. 任务：从「能不能算」到「算得起吗」</h2>
+
+    <p>上一集把判定问题写成语言：输入编码成有限字符串，问题变成「这个串属不属于某个集合」。这一集继续问两个更实际的问题：</p>
+
+    <ol>
+      <li><strong>有没有通用算法？</strong>对每一个合法输入，都能在有限步内停机，并且答对。</li>
+      <li><strong>有算法又要多少资源？</strong>时间、内存随输入长度怎么增长，常数加速能不能改变结论。</li>
+    </ol>
+
+    <p>两个问题对应两种不同的「不行」。第一种是逻辑上的不可能：不是实现不好，而是任何算法都做不到。第二种是资源上的不划算：算法存在，但增长太快，实际规模下用不了。把这两种「不行」混在一起，就会得出错误的工程结论。</p>
+
+    <h2 id="halt">1. 停机问题：一个所有人都想要的功能</h2>
+
+    <p>设想一个工具：输入任意程序 <code>P</code> 和输入 <code>x</code>，输出「停」或「不停」。如果真有这个工具，静态检查、程序分析、自动修复都会容易很多。</p>
+
+    <p>把「会停」的所有程序-输入对收集起来，得到一个语言：</p>
+
+    <p>$$H=\{\,\langle P,x\rangle\mid P\text{ 在输入 }x\text{ 上停机}\,\}$$</p>
+
+    <p>停机问题问的就是 $\langle P,x\rangle\in H$ 是否成立。结论是：<strong>$H$ 不可判定</strong>。不存在一个算法，对每个程序和输入都停机，并且都答对。</p>
+
+    <p>注意结论的范围：它说的是「通用判定器不存在」，不是「所有程序都无法分析」。对某一类受限程序，终止性可能可判定；对具体一个程序，跑一跑也可能看出它会停。不可判定性挡住的，是对所有输入都给出保证的通用方法。</p>
+
+    <h2 id="diagonal">2. 对角线：为什么判定器不存在</h2>
+
+    <p>证明用反证法。假设存在判定器 <code>H(P, x)</code>，对任意程序和输入都停机，并正确回答「停」或「不停」。用它构造一个新程序 <code>D</code>：</p>
+
+    <pre><code>D(P):
+    if H(P, P) == "停":
+        loop forever
+    else:
+        halt</code></pre>
+
+    <p>也就是说，<code>D</code> 拿到一个程序 <code>P</code>，先问「<code>P</code> 在输入 <code>P</code> 上会不会停」，然后故意做相反的事：会停就死循环，不会停就立刻停。</p>
+
+    <p>现在把 <code>D</code> 自己喂给 <code>D</code>，问 <code>D(D)</code> 会不会停：</p>
+
+    <ul>
+      <li>如果 <code>H(D, D)</code> 说「停」，那么 <code>D</code> 进入死循环，实际不停，矛盾；</li>
+      <li>如果 <code>H(D, D)</code> 说「不停」，那么 <code>D</code> 立刻停机，实际会停，仍然矛盾。</li>
+    </ul>
+
+    <p>两边都矛盾，所以假设不成立，通用判定器不存在。这个论证的形状和康托尔对角线、哥德尔不完备定理是同一类：把「对所有对象都成立的方法」拿来自指，构造一个专门反对它的对象。</p>
+
+    <h2 id="limit">3. 逻辑墙与三扇小门</h2>
+
+    <p>停机问题的障碍是逻辑上的，不是工程上的。给再多时间、再快的芯片，也绕不过去：硬件加速只能让已有的算法跑得快，不能把一个不存在的算法变出来。</p>
+
+    <p>但现实中的分析工具确实在工作。它们不是推倒了墙，而是从墙下开了三扇小门：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>退路</th><th>做法</th><th>代价</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>限制程序类</td><td>只分析规则允许的那一类程序，例如有限状态机、无递归的配置语言</td><td>能分析的范围变窄</td></tr>
+          <tr><td>保守近似</td><td>宁可多报，不可漏报；结论是「可能有问题」而不是「一定有问题」</td><td>会有误报，需要人工复核</td></tr>
+          <tr><td>有界搜索</td><td>只看有限步、有限深度、有限循环次数</td><td>只覆盖边界内，超出范围的输入没有保证</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>所以「工具能分析」和「工具给出通用保证」是两件事。看到一份分析报告，先问它的保证建立在哪种限制上：程序类、近似方向，还是搜索边界。限制不同，结论的适用范围就不同。</p>
+
+    <h2 id="smt">4. 受限模型：SAT/SMT 给出反例</h2>
+
+    <p>一个具体的例子是访问控制。把策略规则和一个「可能的越权」编码成逻辑约束，送进可满足性求解器：</p>
+
+    <ul>
+      <li><strong>可满足</strong>：求解器给出一组具体赋值，也就是一条真实的越权路径，可以直接复现；</li>
+      <li><strong>不可满足</strong>：在这个模型内不存在越权，约束本身已经把这种组合排除了。</li>
+    </ul>
+
+    <p>两条出口都要看。只演示「找到了越权」会让人以为工具只会报错；只演示「没有越权」又会隐瞒模型的边界。真正的保证是：<strong>在给定的策略模型和求解器语义下</strong>，不存在满足约束的路径。</p>
+
+    <p>边界也很清楚：有界检查只覆盖边界内；一般查询可能超时，或者求解器返回 <code>unknown</code>。返回未知不等于不可满足，超时也不等于安全。把「没找到反例」当成「不存在反例」，是这类工具最常见的误用。</p>
+
+    <h2 id="growth">5. 代价：增长率比常数加速更重要</h2>
+
+    <p>再看资源。设输入长度是 $n$，数基本操作。下面两组数字很能说明问题：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>$n$</th><th>$n^2$</th><th>$2^n$</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>30</td><td>900</td><td>约 $1.07\times 10^9$（十亿级）</td></tr>
+          <tr><td>60</td><td>3,600</td><td>约 $1.15\times 10^{18}$（百亿亿级）</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>$n$ 翻一倍，$n^2$ 只变成 4 倍；$2^n$ 却乘上 $2^{30}\approx 10^9$。常数级加速，比如把机器换快十倍，只能把 $2^n$ 的可用规模往前推一点点；增长率差一个量级，结果就是「能算」和「算到宇宙结束」的差别。</p>
+
+    <p>所以复杂度首先比较的是增长阶，不是具体秒数。但也要记住两点：大 $O$ 忽略常数，实际工程里常数可能很大；多项式时间只是理论基准，不保证实际快。一个 $O(n^{10})$ 的算法在 $n=100$ 时也可能完全不可用。</p>
+
+    <h2 id="pnp">6. P、NP、NP 完全</h2>
+
+    <p>判定问题按难度分层，最常用的三个类是：</p>
+
+    <ul>
+      <li><strong>P</strong>：存在多项式时间算法可解的问题。形式化地，$P=\bigcup_k \mathrm{DTIME}(n^k)$。</li>
+      <li><strong>NP</strong>：解可以在多项式时间内验证的问题。也就是说，存在一个多项式时间的验证器 $V$，使得 $x\in L$ 当且仅当存在一个多项式长度的证书 $c$，让 $V(x,c)$ 接受。</li>
+      <li><strong>NP 完全</strong>：属于 NP，并且 NP 中所有问题都能多项式时间归约到它。它是 NP 里最难的一类。</li>
+    </ul>
+
+    <p>三者的包含关系是 $P\subseteq NP$，NP 完全在 NP 内。$P=NP$ 是否成立仍是开放问题；目前既没有证明相等，也没有证明不等。</p>
+
+    <p>还有两个常见误解。第一，NP 完全不代表每个实例都难：难的是最坏情况下的通用解法，具体实例可能很容易，求解器也经常能快速搞定。第二，NP 不是「非多项式」，而是「非确定性多项式时间」，核心是验证容易，不是求解容易。</p>
+
+    <h2 id="reduction">7. 归约与旅行商</h2>
+
+    <p>归约把一个问题翻译成另一个问题，并且保持答案不变。多项式时间多一归约记作 $A\le_p B$：存在多项式时间可计算的函数 $f$，使得对每个实例 $x$，</p>
+
+    <p>$$x\in A\iff f(x)\in B.$$</p>
+
+    <p>如果 $A\le_p B$ 且 $B$ 有多项式算法，那么 $A$ 也有；反过来，如果 $A$ 很难，$B$ 也难。NP 完全的定义就是：$B\in NP$，且对每个 $A\in NP$ 都有 $A\le_p B$。</p>
+
+    <p>旅行商问题（TSP）是经典例子。给一座城市、每对城市之间的距离和一个预算 $B$，问有没有一条经过每座城市恰好一次、最后回到起点、总长不超过 $B$ 的环游。验证一条候选路线很容易：走一遍，加总长度，和预算比较。但判定「预算内有没有」是 NP 完全。</p>
+
+    <p>「验证容易」和「求解容易」是两件事。TSP 的候选解检查是线性的，但搜索空间是阶乘级；这正是 NP 的典型形状。</p>
+
+    <h2 id="route">8. 同一张地图：最短路与环游</h2>
+
+    <p>回到外卖。同一张道路网，换一个任务，难度完全不同：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>任务</th><th>问什么</th><th>难度</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>两点最短路</td><td>从 A 到 B 的最短路线</td><td>边权非负时有多项式算法（如 Dijkstra）</td></tr>
+          <tr><td>走遍所有站点</td><td>经过每个站点一次的最短环游</td><td>判定版本是 NP 完全；优化版本 NP 难</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>难在任务，不在图。同一张地图，找一条最短路很容易，要求走遍所有站点就难。工程上有三类应对：</p>
+
+    <ul>
+      <li><strong>精确求解</strong>：利用实例结构，比如小规模、稀疏图、特殊约束；最坏情况仍然很贵。</li>
+      <li><strong>近似</strong>：给出有证明的误差边界，比如解不超过最优解的某个倍数。</li>
+      <li><strong>启发式</strong>：用速度换质量保证，可能很好，也可能没有最坏情况保证。</li>
+    </ul>
+
+    <p>理论的作用不是替工程选一个万能方法，而是把「质量」和「代价」的交换说清楚：你要的是最优、可证明的近似，还是尽量快的好解。</p>
+
+    <h2 id="crypto">9. 难度作为资源：密码学</h2>
+
+    <p>「难」不一定是坏事，它也可以是一种资源。密码学假设某些问题对资源受限的对手是难的，比如大整数分解和离散对数。</p>
+
+    <p>安全归约把一次成功攻击，联系到打破某个数学假设：如果存在一个多项式时间的攻击者，能攻破这个系统，那么就能用它构造一个多项式时间的算法，去解决那个假设难题。于是「系统安全」变成了「假设成立」的条件命题。</p>
+
+    <p>这里有两个容易被忽略的条件。第一，安全通常关心<strong>实例分布</strong>，不只是最坏情况：随机生成的密钥要难，而不是所有密钥都难。第二，假设必须写清<strong>对手的计算模型</strong>：经典多项式时间、量子多项式时间，还是有限内存，结论完全不同。</p>
+
+    <p>量子计算改变了资源模型。足够强的量子计算机可以用 Shor 算法攻破分解和离散对数，所以基于这两类问题的公钥系统需要迁移。2024 年，NIST 定稿了三个抗量子标准：ML-KEM（FIPS 203）、ML-DSA（FIPS 204）和 SLH-DSA（FIPS 205）。这不是说所有密码都失效，而是说假设需要更新。</p>
+
+    <h2 id="aiq">10. AI 与量子：三层视角</h2>
+
+    <p>人工智能和量子计算也可以放进「模型 / 可解 / 代价」这三层来看。</p>
+
+    <p><strong>AI 的边界在保证，不在能力。</strong>学习到的启发式能引导搜索、生成候选解，在很多任务上经验效果很好；但正确性保证需要规格和验证。经验成功不等于对所有输入都有算法，也不等于输出满足业务约束。把模型放进系统，仍然要回答：输入范围是什么、失败时怎么办、谁来验证。</p>
+
+    <p><strong>量子计算改变资源模型，不改变逻辑边界。</strong>它对某些问题有加速；但它不能解决标准模型下的停机问题，也没有已知的多项式量子算法解 NP 完全。量子计算机不是「更快的图灵机」，它改变的是可用的操作和复杂度类，不是可计算性的定义。</p>
+
+    <p>两句话可以并排放在一起：AI 改变的是「怎么找解」，量子改变的是「算得多快」；两者都没有取消「模型、输入类别、假设」这三个条件。</p>
+
+    <h2 id="boundaries">11. 三种边界，不能混</h2>
+
+    <p>回到那个服务，它同时撞上三种不同的边界：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>边界</th><th>例子</th><th>结论</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>表达不够</td><td>任意深度的括号嵌套</td><td>有限状态记不住，需要栈；换模型可以解决</td></tr>
+          <tr><td>没有通用判定器</td><td>任意程序是否终止</td><td>一般不可判定；只能限制程序类、近似或有界搜索</td></tr>
+          <tr><td>资源要求高</td><td>最优环游的判定版本</td><td>NP 完全；精确解很贵，可用近似或启发式</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>三种限制不能混着说。模型表达不够，换更强的模型可能解决；没有通用判定器，换更快的机器也解决不了；资源要求高，问题本身可判定，只是最坏情况太贵。把三者混成一句「这个问题做不了」，就丢掉了最重要的信息：到底卡在哪一层。</p>
+
+    <h2 id="method">12. 五步分析法</h2>
+
+    <p>分析任何应用，都可以套同一条流水线：</p>
+
+    <ol>
+      <li><strong>形式化</strong>：把业务问题写成实例、编码和判定问题；先明确输入范围和答案是「是/否」还是「输出一个对象」。</li>
+      <li><strong>选模型</strong>：需要有限状态、栈，还是一条无界带子？模型决定能描述什么，也决定后面能证明什么。</li>
+      <li><strong>立保证</strong>：是通用判定、受限判定，还是有界检查？保证的范围要写在结论里。</li>
+      <li><strong>析资源</strong>：时间、内存随输入长度怎么增长？最坏情况和实际分布差多少？</li>
+      <li><strong>改设计</strong>：如果卡在边界上，是换模型、缩范围、放宽答案，还是接受近似？改完再回到第一步。</li>
+    </ol>
+
+    <p>五步不是一次性的流程，而是一个循环。最后一步「改设计」经常要回到第一步重新形式化；很多工程上的「算法优化」，本质上是在改问题的定义。</p>
+
+    <h2 id="pitfalls">13. 常见错误</h2>
+
+    <ol>
+      <li><strong>把「不可判定」说成「任何情况都做不到」。</strong>停机问题对一般程序不可判定，但对受限程序类可能有判定算法。</li>
+      <li><strong>以为更快的硬件能解决逻辑边界。</strong>硬件加速只改变常数，不改变可计算性。</li>
+      <li><strong>把「NP 完全」当成「每个实例都难」。</strong>难的是最坏情况下的通用解法，具体实例常常很容易。</li>
+      <li><strong>把 NP 理解成「非多项式」。</strong>NP 是「验证容易」，不是「求解一定慢」。</li>
+      <li><strong>把「没找到反例」当成「不存在反例」。</strong>求解器可能超时或返回未知；未知不等于不可满足。</li>
+      <li><strong>把「多项式时间」当成「实际很快」。</strong>大 $O$ 忽略常数，高次多项式在真实规模下可能不可用。</li>
+      <li><strong>把最短路和环游当成同一类问题。</strong>同一张图，任务不同，难度可以从多项式跳到 NP 难。</li>
+      <li><strong>把密码学安全当成「最坏情况难」。</strong>安全通常关心实例分布和对手模型，不只是最坏情况。</li>
+      <li><strong>以为 AI 的经验成功等于全输入保证。</strong>正确性需要规格、验证和失败处理。</li>
+      <li><strong>以为量子计算能解 NP 完全。</strong>没有已知的多项式量子算法；它改变资源模型，不改变停机问题。</li>
+    </ol>
+
+    <h2 id="quiz">14. 自测 8 题</h2>
+
+    <ol>
+      <li>停机问题为什么不可判定？用对角线论证写出矛盾。</li>
+      <li>「通用判定器不存在」和「这个程序会不会停」有什么区别？</li>
+      <li>逻辑墙下的三扇小门分别是什么？各自的保证范围是什么？</li>
+      <li>SAT 求解器返回可满足、不可满足、未知，分别能推出什么结论？</li>
+      <li>$n$ 从 30 到 60，$n^2$ 和 $2^n$ 各增长多少倍？这说明了什么？</li>
+      <li>P、NP、NP 完全的定义分别是什么？三者是什么关系？</li>
+      <li>$A\le_p B$ 的含义是什么？它为什么能用来证明 NP 完全？</li>
+      <li>表达不够、不可判定、NP 完全，这三种边界分别该怎么应对？</li>
+    </ol>
+
+    <details>
+      <summary>答案</summary>
+      <ol>
+        <li>假设判定器 $H$ 存在，构造 $D(P)$：若 $H(P,P)$ 说停就死循环，否则停机。问 $D(D)$：两种回答都会导致相反的结果，矛盾，所以 $H$ 不存在。</li>
+        <li>前者是对所有程序和输入的通用保证；后者是具体实例，可以靠运行、人工分析或受限工具回答。不可判定性只否定通用方法。</li>
+        <li>限制程序类、保守近似、有界搜索。分别把保证缩小到特定程序类、特定近似方向、特定搜索边界。</li>
+        <li>可满足给出具体反例；不可满足在模型内排除；未知表示求解器没有结论，不能推出安全或不安全。</li>
+        <li>$n^2$ 增长 4 倍；$2^n$ 增长 $2^{30}\approx 10^9$ 倍。增长阶比常数加速更重要。</li>
+        <li>P 是多项式时间可解；NP 是多项式时间可验证；NP 完全是 NP 中所有问题都能多项式归约到的那类。$P\subseteq NP$，$P=NP$ 仍开放。</li>
+        <li>存在多项式时间函数 $f$，使 $x\in A\iff f(x)\in B$。若 $A$ 是 NP 完全且 $A\le_p B$，则 $B$ 也是 NP 难；再验证 $B\in NP$，就得到 NP 完全。</li>
+        <li>表达不够：换更强模型（如加栈）；不可判定：限制程序类、近似或有界搜索；NP 完全：精确求解利用结构，或用近似、启发式换保证。</li>
+      </ol>
+    </details>
+
+    <h2 id="takeaway">15. 收尾</h2>
+
+    <p>五句话记住这一集：</p>
+
+    <ol>
+      <li><strong>停机问题划出逻辑边界</strong>：通用判定器不存在，更快的硬件也绕不过去。</li>
+      <li><strong>三扇小门换保证</strong>：限制程序类、保守近似、有界搜索；保证范围要跟着写清楚。</li>
+      <li><strong>增长率决定可用性</strong>：常数加速改变不了指数增长；多项式时间只是一个基准。</li>
+      <li><strong>难度可以分层</strong>：P、NP、NP 完全，归约保持答案；验证容易不等于求解容易。</li>
+      <li><strong>三类边界不能混</strong>：表达不够、不可判定、资源不够，对应三种完全不同的应对。</li>
+    </ol>
+
+    <p>如果只用一句话记住它：<strong>每一份保证，都带着一个模型、一个输入类别、一组假设。</strong>下一集开始，从最简单的有限记忆入手，先看有限自动机到底能表达什么。</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+  <script defer src="book-shell.js?v=2"></script>
+  <script defer src="katex/katex.min.js"></script>
+  <script defer src="katex/auto-render.min.js"></script>
+  <script defer src="katex/render-math.js"></script>
+</body>
+</html>

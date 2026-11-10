@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>计算理论：正则表达式与泵引理 · 学习笔记</title>
+  <meta name="description" content="从日志里的 (ON|OFF):[0-9][0-9] 出发，把正则表达式拆成三个原子和三种运算；双向连接自动机：按结构拼出 NFA，用 R(i,j,k) 动态规划反推正则；再看两个看起来像计数的语言，用泵引理和鸽笼原理证明 0 的 p 次方 1 的 p 次方不正则；最后收束到三个判定问题与 RE2 的工程取舍。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="legacy-v1.css" />
+  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="book-shell.css" />
+  <link rel="stylesheet" href="katex/katex.min.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article pre {
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      overflow-x: auto;
+      margin-bottom: 18px;
+    }
+    .article pre code {
+      background: none;
+      border: 0;
+      padding: 0;
+      font-size: 0.86rem;
+      line-height: 1.6;
+    }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .back-link { display: inline-block; margin-bottom: 28px; font-size: 0.92rem; }
+
+    .article .katex { font-size: 1.03em; }
+    .article .katex-display {
+      margin: 20px 0;
+      padding: 2px 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+    .article .katex-display::-webkit-scrollbar { height: 6px; }
+    .article .katex-display::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+    .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+    .table-wrap table { margin-bottom: 0; }
+    .table-wrap td:first-child, .table-wrap th:first-child { white-space: nowrap; }
+
+    .short-video { max-width: 340px; margin: 0 auto 32px; }
+    .short-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 9 / 16;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .short-video video::cue {
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.4;
+      color: #fffdf9;
+      background: rgba(33, 29, 25, 0.78);
+    }
+    .short-video figcaption {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">计算理论 · 第 4 集</p>
+    <h1>计算理论：正则表达式与泵引理</h1>
+
+    <blockquote>
+      一句话主线：上一集用机器描述正则语言，这一集换成写法。正则表达式只有三个原子和三种运算，能按结构拼成自动机，也能用 $R(i,j,k)$ 从自动机反推出来；但它的能力有边界：$0^n1^n$ 这类要求两个计数器同步增长的语言，任何有限自动机都写不出来。泵引理用鸽笼原理把这条边界证明出来，最后落到三个判定问题和工程上的取舍。
+    </blockquote>
+
+    <figure class="short-video">
+      <video controls playsinline preload="metadata" width="1080" height="1920"
+             poster="media/regex-pump-poster.jpg">
+        <source src="media/regex-pump-5min.mp4" type="video/mp4" />
+        <track kind="captions" src="media/regex-pump-zh.vtt" srclang="zh" label="中文" />
+        浏览器不支持内嵌视频，<a href="media/regex-pump-5min.mp4">点这里下载这段短片</a>。
+      </video>
+      <figcaption>配套短片 · 约 4 分 45 秒 · 有口播和字幕：日志正则、三个原子与三种运算、按结构拼 NFA、R(i,j,k) 动态规划、两个计数语言、泵引理与鸽笼证明、三个判定问题、RE2 的取舍</figcaption>
+    </figure>
+
+    <p>「正则」这个词在工程里出现得太频繁，容易被当成字符串模板。这一集把它还原成一个精确的语言描述：它有固定的语法，有对应的机器，也有明确的表达上限。</p>
+
+    <h2 id="task">0. 任务：从一行日志到一族串</h2>
+
+    <p>日志里要抓一类错误：行首是 <code>ON</code> 或 <code>OFF</code>，紧跟一个冒号，再跟两位数字。写成正则就是：</p>
+
+    <pre><code>(ON|OFF):[0-9][0-9]</code></pre>
+
+    <p>它匹配 <code>ON:07</code>、<code>OFF:12</code>，不匹配 <code>ON:7</code>，也不匹配 <code>ERR:99</code>。关键在于：它描述的不是某一条字符串，而是<strong>一整族</strong>字符串。写法给出模式，模式对应一个集合，这个集合就是语言。</p>
+
+    <h2 id="syntax">1. 三个原子，三种运算</h2>
+
+    <p>正则表达式的语法可以从三个原子出发：</p>
+
+    <ul>
+      <li><strong>$a$</strong>：只含一个字符的串，语言是 $\{a\}$；</li>
+      <li><strong>$\varepsilon$</strong>：空串，语言是 $\{\varepsilon\}$，只有一个长度为 0 的串；</li>
+      <li><strong>$\varnothing$</strong>：空集，语言是 $\{\}$，一个串都没有。</li>
+    </ul>
+
+    <p>三种运算把它们拼成更大的表达式：</p>
+
+    <ul>
+      <li><strong>并</strong> $R_1\cup R_2$：二选一，语言是两边的并集；</li>
+      <li><strong>连接</strong> $R_1R_2$：前后接起来，语言是所有「前一段接后一段」的串；</li>
+      <li><strong>星号</strong> $R^*$：重复零次或多次，语言是有限次连接的并。</li>
+    </ul>
+
+    <p>可以用递归的方式把语法写全：</p>
+
+    <p>$$R\ ::=\ a\ \mid\ \varepsilon\ \mid\ \varnothing\ \mid\ (R_1\cup R_2)\ \mid\ (R_1R_2)\ \mid\ R^*$$</p>
+
+    <p>括号只改变结合顺序，不改变语言。工程里的正则还有字符类、量词、锚点、分组等语法糖，但它们大多可以翻译回这三个原子和三种运算。</p>
+
+    <blockquote>
+      $\varepsilon$ 和 $\varnothing$ 必须分开：空串语言含一个长度为 0 的串；空集一个串都没有。前者的星号是 $\{\varepsilon\}$，后者连空串都不含。
+    </blockquote>
+
+    <h2 id="semantics">2. 语义：每个表达式对应一个语言</h2>
+
+    <p>按结构递归定义 $L(R)$：</p>
+
+    <p>$$L(R_1\cup R_2)=L(R_1)\cup L(R_2)$$</p>
+
+    <p>$$L(R_1R_2)=\{\,uv\mid u\in L(R_1),\ v\in L(R_2)\,\}$$</p>
+
+    <p>$$L(R^*)=\{\,u_1u_2\cdots u_k\mid k\ge 0,\ u_i\in L(R)\,\}$$</p>
+
+    <p>注意 $R^*$ 里 $k=0$ 的情况：不管 $R$ 是什么，$\varepsilon$ 一定属于 $R^*$。</p>
+
+    <p>几条常用的等式，可以直接从语义验证：</p>
+
+    <p>$$R\cup\varnothing=R,\qquad R\varepsilon=R,\qquad R\varnothing=\varnothing$$</p>
+
+    <p>$$\varnothing^*=\{\varepsilon\},\qquad \varepsilon^*=\{\varepsilon\}$$</p>
+
+    <p>这些等式在化简表达式时很有用，但要注意它们说的是语言相等，不是字符串相同。</p>
+
+    <h2 id="build">3. 正则到自动机：按结构拼</h2>
+
+    <p>正则和有限自动机等价：任给一个正则表达式，都能造出一个接收同样语言的 NFA。做法是自底向上，对语法树做归纳。</p>
+
+    <ul>
+      <li><strong>字符 $a$</strong>：两个状态，一条标记为 $a$ 的边；</li>
+      <li><strong>空串 $\varepsilon$</strong>：两个状态，一条 $\varepsilon$ 边；</li>
+      <li><strong>空集 $\varnothing$</strong>：起点与接受状态之间没有路；</li>
+      <li><strong>并、连接、星号</strong>：分别套用上一集的三种 $\varepsilon$ 构造。</li>
+    </ul>
+
+    <p>每一步只增加常数个状态和 $\varepsilon$ 边，所以构造出的 NFA 状态数是表达式长度的线性量级。这个构造常叫 Thompson 构造。</p>
+
+    <p>反过来，自动机到正则也可以用同样的思路：不是「拼机器」，而是「消状态」。下一节给出动态规划的做法。</p>
+
+    <h2 id="dp">4. 自动机到正则：$R(i,j,k)$</h2>
+
+    <p>任给一个 DFA，怎么写出它的正则表达式？直接观察图会把路径枚举爆炸。用动态规划，把状态编号 $1,\dots,n$，定义三元函数：</p>
+
+    <p>定义三元函数 $R(i,j,k)$：从 $i$ 读串 $w$ 到 $j$，并且路径中间经过的状态编号不超过 $k$。所有这样的 $w$ 构成一个语言，也可以看成一个正则表达式。</p>
+
+    <p>「中间」指路径上除起点和终点之外的状态。$R(i,j,k)$ 是一个语言，也可以看成一个正则表达式。</p>
+
+    <p>基础情况是 $k=0$：中间不允许经过任何状态，只可能一步从 $i$ 到 $j$，所以只含一条边上的字符；如果 $i=j$，还要加上空串。</p>
+
+    <p>递推分两支：要么不用第 $k$ 个状态，要么用。用的话，路径可以拆成「到 $k$」「在 $k$ 上绕圈」「从 $k$ 到 $j$」三段：</p>
+
+    <p>$$R(i,j,k)=R(i,j,k-1)\ \cup\ R(i,k,k-1)\,R(k,k,k-1)^*\,R(k,j,k-1)$$</p>
+
+    <p>第三个数每次减一，最后落到只走一条边的基础情况。按 $k=0,1,\dots,n$ 逐层填表，每一格都是一个正则表达式。</p>
+
+    <p>最后把所有「起点到某个接受状态」的格子并起来：</p>
+
+    <p>$$R=\bigcup_{f\in F}R(q_0,f,n)$$</p>
+
+    <p>这个递推也解释了广义非确定自动机（GNFA）的消状态法：每消掉一个中间状态，就把经过它的路径「折叠」进一条边。两者是同一件事的两种写法。</p>
+
+    <h2 id="counting">5. 两个看起来像计数的语言</h2>
+
+    <p>下面两个语言很像，但一个正则，一个不正则：</p>
+
+    <p>$$L_1=\{\,w\mid \#_0(w)=\#_1(w)\,\}$$</p>
+
+    <p>$$L_2=\{\,w\mid \#_{01}(w)=\#_{10}(w)\,\}$$</p>
+
+    <p>其中 $\#_0(w)$ 表示 0 的个数，$\#_{01}(w)$ 表示子串 01 出现的次数。</p>
+
+    <p>$L_2$ 是正则的。原因是两个次数的差只由首尾决定。逐字符扫描时，每次从 0 变到 1，$\#_{01}$ 加一；每次从 1 变到 0，$\#_{10}$ 加一。差值只在「首尾不同」时非零：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>首字符</th><th>尾字符</th><th>$\#_{01}-\#_{10}$</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>0</td><td>1</td><td>+1</td></tr>
+          <tr><td>1</td><td>0</td><td>-1</td></tr>
+          <tr><td>0</td><td>0</td><td>0</td></tr>
+          <tr><td>1</td><td>1</td><td>0</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>所以 $L_2$ 等价于「首尾相同，或者长度不超过 1」。有限状态只要记住首字符，再检查尾字符，就够了。</p>
+
+    <p>$L_1$ 要求两个计数同步增长：读完任意长的前缀，都要知道 0 和 1 的差是多少，而这个差没有上界。有限状态记不住无界的整数，所以 $L_1$ 不正则。下一节的泵引理把这句话变成证明。</p>
+
+    <h2 id="pump">6. 泵引理：正则语言的必要条件</h2>
+
+    <p>泵引理说的是：如果 $A$ 是正则语言，那么存在一个「泵长度」$p$，使得 $A$ 里每个长度至少为 $p$ 的串，都能切成三段 $x,y,z$，满足三件事：</p>
+
+    <p>$$|y|>0,\qquad |xy|\le p,\qquad xy^iz\in A$$</p>
+
+    <p>直观理解：机器只有 $p$ 个状态，读一个足够长的串，必然在某个状态上重复。两个相同状态之间读到的字符就是 $y$；这段是一个环，可以绕任意多次，也可以一次都不绕。绕零次就是删掉 $y$，绕两次就是把 $y$ 重复一遍。</p>
+
+    <p>三条性质缺一不可：$|y|>0$ 保证确实绕了一圈；$|xy|\le p$ 保证这个环出现在前 $p$ 个字符内；$xy^iz\in A$ 要求对每个 $i\ge 0$ 都成立，保证无论绕几次，串仍然属于 $A$。</p>
+
+    <blockquote>
+      泵引理只是必要条件，不是充分条件。满足它不代表正则；但违反它，就一定不正则。用它证明不正则时，切分不是你随便选：要对所有满足条件的切分都推出矛盾。
+    </blockquote>
+
+    <h2 id="proof">7. 证明：鸽笼原理找出一个环</h2>
+
+    <p>设 $A$ 被一个 DFA $M$ 接收，$M$ 有 $p$ 个状态。取 $A$ 中任意一个长度 $n\ge p$ 的串 $s=s_1s_2\cdots s_n$，考虑运行时的状态序列：</p>
+
+    <p>$$r_0,\ r_1,\ \dots,\ r_n$$</p>
+
+    <p>一共有 $n+1$ 个状态，而机器只有 $p$ 个状态。前 $p+1$ 个状态 $r_0,\dots,r_p$ 里，由鸽笼原理，必有两个相同。设 $r_i=r_j$，其中 $0\le i&lt;j\le p$。令：</p>
+
+    <p>$$x=s_1\cdots s_i,\qquad y=s_{i+1}\cdots s_j,\qquad z=s_{j+1}\cdots s_n$$</p>
+
+    <p>因为 $i&lt;j$，所以 $|y|=j-i>0$；因为 $j\le p$，所以 $|xy|=j\le p$。从 $r_i$ 读 $y$ 回到 $r_i$，这段是一个环：绕零次、一次、多次，状态序列都成立。因此 $xy^iz\in A$ 对每个 $i\ge 0$ 成立。</p>
+
+    <p>证明里没有用到 $A$ 的具体结构，只用了「状态数有限」这一个事实。泵长度 $p$ 可以取状态数，也可以取任何不小于状态数的值。</p>
+
+    <h2 id="nonregular">8. 用泵引理证明 $0^n1^n$ 不正则</h2>
+
+    <p>令 $A=\{0^n1^n\mid n\ge 0\}$。假设 $A$ 正则，泵长度为 $p$。取：</p>
+
+    <p>$$s=0^p1^p$$</p>
+
+    <p>它的长度是 $2p\ge p$，所以存在切分 $s=xyz$ 满足三条性质。因为 $|xy|\le p$，而前 $p$ 个字符全是 0，所以 $y$ 只能由 0 组成；又因为 $|y|>0$，$y=0^k$，$k\ge 1$。</p>
+
+    <p>现在泵一次，取 $i=2$：</p>
+
+    <p>$$xy^2z=0^{p+k}1^p$$</p>
+
+    <p>0 比 1 多 $k$ 个，不在 $A$ 里。再泵零次，取 $i=0$：</p>
+
+    <p>$$xy^0z=0^{p-k}1^p$$</p>
+
+    <p>0 比 1 少 $k$ 个，也不在 $A$ 里。两种都违反 $xy^iz\in A$，矛盾。所以 $A$ 不正则。</p>
+
+    <p>这个论证覆盖了所有满足条件的切分：无论 $y$ 取在前 $p$ 个 0 的哪一段，泵一次都会让 0 变多，泵零次都会让 0 变少。只要有一种泵法跳出语言，就足以推翻「$A$ 正则」。</p>
+
+    <h2 id="closure">9. 闭包性质也能用来反证</h2>
+
+    <p>正则语言对并、连接、星号、补集、交集都封闭。这些封闭性不只用来构造，也能用来证明不正则，常用的是反证：假设某个语言正则，经过封闭运算推出一个已知不正则的语言也正则，矛盾。</p>
+
+    <p>例如要证 $L=\{\,0^n1^n\mid n\ge 0\,\}$ 不正则，也可以假设它正则，再与正则语言 $0^*1^*$ 求交：</p>
+
+    <p>$$L\cap 0^*1^*=L$$</p>
+
+    <p>这不会产生矛盾，因为交出来还是它自己。更常见的是反过来：已知某个语言不正则，用封闭性推出另一个语言也不正则。</p>
+
+    <p>封闭性证明里有两个容易忽略的前提：补集要求机器已经补全；交集用乘积构造，要求两台都是确定机器。前提不满足，构造就不成立。</p>
+
+    <h2 id="decide">10. 三个判定问题</h2>
+
+    <p>对有限自动机，下面三个问题都可以判定，而且都能给出具体的算法：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>问题</th><th>输入</th><th>做法</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>接收</td><td>机器 $M$ 和串 $w$</td><td>从起点模拟，读完看是否在接受状态</td></tr>
+          <tr><td>空性</td><td>机器 $M$</td><td>从起点做可达性搜索，看能否到达接受状态</td></tr>
+          <tr><td>等价</td><td>机器 $M_1,M_2$</td><td>确定化后取对称差，检查是否为空</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>三个问题都会停机：串的长度有限，模拟步数有限；状态数有限，可达性搜索最多访问每个状态一次；对称差的乘积状态数最多是两个机器状态数的乘积。</p>
+
+    <p>等价判定也可以用乘积构造直接做：两台机器同时运行，看是否存在一个串，使一台接受、另一台不接受。存在就是不等价，不存在就是等价。</p>
+
+    <h2 id="tools">11. 工程边界：线性时间与 $2^m$</h2>
+
+    <p>工程上用正则，要记住两个边界。</p>
+
+    <p>第一，固定表达式的确定自动机，读 $n$ 个字符是线性时间：每个字符走一步，不需要回退。</p>
+
+    <p>第二，把 $m$ 个状态的 NFA 确定化，最坏要 $2^m$ 个状态。这个指数膨胀在工程里是真实存在的：某些模式会触发状态爆炸，编译期内存暴涨，或者匹配时回溯次数失控。</p>
+
+    <p>RE2 这类引擎的选择是：放弃反向引用和前后瞻，只保留能用自动机线性模拟的语法，换来线性时间和可控内存。这是一个明确的取舍，不是「功能少所以弱」。</p>
+
+    <p>另一类引擎用回溯实现更丰富的语法，代价是最坏情况下的指数级回溯。写正则时，如果输入来自外部、长度不可控，就要特别小心嵌套量词和可选分支的组合。</p>
+
+    <h2 id="pitfalls">12. 常见错误</h2>
+
+    <ol>
+      <li><strong>把正则当字符串模板。</strong>正则描述一个语言，不是「查找某个关键词」；锚点和边界决定它匹配整串还是子串。</li>
+      <li><strong>混淆 $\varepsilon$ 与 $\varnothing$。</strong>空串语言含一个长度为 0 的串；空集一个串都没有。</li>
+      <li><strong>以为泵引理是充分条件。</strong>满足三条性质不代表正则；它只能用来证明不正则。</li>
+      <li><strong>只试一种切分。</strong>证明不正则时，要对所有满足 $|xy|\le p$、$|y|>0$ 的切分推出矛盾。</li>
+      <li><strong>忘记 $|xy|\le p$ 的作用。</strong>它把 $y$ 限制在前 $p$ 个字符内，是很多证明的关键。</li>
+      <li><strong>在未补全的机器上求补。</strong>缺边会被当成拒绝，补出来的语言不对。</li>
+      <li><strong>把确定化当成免费操作。</strong>最坏 $2^m$ 个状态；工程上要评估模式复杂度和输入规模。</li>
+      <li><strong>忽略引擎差异。</strong>反向引用、前后瞻、回溯语义在不同引擎里行为不同；跨引擎迁移要重新测试。</li>
+    </ol>
+
+    <h2 id="quiz">13. 自测 8 题</h2>
+
+    <ol>
+      <li>正则表达式的三个原子和三种运算分别是什么？</li>
+      <li>$L(\varepsilon)$ 和 $L(\varnothing)$ 分别是什么？$\varnothing^*$ 呢？</li>
+      <li>把 $(ab)^*$ 按结构翻译成 NFA，需要哪些构造？</li>
+      <li>$R(i,j,k)$ 的三个参数分别表示什么？递推式的两个分支是什么？</li>
+      <li>为什么 $\#_{01}(w)=\#_{10}(w)$ 是正则的，而 $\#_0(w)=\#_1(w)$ 不是？</li>
+      <li>写出泵引理的三条性质，并说明每条的作用。</li>
+      <li>用泵引理证明 $0^n1^n$ 不正则时，为什么 $y$ 只能由 0 组成？</li>
+      <li>接收、空性、等价三个判定问题分别怎么做？为什么都会停机？</li>
+    </ol>
+
+    <details>
+      <summary>答案</summary>
+      <ol>
+        <li>原子：一个字符、空串、空集；运算：并、连接、星号。</li>
+        <li>$L(\varepsilon)=\{\varepsilon\}$；$L(\varnothing)=\{\}$；$\varnothing^*=\{\varepsilon\}$，因为星号允许重复零次。</li>
+        <li>字符 $a,b$ 各用一条边；连接把两段接起来；星号用新起点、$\varepsilon$ 进入原机器、接受态 $\varepsilon$ 回到起点，并允许直接接受空串。</li>
+        <li>$i$ 起点、$j$ 终点、$k$ 允许经过的最大状态编号；分支一是不用 $k$，取 $R(i,j,k-1)$；分支二是用 $k$，拆成到 $k$、在 $k$ 上绕圈、从 $k$ 到 $j$。</li>
+        <li>前者两个次数的差只由首尾决定，有限状态记住首字符就够；后者要求两个计数器同步增长，差值无界，有限状态记不住。</li>
+        <li>$|y|>0$ 保证绕了一圈；$|xy|\le p$ 保证环在前 $p$ 个字符内；$xy^iz\in A$ 保证任意次重复仍在语言里。</li>
+        <li>取 $s=0^p1^p$，前 $p$ 个字符全是 0，而 $|xy|\le p$，所以 $y$ 落在全 0 的前缀里；又 $|y|>0$，所以 $y=0^k$。</li>
+        <li>接收：模拟到串尾；空性：从起点做可达性搜索；等价：确定化后取对称差。串长有限、状态数有限，所以都会停机。</li>
+      </ol>
+    </details>
+
+    <h2 id="takeaway">14. 收尾</h2>
+
+    <p>四句话记住这一集：</p>
+
+    <ol>
+      <li><strong>正则 = 有限自动机</strong>：三个原子、三种运算，按结构可以互相翻译。</li>
+      <li><strong>泵引理证明不正则</strong>：状态有限，长串必然出现重复状态，重复段可以任意泵。</li>
+      <li><strong>三个判定问题都可解</strong>：接收、空性、等价，都有会停机的算法。</li>
+      <li><strong>工程正则有取舍</strong>：线性时间与完整语法，往往只能选一边。</li>
+    </ol>
+
+    <p>如果只用一句话记住它：<strong>正则能写出一整族串，但写不出需要无界计数的语言。</strong>下一集给机器加一个栈，看看多出来的那点存储能把表达力推到哪里。</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+  <script defer src="book-shell.js?v=2"></script>
+  <script defer src="katex/katex.min.js"></script>
+  <script defer src="katex/auto-render.min.js"></script>
+  <script defer src="katex/render-math.js"></script>
+</body>
+</html>

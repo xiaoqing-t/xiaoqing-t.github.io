@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>计算理论：DFA 与 NFA · 学习笔记</title>
+  <meta name="description" content="从会话监控的三个状态出发，把有限自动机写成五元组；用输入路径定义接收与语言；再看非确定自动机、ε 转移和子集构造，理解为什么猜测不增加能力、代价是最坏 2 的 m 次方；最后用并、连接、星号、补集、乘积处理正则运算，并看清有限状态记不住计数的边界。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="legacy-v1.css" />
+  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="book-shell.css" />
+  <link rel="stylesheet" href="katex/katex.min.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article pre {
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      overflow-x: auto;
+      margin-bottom: 18px;
+    }
+    .article pre code {
+      background: none;
+      border: 0;
+      padding: 0;
+      font-size: 0.86rem;
+      line-height: 1.6;
+    }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .back-link { display: inline-block; margin-bottom: 28px; font-size: 0.92rem; }
+
+    .article .katex { font-size: 1.03em; }
+    .article .katex-display {
+      margin: 20px 0;
+      padding: 2px 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+    .article .katex-display::-webkit-scrollbar { height: 6px; }
+    .article .katex-display::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+    .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+    .table-wrap table { margin-bottom: 0; }
+    .table-wrap td:first-child, .table-wrap th:first-child { white-space: nowrap; }
+
+    .short-video { max-width: 340px; margin: 0 auto 32px; }
+    .short-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 9 / 16;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .short-video video::cue {
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.4;
+      color: #fffdf9;
+      background: rgba(33, 29, 25, 0.78);
+    }
+    .short-video figcaption {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">计算理论 · 第 3 集</p>
+    <h1>计算理论：DFA 与 NFA</h1>
+
+    <blockquote>
+      一句话主线：上一集说有限记忆能表达一类问题，这一集给出第一个精确模型——确定有限自动机。它把「每个状态、每个字符只有一个去处」写成总函数；非确定自动机允许一个输入走向一组状态，但子集构造证明它并不更强，代价是最坏 $2^m$ 个状态。最后用并、连接、星号、补集和乘积把这些机器接起来，也看清它们记不住计数的边界。
+    </blockquote>
+
+    <figure class="short-video">
+      <video controls playsinline preload="metadata" width="1080" height="1920"
+             poster="media/dfa-nfa-poster.jpg">
+        <source src="media/dfa-nfa-5min.mp4" type="video/mp4" />
+        <track kind="captions" src="media/dfa-nfa-zh.vtt" srclang="zh" label="中文" />
+        浏览器不支持内嵌视频，<a href="media/dfa-nfa-5min.mp4">点这里下载这段短片</a>。
+      </video>
+      <figcaption>配套短片 · 约 4 分半 · 有口播和字幕：三个状态、五元组、接收与语言、NFA 与 ε 转移、子集构造、三种闭包、乘积与反例，最后停在有限状态的边界</figcaption>
+    </figure>
+
+    <p>「有限记忆」这句话要先落成一个能计算的模型，才谈得上证明。这一集从一张会话监控表开始，把模型写成五元组，再讨论两件事：它接收哪些串，以及去掉非确定性要付多少代价。</p>
+
+    <h2 id="task">0. 任务：分类所有有限长的操作记录</h2>
+
+    <p>一个会话监控器只关心三件事：用户还没登录、已经登录、已经违规。事件只有三种：登录、登出、读资源。规则也很简单：</p>
+
+    <ul>
+      <li>未登录时读资源，立刻进入违规；</li>
+      <li>违规之后，任何事件都留在违规；</li>
+      <li>其余情况按常识在未登录与已登录之间切换。</li>
+    </ul>
+
+    <p>问题是：给一条有限长的事件记录，判断它最终落在哪个状态。记录可以任意长，但状态只有三个。这就是有限自动机最典型的用法：<strong>用有限个状态，概括任意长的历史</strong>。</p>
+
+    <h2 id="monitor">1. 三个状态与一张转移表</h2>
+
+    <p>把状态画成节点，事件画成有向边，就得到一张状态图。未登录读资源、已登录读资源，两条边都指向违规；违规状态对每个事件都回到自身，这种状态叫<strong>吸收态</strong>。</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>状态</th><th>登录</th><th>登出</th><th>读资源</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>未登录</td><td>已登录</td><td>未登录</td><td>违规</td></tr>
+          <tr><td>已登录</td><td>已登录</td><td>未登录</td><td>违规</td></tr>
+          <tr><td>违规</td><td>违规</td><td>违规</td><td>违规</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>这张表有两个关键性质：每个格子都填了，而且只填一个状态。只要缺一格，或者一格填两个状态，它就不是确定自动机。这两条限制会在定义里写成「总函数」和「唯一目标」。</p>
+
+    <h2 id="dfa">2. 确定有限自动机：五元组</h2>
+
+    <p>确定有限自动机（DFA）是一个五元组：</p>
+
+    <p>$$M=(Q,\ \Sigma,\ \delta,\ q_0,\ F)$$</p>
+
+    <ul>
+      <li>$Q$：有限的状态集；</li>
+      <li>$\Sigma$：有限的字母表，也就是允许出现的输入字符；</li>
+      <li>$\delta:Q\times\Sigma\to Q$：转移函数；</li>
+      <li>$q_0\in Q$：初始状态；</li>
+      <li>$F\subseteq Q$：接受状态集。</li>
+    </ul>
+
+    <p>转移函数是<strong>总函数</strong>：对每个状态和每个字符，都必须给出唯一的下一个状态。也就是说，$\delta$ 的定义域是整个 $Q\times\Sigma$，值域是 $Q$，不能有「未定义」的格子，也不能一个输入对应两个目标。</p>
+
+    <p>画成图就是：节点是状态，边是字符。确定机器的图上，同一个节点出发、同一个字符标记的边最多一条。</p>
+
+    <h3>一个两状态的例子：偶校验</h3>
+
+    <p>只读 0 和 1，要求读完后 1 的个数是偶数。两个状态就够了：偶、奇。读 0 切换状态，读 1 留在原状态。初始状态是偶，接受状态也是偶。</p>
+
+    <p>这个例子说明：状态不必对应「记住整个历史」，只需要记住<strong>与后续判断有关的那一点信息</strong>。偶校验只关心当前 1 的个数是奇还是偶，不关心前面出现过什么顺序。</p>
+
+    <h2 id="accept">3. 接收、运行与语言</h2>
+
+    <p>给一个输入串 $w=w_1w_2\cdots w_n$，从 $q_0$ 出发，每读一个字符走一条边：</p>
+
+    <p>$$r_0=q_0,\qquad r_{i}=\delta(r_{i-1},w_i)$$</p>
+
+    <p>走完整串后停在 $r_n$。如果 $r_n\in F$，就说机器<strong>接收</strong>这个串；否则不接收。把 $\delta$ 按串递归扩展，可以写成 $\hat\delta(q,w)$，于是接收条件就是：</p>
+
+    <p>$$\hat\delta(q_0,w)\in F$$</p>
+
+    <p>一台机器接收的所有串，构成它的<strong>语言</strong>：</p>
+
+    <p>$$L(M)=\{\,w\in\Sigma^*\mid \hat\delta(q_0,w)\in F\,\}$$</p>
+
+    <p>如果存在某个有限自动机 $M$ 使 $L=L(M)$，就称 $L$ 是<strong>正则语言</strong>。注意这里的顺序：先有机器，再有它接收的语言；正则语言是「能被某台有限自动机接收」这个性质，而不是某种写法。</p>
+
+    <h2 id="nfa">4. 非确定有限自动机：一个输入，多条路</h2>
+
+    <p>有些问题用确定机器写起来很别扭。例如「找一个包含子串 010 的串」：确定机器必须记住当前已经匹配到 010 的哪一位，还要在失配时回退。而非确定机器可以在每个位置都「猜一次」：猜这里就是子串的起点。</p>
+
+    <p>非确定有限自动机（NFA）把转移函数改成：</p>
+
+    <p>$$\delta:Q\times(\Sigma\cup\{\varepsilon\})\to 2^{Q}$$</p>
+
+    <p>也就是说，从一个状态和一个字符出发，目标是一<strong>组</strong>状态，可以是空集，也可以有多个。此外还允许 $\varepsilon$ 转移：不读任何字符，直接跳到另一个状态。</p>
+
+    <p>NFA 的接收规则是存在性的：只要存在一条路径，读完整串后停在接受状态，就算接收。它不要求所有路径都成功，也不给路径分配概率。</p>
+
+    <blockquote>
+      非确定不是随机。没有概率分布，没有「掷骰子」，也没有「大多数路径」这种说法。它只问：有没有一条路走通。
+    </blockquote>
+
+    <h2 id="eclosure">5. ε 转移与 ε 可达类</h2>
+
+    <p>$\varepsilon$ 转移让机器可以在不消耗输入的情况下移动。于是「此刻可能在哪」不再是一个状态，而是一个集合。为了把 $\varepsilon$ 的影响一次算清，定义状态集合 $S$ 的 <strong>$\varepsilon$ 可达类</strong>：</p>
+
+    <p>$$\varepsilon\text{-closure}(S)=\{\,q\mid \exists s\in S:\ s\Rightarrow_{\varepsilon}^{*} q\,\}$$</p>
+
+    <p>计算方法是图上的可达性搜索：把 $S$ 放进队列，沿 $\varepsilon$ 边扩展，收集所有能到的状态。它有三个常用性质：</p>
+
+    <ul>
+      <li>$S\subseteq\varepsilon\text{-closure}(S)$，因为长度为零的路径允许；</li>
+      <li>再取一次不会变大：$\varepsilon\text{-closure}(\varepsilon\text{-closure}(S))=\varepsilon\text{-closure}(S)$；</li>
+      <li>对集合的并要求，可以先并再取闭包。</li>
+    </ul>
+
+    <h2 id="subset">6. 子集构造：把猜测打包</h2>
+
+    <p>非确定性能不能换来更强的能力？不能。任给一个 NFA，都能造出一个接收同样语言的 DFA。构造的思想只有一句话：<strong>把此刻可能所在的所有状态，打包成一个集合，作为新机器的一个状态</strong>。</p>
+
+    <p>设 NFA 为 $N=(Q_N,\Sigma,\delta_N,q_0,F_N)$，构造 DFA $D=(Q_D,\Sigma,\delta_D,q_{0D},F_D)$：</p>
+
+    <p>$$Q_D\subseteq 2^{Q_N},\qquad q_{0D}=\varepsilon\text{-closure}(\{q_0\})$$</p>
+
+    <p>对集合 $S$ 和字符 $a$，先让 $S$ 里每个状态读 $a$，把目标并起来，再取一次 $\varepsilon$ 可达类：</p>
+
+    <p>$$\delta_D(S,a)=\varepsilon\text{-closure}\Big(\bigcup_{q\in S}\delta_N(q,a)\Big)$$</p>
+
+    <p>接受状态的定义是「碰到就算」：</p>
+
+    <p>$$F_D=\{\,S\in Q_D\mid S\cap F_N\neq\varnothing\,\}$$</p>
+
+    <p>注意 $\varepsilon$ 闭包出现两次：构造起点时一次，每次读字符后一次。漏掉任何一次，都会把「不读字符就能到」的状态算丢。</p>
+
+    <h3>代价：最坏 $2^m$ 个状态</h3>
+
+    <p>新机器的状态是原状态的子集，所以最坏情况下有 $2^m$ 个，其中 $m=|Q_N|$。这是一个上界：实际可达的子集往往少得多，子集构造也只需要从起点出发，边算边发现，不必预先枚举整个幂集。</p>
+
+    <p>但上界是紧的：确实存在一族 NFA，其最小等价 DFA 需要指数多个状态。这就是「去掉非确定性」的代价：能力不变，表示可能指数膨胀。</p>
+
+    <h2 id="closure">7. 正则运算的封闭性</h2>
+
+    <p>有了 NFA 和 $\varepsilon$ 边，正则运算的封闭性证起来很顺。下面三种构造都只需要新开一个起点，或用 $\varepsilon$ 边把已有机器接起来。</p>
+
+    <h3>并集</h3>
+
+    <p>新开一个起点，用两条 $\varepsilon$ 边分别指向两台机器的起点。新机器先「猜」走哪一边，之后照原机器运行。接受状态取两台机器接受状态的并。</p>
+
+    <h3>连接</h3>
+
+    <p>把第一台机器的每个接受状态，用 $\varepsilon$ 边接到第二台机器的起点。第一台接受后，可以不读字符直接进入第二台。</p>
+
+    <h3>星号</h3>
+
+    <p>新起点既能直接成为接受状态（对应重复零次，接受空串），也能通过 $\varepsilon$ 边进入原机器；原机器的接受状态再用 $\varepsilon$ 边回到新起点，从而可以继续下一轮。</p>
+
+    <h3>补集</h3>
+
+    <p>补集要求先把机器<strong>补全</strong>：为每个缺失的转移加一个吸收态，使 $\delta$ 成为总函数。然后把接受状态与非接受状态对调。顺序不能反：在没补全的机器上对调，会把「没有转移」误当成「拒绝」。</p>
+
+    <h3>交集</h3>
+
+    <p>交集用乘积构造：两台确定机器同时运行，状态取笛卡尔积，两个分量都接受才接受。</p>
+
+    <p>$$F_{A\times B}=F_A\times F_B$$</p>
+
+    <p>如果手上是 NFA，先确定化再做补集或乘积，因为这两步都依赖「每个状态对每个字符都有唯一去处」。</p>
+
+    <h2 id="product">8. 乘积与反例：模型内安全</h2>
+
+    <p>把监控器写成 DFA 后，可以问一个比「这条记录是否违规」更强的问题：<strong>这个系统有没有可能产生违规记录？</strong></p>
+
+    <p>做法分两步：</p>
+
+    <ol>
+      <li>把安全机器（只接收合法记录）求补，得到「违规机器」；</li>
+      <li>把违规机器和系统机器做乘积，从初始状态做可达性搜索，看能不能到达一个接受状态。</li>
+    </ol>
+
+    <p>如果找到一条路径，这条路径就是一条具体的反例记录；如果找不到，说明在这个模型内，所有有限记录都安全。</p>
+
+    <p>结论的范围必须说清楚：它只关于模型。系统机器是对真实系统的一个抽象，抽象漏掉了哪些行为，结论就不覆盖哪些行为。另外，两台分别有 $m$ 和 $n$ 个状态的机器，乘积最多有 $m\times n$ 个状态，搜索的空间也是这个量级。</p>
+
+    <h2 id="limit">9. 有限状态记不住计数</h2>
+
+    <p>有限状态能记固定格式、有限条命令、有限次重试；它记不住的是<strong>任意深度</strong>和<strong>任意计数</strong>。</p>
+
+    <p>括号嵌套需要记住「当前嵌套了几层」，层数没有上界，状态数却必须有限。$0^n1^n$ 需要记住「已经读了多少个 0」，再和后面的 1 对齐，同样没有固定的上限。</p>
+
+    <p>这不是实现问题，而是模型表达力的问题。要记住一个无界计数，至少需要一条能无限增长的存储；有限自动机没有这样的存储。下一集用泵引理把这条边界证明出来。</p>
+
+    <h2 id="pitfalls">10. 常见错误</h2>
+
+    <ol>
+      <li><strong>把偏函数当 DFA。</strong>某个状态读某个字符没有定义，就不是确定自动机；要么补一个吸收态，要么承认它只是部分机器。</li>
+      <li><strong>把「非确定」当「随机」。</strong>NFA 没有概率；接收的定义是存在一条成功路径。</li>
+      <li><strong>子集构造漏掉 ε 闭包。</strong>起点要取闭包，每次读字符后也要取闭包。</li>
+      <li><strong>忘记初始集合。</strong>DFA 的起点是 $\varepsilon\text{-closure}(\{q_0\})$，不一定是 $\{q_0\}$。</li>
+      <li><strong>接受状态判断错。</strong>集合里只要有一个原接受状态，整个集合就接受；不是「全部接受」。</li>
+      <li><strong>在未补全的机器上求补。</strong>缺边会被当成拒绝，补出来的语言就错了。</li>
+      <li><strong>以为一定要 $2^m$ 个状态。</strong>$2^m$ 是最坏上界；只构造从起点可达的子集，通常远小于它。</li>
+      <li><strong>把乘积结论当成对真实系统的保证。</strong>结论只覆盖模型内的行为，模型外的行为没有保证。</li>
+    </ol>
+
+    <h2 id="quiz">11. 自测 8 题</h2>
+
+    <ol>
+      <li>DFA 的五元组分别是什么？哪两个分量必须有限？</li>
+      <li>为什么转移函数必须是总函数？缺一条边会带来什么问题？</li>
+      <li>给出一个接收「1 的个数为偶数」的 DFA，状态和转移分别是什么？</li>
+      <li>NFA 的接受条件是什么？它和「所有路径都成功」有什么区别？</li>
+      <li>$\varepsilon\text{-closure}(\{q\})$ 怎么算？它在子集构造里出现几次？</li>
+      <li>子集构造最坏为什么是 $2^m$ 个状态？实际一定这么多吗？</li>
+      <li>补集为什么要求先补全？交集为什么要求两台都是确定机器？</li>
+      <li>用乘积做安全分析，找到可达接受态和找不到，分别说明什么？结论范围是什么？</li>
+    </ol>
+
+    <details>
+      <summary>答案</summary>
+      <ol>
+        <li>$Q$ 状态集、$\Sigma$ 字母表、$\delta$ 转移函数、$q_0$ 初始状态、$F$ 接受状态集；$Q$ 和 $\Sigma$ 必须有限。</li>
+        <li>总函数保证每个状态对每个字符都有唯一去处；缺边会让某些输入无法运行，机器不再是「对每个串都有确定结果」的判定器。</li>
+        <li>状态集为 {偶, 奇}，初始偶，接受偶；读 0 时偶变奇、奇变偶，读 1 时都留在原状态。</li>
+        <li>存在一条路径读完整串后停在接受状态；不要求所有路径成功，也不要求每条路径都停在同一状态。</li>
+        <li>从 $q$ 出发只走 $\varepsilon$ 边做可达性搜索，收集所有能到的状态；子集构造里出现两次：构造起点一次，每次读字符后一次。</li>
+        <li>新状态是原状态的子集，子集总数是 $2^m$；实际只需要构造从起点可达的那些子集，通常少得多。</li>
+        <li>补集要对调接受与非接受，缺边会被误判为拒绝；交集要同时模拟两台机器，只有确定机器才能保证每个字符有唯一下一步。</li>
+        <li>找到可达接受态：给出一条具体反例记录；找不到：模型内所有有限记录都安全。结论只关于模型，乘积状态数最多 $m\times n$。</li>
+      </ol>
+    </details>
+
+    <h2 id="takeaway">12. 收尾</h2>
+
+    <p>四句话记住这一集：</p>
+
+    <ol>
+      <li><strong>DFA 是总函数</strong>：每个状态、每个字符，唯一去处。</li>
+      <li><strong>NFA 是一组可能状态</strong>：一个输入可以有多条路，存在一条成功就算接收。</li>
+      <li><strong>子集构造把猜测变成集合</strong>：能力不变，最坏代价是 $2^m$ 个状态。</li>
+      <li><strong>有限状态记不住计数</strong>：括号深度和 $0^n1^n$ 都超出它的表达力。</li>
+    </ol>
+
+    <p>如果只用一句话记住它：<strong>非确定性不增加能力，只改变写法；确定化把「可能在哪」变成一个集合。</strong>下一集换一个方向，从写法入手：正则表达式怎么描述这些语言，泵引理又怎么证明有些语言根本写不出来。</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+  <script defer src="book-shell.js?v=2"></script>
+  <script defer src="katex/katex.min.js"></script>
+  <script defer src="katex/auto-render.min.js"></script>
+  <script defer src="katex/render-math.js"></script>
+</body>
+</html>
