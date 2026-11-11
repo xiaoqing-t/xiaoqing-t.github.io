@@ -7,10 +7,18 @@ export default function Footer() {
 
   return (
     <footer className="footer">
-      <div className="container">
-        <p>
-          © {year} {profile.name} · 用 React + TypeScript 构建
+      <div className="container footer-inner">
+        <p className="footer-brand">
+          <span className="footer-name">{profile.name}</span>
+          <span className="footer-note">© {year} · 用 React + TypeScript 构建</span>
         </p>
+        <nav className="footer-links" aria-label="页脚导航">
+          <a href="#contact">联系</a>
+          <a href={profile.github} target="_blank" rel="noopener">
+            GitHub ↗
+          </a>
+          <a href="#top">回到顶部 ↑</a>
+        </nav>
       </div>
     </footer>
   )

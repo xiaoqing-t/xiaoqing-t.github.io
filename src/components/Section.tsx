@@ -4,11 +4,15 @@
 import type { ReactNode } from 'react'
 
 interface SectionProps {
-  /** 锚点 id，导航栏的 #about / #projects 就是跳到它上面 */
+  /** 锚点 id，导航栏的 #work / #notes 就是跳到它上面 */
   id: string
   /** 标题前的两位编号，如 "01" */
   num: string
   title: string
+  /** 标题后的英文小标签（等宽），如 "SELECTED WORK" */
+  en?: string
+  /** 标题行最右侧的元信息，如年份区间 "2025 — 2026" */
+  meta?: string
   /** 标题下面那行小字（可选） */
   lead?: string
   /** 是否用浅灰底色（让相邻区块交替，视觉上分得开） */
@@ -16,14 +20,19 @@ interface SectionProps {
   children: ReactNode
 }
 
-export default function Section({ id, num, title, lead, alt, children }: SectionProps) {
+export default function Section({ id, num, title, en, meta, lead, alt, children }: SectionProps) {
   return (
     <section id={id} className={alt ? 'section section-alt' : 'section'}>
       <div className="container">
-        <h2 className="section-title">
-          <span className="section-num">{num}</span>
-          {title}
-        </h2>
+        <header className="section-head">
+          <h2 className="section-title">
+            <span className="section-num">{num}</span>
+            <span className="section-zh">{title}</span>
+            {en && <span className="section-en">{en}</span>}
+          </h2>
+          <span className="section-rule" aria-hidden="true" />
+          {meta && <span className="section-meta">{meta}</span>}
+        </header>
 
         {lead && <p className="section-lead">{lead}</p>}
 

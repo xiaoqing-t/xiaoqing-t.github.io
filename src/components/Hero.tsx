@@ -1,49 +1,65 @@
-// 首屏大标题区。纯展示，没有状态 —— 内容全部来自 src/data/site.tsx 的 hero。
+// 首屏：左侧大标题（衬线，斜体棕色强调），右侧关注 / 现在 / 荣誉三块。
+// 内容来自 src/data/site.tsx 的 hero 与 focus。
 
-import { hero } from '../data/site'
+import { hero, focus } from '../data/site'
 
 export default function Hero() {
   return (
-    // id="top" 是给导航栏左上角那个「ZY」用的锚点
+    // id="top" 是给导航栏左上角姓名用的锚点
     <header className="hero" id="top">
       {/* 纯装饰的背景层，对读屏软件隐藏 */}
-      <div className="hero-bg" aria-hidden="true"></div>
+      <div className="hero-bg" aria-hidden="true" />
 
       <div className="hero-inner">
-        <p className="hero-eyebrow">{hero.eyebrow}</p>
+        <div className="hero-main">
+          <p className="hero-eyebrow">{hero.eyebrow}</p>
 
-        <h1 className="hero-title">
-          {hero.titleLead}
-          {/* 标题中间那段上色 */}
-          <span className="accent">{hero.titleAccent}</span>
-          {hero.titleTail}
-        </h1>
+          <h1 className="hero-title">
+            {hero.titleLead}
+            {/* 中间那段用衬线斜体 + 棕色 */}
+            <em className="accent">{hero.titleAccent}</em>
+            {hero.titleTail}
+          </h1>
 
-        {/* 一行一个 span，换行交给 CSS（.hero-sub span 是 display: block） */}
-        <p className="hero-sub">
-          {hero.subLines.map((line) => (
-            <span key={line}>{line}</span>
-          ))}
-        </p>
+          <p className="hero-sub">
+            {hero.subLines.map((line) => (
+              <span key={line}>{line}</span>
+            ))}
+          </p>
 
-        <div className="hero-actions">
-          {hero.actions.map((action) => (
-            <a
-              key={action.href}
-              href={action.href}
-              // primary 为真 = 蓝色实心按钮，否则是描边按钮
-              className={action.primary ? 'btn btn-primary' : 'btn btn-ghost'}
-            >
-              {action.label}
-            </a>
-          ))}
+          <div className="hero-actions">
+            {hero.actions.map((action) => (
+              <a
+                key={action.href}
+                href={action.href}
+                className={action.primary ? 'btn btn-primary' : 'btn btn-ghost'}
+              >
+                {action.label}
+              </a>
+            ))}
+          </div>
         </div>
 
-        <ul className="hero-meta">
-          {hero.meta.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
+        <aside className="hero-aside" aria-label="简介与现状">
+          <div className="hero-fact">
+            <p className="fact-label">关注 · FOCUS</p>
+            <p className="fact-body">{focus.focus}</p>
+          </div>
+          <div className="hero-fact">
+            <p className="fact-label">现在 · CURRENTLY</p>
+            <p className="fact-body">{focus.currently}</p>
+          </div>
+          <div className="hero-fact">
+            <p className="fact-label">荣誉 · HONORS</p>
+            <ul className="fact-badges">
+              {focus.honors.map((h) => (
+                <li key={h} className="fact-badge">
+                  {h}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
       </div>
     </header>
   )

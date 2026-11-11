@@ -7,7 +7,7 @@ import { aboutCards } from '../data/site'
 
 export default function About() {
   return (
-    <Section id="about" num="01" title="关于我">
+    <Section id="about" num="06" title="关于我" en="ABOUT">
       <Reveal className="about-grid">
         {aboutCards.map((card) => (
           // key 用标题：三张卡的标题各不相同，天然适合当身份证
