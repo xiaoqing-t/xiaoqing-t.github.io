@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>计算理论：上下文无关文法 · 学习笔记</title>
+  <meta name="description" content="从一条重写链出发，把上下文无关文法写成四元组；用推导树和语言定义接住 0 的 n 次方 1 的 n 次方；再看歧义、固有歧义、乔姆斯基范式与四步转换，最后数出长度 n 的非空串恰好需要 2n 减 1 步推导。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="legacy-v1.css" />
+  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="book-shell.css" />
+  <link rel="stylesheet" href="katex/katex.min.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article pre {
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      overflow-x: auto;
+      margin-bottom: 18px;
+    }
+    .article pre code {
+      background: none;
+      border: none;
+      padding: 0;
+    }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+
+    .article .katex { font-size: 1.03em; }
+    .article .katex-display {
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 4px 0 8px;
+      margin: 14px 0 18px;
+    }
+    .article .katex-display::-webkit-scrollbar { height: 6px; }
+    .article .katex-display::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+
+    .short-video { max-width: 340px; margin: 0 auto 32px; }
+    .short-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 9 / 16;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .short-video video::cue {
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.4;
+      color: #fffdf9;
+      background: rgba(33, 29, 25, 0.78);
+    }
+    .short-video figcaption {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">计算理论 · 第 5 集</p>
+    <h1>计算理论：上下文无关文法</h1>
+
+    <blockquote>
+      一句话主线：上一集证明有限状态记不住计数，这一集换一种描述方式——不画机器，写重写规则。文法是一个四元组，推导是一步步替换变元；歧义看最左推导是否唯一，乔姆斯基范式把规则压成两种形状，最后数出长度 $n$ 的非空串恰好需要 $2n-1$ 步推导。
+    </blockquote>
+
+    <figure class="short-video">
+      <video controls playsinline preload="metadata" width="1080" height="1920"
+             poster="media/cfg-poster.jpg">
+        <source src="media/cfg-5min.mp4" type="video/mp4" />
+        <track kind="captions" src="media/cfg-zh.vtt" srclang="zh" label="中文" />
+        浏览器不支持内嵌视频，<a href="media/cfg-5min.mp4">点这里下载这段短片</a>。
+      </video>
+      <figcaption>配套短片 · 约 4 分半 · 有口播和字幕：重写链、四元组、推导树、三个计数例子、两棵语法树、固有歧义、乔姆斯基范式与四步转换，最后数推导步数</figcaption>
+    </figure>
+
+    <p>有限自动机的语言是「边上的字符拼起来」。文法换了一个视角：语言由规则<strong>生成</strong>，而不是由机器<strong>识别</strong>。这个视角能描述带嵌套的结构，代价是判断一个串属不属于语言，需要做搜索或者动态规划。</p>
+
+    <h2 id="task">0. 任务：一条重写链</h2>
+
+    <p>看一条链：</p>
+
+    <p>$$A\Rightarrow 0A1\Rightarrow 00A11\Rightarrow 000A111\Rightarrow 000\#111$$</p>
+
+    <p>每一步只改一个 $A$，旁边的字符原样保留。$A$ 叫<strong>变元</strong>，0、1、# 叫<strong>终结符</strong>。最后一步把 $A$ 换成 #，链停在一个没有变元的串上。</p>
+
+    <p>这条链说明了两件事：规则可以只作用于一个符号；替换时，左右两边的上下文不参与判断。第二点正是「上下文无关」这个名字的来源。</p>
+
+    <h2 id="rewrite">1. 重写规则</h2>
+
+    <p>一条规则写成 $A\to w$，左边是一个变元，右边是变元和终结符组成的串。规则不是字符串替换模板：它不检查 $A$ 左边是什么、右边是什么，只要栈顶或当前最左变元是 $A$，就可以换成 $w$。</p>
+
+    <p>这一点和正则表达式有本质区别。正则表达式按「读入的字符」推进，机器只有一个当前位置；文法按「结构」展开，一个变元可以同时决定左右两边要生成什么。于是 $0^n1^n$ 这种两边数量必须相等的语言，可以写成：</p>
+
+    <p>$$S\to 0S1\mid\varepsilon$$</p>
+
+    <p>每展开一次 $S$，左右各加一个符号；展开到空串时停。数量相等不是数出来的，而是由同一棵树的两侧同步生长保证的。</p>
+
+    <h2 id="cfg">2. 上下文无关文法：四元组</h2>
+
+    <p>上下文无关文法（CFG）是一个四元组：</p>
+
+    <p>$$G=(V,\ \Sigma,\ R,\ S)$$</p>
+
+    <ul>
+      <li>$V$：有限变元集；</li>
+      <li>$\Sigma$：有限终结符集，且 $V\cap\Sigma=\varnothing$；</li>
+      <li>$R$：有限规则集，每条规则形如 $A\to w$，其中 $A\in V$，$w\in(V\cup\Sigma)^*$；</li>
+      <li>$S\in V$：开始变元。</li>
+    </ul>
+
+    <p>规则左边必须<strong>恰好一个变元</strong>。右边可以为空串，也可以任意长；这一点是后面乔姆斯基范式要收紧的地方。</p>
+
+    <p>为什么叫上下文无关？因为规则的适用与否，只看左边那个变元，不看它旁边有什么。对比一下上下文有关文法：那种规则可能写成 $xAy\to xwy$，要求 $A$ 左边是 $x$、右边是 $y$ 才能替换。上下文无关把这条限制去掉了，换来的描述能力仍然足以覆盖绝大多数程序语言的语法。</p>
+
+    <h2 id="derive">3. 推导与语言</h2>
+
+    <p>如果 $A\to w$ 是一条规则，那么在任何串里把某个 $A$ 换成 $w$，就是一步推导，记作 $\Rightarrow$。零步或多步推导记作 $\Rightarrow^*$。</p>
+
+    <p>推导可以画成树：根是开始变元，每个内部节点是一次规则应用，叶子从左到右拼成最终的串。文法生成的语言，就是所有能从 $S$ 推到纯终结符串的串：</p>
+
+    <p>$$L(G)=\{\,w\in\Sigma^*\mid S\Rightarrow^* w\,\}$$</p>
+
+    <p>能被某个 CFG 生成的语言，叫<strong>上下文无关语言</strong>（CFL）。注意 $\Rightarrow^*$ 允许零步，所以如果 $S\to\varepsilon$ 是规则，空串也在语言里。</p>
+
+    <h2 id="examples">4. 三个例子</h2>
+
+    <h3>$0^n1^n$</h3>
+
+    <p>$$S\to 0S1\mid\varepsilon$$</p>
+
+    <p>生成 $\varepsilon,01,0011,000111,\dots$。每层左右各加一个符号，两边的数量天然相等。</p>
+
+    <h3>$1^n0^n$</h3>
+
+    <p>$$S\to 1S0\mid\varepsilon$$</p>
+
+    <p>只是把两个符号换个位置。它同样不是正则语言：泵引理那集的反例换个字母顺序就适用。</p>
+
+    <h3>两个语言的并</h3>
+
+    <p>新开一个开始变元，二选一指向两套规则：</p>
+
+    <p>$$S\to A\mid B,\qquad A\to 0A1\mid\varepsilon,\qquad B\to 1B0\mid\varepsilon$$</p>
+
+    <p>三个都是上下文无关语言，但前两个不是正则语言。区别不在「有没有循环」，而在<strong>循环是否能同时约束两个位置</strong>。有限自动机的环只记录「回到了某个状态」，文法的一次展开同时决定左右两边，所以能记住两边数量相等。</p>
+
+    <h2 id="ambiguity">5. 歧义：一个串，两棵树</h2>
+
+    <p>考虑算术表达式的文法：</p>
+
+    <p>$$E\to E+E\mid E\times E\mid (E)\mid a$$</p>
+
+    <p>串 $a+a\times a$ 有两棵语法树：乘法在根，对应 $(a+a)\times a$；加法在根，对应 $a+(a\times a)$。两棵树对应两种最左推导。</p>
+
+    <p><strong>最左推导</strong>是每一步都替换当前串里最左边的变元。一个串有两种不同的最左推导，就叫<strong>歧义</strong>；只要文法生成某个有歧义的串，这个文法就是歧义的。</p>
+
+    <p>歧义影响的是「怎么解释」，不是「串属不属于语言」。上面两种解释都生成 $a+a\times a$，所以这个串始终在语言里；歧义让「这个表达式等于几」变得不唯一，所以工程上要消除它：给运算符优先级，或者改写文法，让乘法的树必须更深。</p>
+
+    <h2 id="inherent">6. 固有歧义</h2>
+
+    <p>歧义首先是文法的问题：换一套规则，可能就无歧义了。算术表达式就是例子——加上优先级层次以后，同一串只剩一棵树。</p>
+
+    <p>但有些语言，<strong>任何</strong>文法都歧义，叫<strong>固有歧义</strong>。典型例子是：</p>
+
+    <p>$$\{\,a^ib^jc^k\mid i=j\ \vee\ j=k\,\}$$</p>
+
+    <p>两个条件在 $i=j=k$ 处重叠。对重叠处的串，它既可以按「$i=j$」那一支生成，也可以按「$j=k$」那一支生成；两支的语法树不同，而且无法通过改写规则消除，因为语言本身没有提供区分两支的信息。</p>
+
+    <p>更糟的是：不存在算法能判断任给的一个文法是否歧义，更不用说自动消除歧义。这一点在可判定性那一章会再次出现。</p>
+
+    <h2 id="cnf">7. 乔姆斯基范式</h2>
+
+    <p>为了后面的证明和算法，需要一个统一形状。乔姆斯基范式（CNF）只允许两种规则：</p>
+
+    <p>$$A\to BC,\qquad A\to a$$</p>
+
+    <p>其中 $B,C$ 是变元，且都不能是开始变元；另外允许开始变元直接推出空串：$S\to\varepsilon$。</p>
+
+    <p>定理是：任何上下文无关语言，都有乔姆斯基范式的文法。也就是说，收紧形状不损失表达力。</p>
+
+    <p>为什么需要这个形状？因为每条规则要么把串长度加一（二分），要么终结一个叶子（产生一个字符），推导的过程就变成一棵二叉树的生长，步数和叶子数可以直接数。后面的 CYK 算法和泵引理都依赖这一点。</p>
+
+    <h2 id="convert">8. 四步转换</h2>
+
+    <p>把任意 CFG 转成 CNF，分四步：</p>
+
+    <ol>
+      <li><strong>加新开始变元。</strong>引入 $S_0$，加规则 $S_0\to S$。这样即使后面删掉 $S\to\varepsilon$，开始变元也不会意外消失。</li>
+      <li><strong>删空串规则。</strong>删掉所有非开始变元的 $A\to\varepsilon$；每删一条，就在所有出现 $A$ 的规则右边补一条「删掉这个 $A$」的版本。这样原来靠空串补齐的串仍然能生成。</li>
+      <li><strong>删单变元规则。</strong>删掉 $A\to B$；如果 $B$ 能推出某个串 $w$，就给 $A$ 加一条 $A\to w$。反复做到没有「变元直接推变元」的规则。</li>
+      <li><strong>拆长规则。</strong>把右边长度大于等于三的规则拆成二叉：$A\to BCD$ 变成 $A\to BX$、$X\to CD$，一层层挂；终结符先包一层新变元，例如 $A\to aB$ 变成 $A\to A_aB$、$A_a\to a$。</li>
+    </ol>
+
+    <p>这个过程可能让规则数量指数膨胀，但一定终止：每一步都在减少某类规则，或者把右边变短。</p>
+
+    <h2 id="length">9. 推导长度：$2n-1$</h2>
+
+    <p>CNF 有一个直接结果：长度 $n$ 的非空串，从开始变元出发，恰好需要 $2n-1$ 步推导。</p>
+
+    <p>理由是一棵满二叉树：$n$ 个叶子对应 $n$ 个终结符规则；二叉树有 $n-1$ 个内点，对应 $n-1$ 次二分。两者相加：</p>
+
+    <p>$$(n-1)+n=2n-1$$</p>
+
+    <p>这个界后面证明上下文无关语言的泵引理会用到：树够高，最长路径上一定有变元重复；重复的那一段，就是可以「泵」的部分。</p>
+
+    <h2 id="where">10. 工程上的位置</h2>
+
+    <p>上下文无关文法不是只出现在教材里。程序语言的语法、JSON 的括号结构、配置文件、协议消息，绝大多数都用 CFG 的变体描述。</p>
+
+    <p>但要注意两条边界。第一，CFG 只描述<strong>语法</strong>：一个串符合文法，不代表它类型正确、权限正确、业务规则正确。第二，CFG 能表达嵌套，但不能表达「两个计数器必须同步」这类语言，例如 $a^nb^nc^n$；那需要更强的模型。</p>
+
+    <p>工程上常见的做法是把 CFG 限制成可以线性时间解析的子类，例如 LL、LR、LALR；限制的是写法，不是表达力的理论上界。</p>
+
+    <h2 id="pitfalls">11. 常见错误</h2>
+
+    <ol>
+      <li><strong>把规则左边写成串。</strong>上下文无关要求左边恰好一个变元；写成 $AB\to C$ 已经越界。</li>
+      <li><strong>把 $\varepsilon$ 和空集混为一谈。</strong>$\varepsilon$ 是长度为 0 的串；空集是一个串都没有。规则 $S\to\varepsilon$ 让语言包含空串，不写这条规则就不包含。</li>
+      <li><strong>把推导方向搞反。</strong>$S\Rightarrow^*w$ 是从开始变元推到串；反过来是归约，不是生成。</li>
+      <li><strong>以为歧义等于串不属于语言。</strong>歧义说的是有两棵树；串仍然在语言里。</li>
+      <li><strong>以为换文法就能消除所有歧义。</strong>固有歧义的语言，任何文法都歧义。</li>
+      <li><strong>转 CNF 时忘了补规则。</strong>删掉 $A\to\varepsilon$ 却不补「删掉 A」的版本，会丢掉原来的串。</li>
+      <li><strong>把 $2n-1$ 当成所有文法的步数。</strong>这个界只对 CNF 成立；一般文法可能更短。</li>
+      <li><strong>把语法正确当成语义正确。</strong>CFG 检查的是形状，不是类型、权限或业务规则。</li>
+    </ol>
+
+    <h2 id="quiz">12. 自测 8 题</h2>
+
+    <ol>
+      <li>CFG 的四元组分别是什么？哪两个集合必须不相交？</li>
+      <li>为什么叫「上下文无关」？它和上下文有关文法的规则形式差在哪？</li>
+      <li>$S\to 0S1\mid\varepsilon$ 生成什么语言？为什么它不是正则语言？</li>
+      <li>文法生成的语言怎么定义？$\Rightarrow^*$ 的星号允许零步吗？</li>
+      <li>什么是最左推导？一个串有两种最左推导说明什么？</li>
+      <li>固有歧义和普通歧义的区别是什么？判断歧义可不可判定？</li>
+      <li>乔姆斯基范式允许哪两种规则？为什么允许 $S\to\varepsilon$ 这个例外？</li>
+      <li>长度 $n$ 的非空串，在 CNF 下为什么恰好要 $2n-1$ 步？</li>
+    </ol>
+
+    <details>
+      <summary>答案</summary>
+      <ol>
+        <li>$V$ 变元集、$\Sigma$ 终结符集、$R$ 规则集、$S$ 开始变元；$V$ 和 $\Sigma$ 必须不相交。</li>
+        <li>规则只看左边那个变元，不看它左右有什么；上下文有关文法允许规则写成 $xAy\to xwy$，要求特定的上下文。</li>
+        <li>生成 $\{\,0^n1^n\mid n\ge 0\,\}$；它要求两个计数同步增长，有限状态做不到，泵引理可以证明。</li>
+        <li>所有能从 $S$ 推到纯终结符串的串；星号允许零步，所以 $S$ 本身是终结符时，单字符串也算。</li>
+        <li>每一步都替换当前串最左边的变元；有两种最左推导，说明这个串在这个文法下歧义。</li>
+        <li>普通歧义可以通过改写文法消除；固有歧义是任何文法都歧义。判断一个文法是否歧义不可判定。</li>
+        <li>只允许 $A\to BC$ 和 $A\to a$；例外 $S\to\varepsilon$ 是为了让语言包含空串，同时不破坏「右边两个变元不能是开始变元」的计数。</li>
+        <li>$n$ 个叶子对应 $n$ 次终结符规则，$n-1$ 个内点对应 $n-1$ 次二分，合计 $2n-1$ 步。</li>
+      </ol>
+    </details>
+
+    <h2 id="takeaway">13. 收尾</h2>
+
+    <p>四句话记住这一集：</p>
+
+    <ol>
+      <li><strong>文法是一个四元组</strong>：变元、终结符、规则、开始变元。</li>
+      <li><strong>推导是重写</strong>：每次只换一个变元，上下文不参与判断。</li>
+      <li><strong>歧义看最左推导</strong>：两种最左推导就是两棵树；固有歧义无法消除。</li>
+      <li><strong>CNF 只剩两种规则</strong>：二分和终结符，长度 $n$ 的串恰好 $2n-1$ 步。</li>
+    </ol>
+
+    <p>如果只用一句话记住它：<strong>文法用结构记住嵌套，机器用状态记住历史。</strong>下一集给文法配一台机器：下推自动机，用栈模拟最左推导，并证明两者等价。</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+  <script defer src="book-shell.js?v=2"></script>
+  <script defer src="katex/katex.min.js"></script>
+  <script defer src="katex/auto-render.min.js"></script>
+  <script defer src="katex/render-math.js"></script>
+</body>
+</html>

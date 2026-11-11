@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>计算理论：下推自动机 · 学习笔记</title>
+  <meta name="description" content="给有限状态加一个栈，得到下推自动机。从 0 的 n 次方 1 的 n 次方的四状态机器出发，写出六元组与转移函数；再看文法与机器如何双向转换、CFL 对哪些运算封闭、五段泵引理如何证明 a 的 n 次方 b 的 n 次方 c 的 n 次方不是上下文无关语言，以及三个判定问题的边界。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="legacy-v1.css" />
+  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="book-shell.css" />
+  <link rel="stylesheet" href="katex/katex.min.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article pre {
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      overflow-x: auto;
+      margin-bottom: 18px;
+    }
+    .article pre code {
+      background: none;
+      border: none;
+      padding: 0;
+    }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+
+    .article .katex { font-size: 1.03em; }
+    .article .katex-display {
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 4px 0 8px;
+      margin: 14px 0 18px;
+    }
+    .article .katex-display::-webkit-scrollbar { height: 6px; }
+    .article .katex-display::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+
+    .short-video { max-width: 340px; margin: 0 auto 32px; }
+    .short-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 9 / 16;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .short-video video::cue {
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.4;
+      color: #fffdf9;
+      background: rgba(33, 29, 25, 0.78);
+    }
+    .short-video figcaption {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">计算理论 · 第 6 集</p>
+    <h1>计算理论：下推自动机</h1>
+
+    <blockquote>
+      一句话主线：上一集用重写规则描述语言，这一集给文法配一台机器。下推自动机就是有限控制加一个后进先出的栈：读 0 压栈、读 1 弹栈，栈空就说明两边数量相等。它和上下文无关文法等价；闭包性质、五段泵引理和三个判定问题，构成了它的能力边界。
+    </blockquote>
+
+    <figure class="short-video">
+      <video controls playsinline preload="metadata" width="1080" height="1920"
+             poster="media/pda-poster.jpg">
+        <source src="media/pda-5min.mp4" type="video/mp4" />
+        <track kind="captions" src="media/pda-zh.vtt" srclang="zh" label="中文" />
+        浏览器不支持内嵌视频，<a href="media/pda-5min.mp4">点这里下载这段短片</a>。
+      </video>
+      <figcaption>配套短片 · 约 4 分 45 秒 · 有口播和字幕：读 0 压栈、六元组、四状态机器、文法与机器互转、闭包、五段泵引理、aⁿbⁿcⁿ 的反例，最后停在判定问题与工程边界</figcaption>
+    </figure>
+
+    <p>有限自动机只有一个当前位置，读过的东西不留下。上下文无关文法靠「结构」记住了两边同步，但它只是一套重写规则，不是一台能运行的机器。下推自动机补上这个缺口：状态还是有限的，额外给一条栈，深度不设上限。</p>
+
+    <h2 id="task">0. 任务：读到一半，忘了数量</h2>
+
+    <p>读 $0^n1^n$ 时，读到一半需要记住「已经读了多少个 0」。这个数没有上界，状态数却必须有限。有限自动机在这里必然失败，泵引理已经证明过。</p>
+
+    <p>栈提供了另一种记法：不要把数量记成数字，而是把每一个 0 压进栈。读 1 时弹一个 0，两边一一抵消。读完整串后栈空，就说明数量相等。栈的深度随输入增长，但控制器仍然只有有限个状态。</p>
+
+    <h2 id="stack">1. 栈：只在一端操作</h2>
+
+    <p>栈是后进先出（LIFO）的存储：只能看栈顶、压栈、弹栈，不能访问中间。对 $0^n1^n$，规则只有两条：</p>
+
+    <ul>
+      <li>读到 0：压一个 0；</li>
+      <li>读到 1：如果栈顶是 0，弹掉；否则这条路径失败。</li>
+    </ul>
+
+    <p>关键不是「能不能存」，而是「只能按相反顺序取出」。输入先来 0、后来 1，栈后进先出，正好把最近的 0 和最近的 1 配对。括号、嵌套结构、递归调用都遵循同样的顺序。</p>
+
+    <h2 id="pda">2. 下推自动机：六元组</h2>
+
+    <p>下推自动机（PDA）是一个六元组：</p>
+
+    <p>$$M=(Q,\ \Sigma,\ \Gamma,\ \delta,\ q_0,\ F)$$</p>
+
+    <ul>
+      <li>$Q$：有限状态集；</li>
+      <li>$\Sigma$：输入字母表；</li>
+      <li>$\Gamma$：栈字母表，通常包含输入字母表和一个栈底符号；</li>
+      <li>$\delta$：转移函数；</li>
+      <li>$q_0\in Q$：初始状态；</li>
+      <li>$F\subseteq Q$：接受状态集。</li>
+    </ul>
+
+    <p>转移函数看三样东西：当前状态、下一个输入字符、栈顶；给出新状态和新栈顶串：</p>
+
+    <p>$$\delta:Q\times(\Sigma\cup\{\varepsilon\})\times(\Gamma\cup\{\varepsilon\})\to\mathcal{P}(Q\times\Gamma^*)$$</p>
+
+    <p>输入字符可以是 $\varepsilon$，表示不读输入；栈顶也可以是 $\varepsilon$，表示不要求栈非空。结果是「状态 + 新栈顶串」的集合：压栈写成把新符号放到栈顶串前面，弹栈写成栈顶串去掉第一个符号。</p>
+
+    <p>接收的定义：从初始状态和空栈出发，读完整串后进入某个接受状态。只要<strong>存在</strong>一条路径做到，就接收；这就是非确定性。栈底符号 <code>$</code> 不是六元组的一部分，它只是把「空栈」显式写出来，避免「栈空了还能不能继续」的歧义。</p>
+
+    <h2 id="example">3. $0^n1^n$ 的四状态机器</h2>
+
+    <p>用四个状态把上面的规则画成机器：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>阶段</th><th>读入</th><th>栈顶</th><th>动作</th><th>下一状态</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>开始</td><td>ε</td><td>ε</td><td>压 <code>$</code></td><td>$q_0$</td></tr>
+          <tr><td>压栈</td><td>0</td><td>任意</td><td>压 0</td><td>$q_0$</td></tr>
+          <tr><td>切换</td><td>1</td><td>0</td><td>弹 0</td><td>$q_1$</td></tr>
+          <tr><td>弹栈</td><td>1</td><td>0</td><td>弹 0</td><td>$q_1$</td></tr>
+          <tr><td>收尾</td><td>ε</td><td><code>$</code></td><td>弹 <code>$</code></td><td>$q_2$（接受）</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>两条失败分支要看清：1 比 0 多时，栈顶是 $，弹不动；0 比 1 多时，输入读完栈里还剩 0，无法进入接受。两条都说明数量不相等。</p>
+
+    <h2 id="run">4. 一个串怎么被接收</h2>
+
+    <p>以 $0011$ 为例，一条成功路径在每一刻都可以写成「状态、剩余输入、栈」的三元组：</p>
+
+    <p>$$(q_0,0011,\varepsilon)\to(q_0,011,0)\to(q_0,11,00)\to(q_1,1,0)\to(q_1,\varepsilon,\varepsilon)\to(q_2,\varepsilon,\varepsilon)$$</p>
+
+    <p>每一步只看三样：当前状态、下一个字符、栈顶。任何一步没有匹配的转移，这条路径就死掉；但机器是非确定的，只要别的路径能走到接受，整个串仍被接收。</p>
+
+    <p>非确定性在 PDA 里不是「随机选择」，而是「同时探索所有可能」。文法那里是选一条规则展开，这里是对应地选一条转移；两边其实是同一件事的两种写法。</p>
+
+    <h2 id="cfg2pda">5. 文法到机器：用栈做最左推导</h2>
+
+    <p>一个语言是上下文无关的，当且仅当某台 PDA 识别它。两个方向都要构造。</p>
+
+    <p>文法到机器，思路是用栈模拟最左推导。栈顶就是当前要处理的符号：</p>
+
+    <ul>
+      <li>栈顶是变元 $A$：非确定地选一条规则 $A\to w$，把 $A$ 替换成 $w$，最左符号放到栈顶；</li>
+      <li>栈顶是终结符 $a$：与下一个输入字符比较，相同就弹掉，不同就失败；</li>
+      <li>栈顶是栈底标记 <code>$</code>：输入也读完了，就接受。</li>
+    </ul>
+
+    <p>栈里保存的是「还没展开的部分」，顺序与最左推导一致。每展开一个变元，就把它的右边按相反顺序压栈，保证最左符号先被处理。</p>
+
+    <h2 id="pda2cfg">6. 机器到文法：状态对变元</h2>
+
+    <p>反方向更难。先把机器整理成规范形状：</p>
+
+    <ol>
+      <li>只有一个接受状态；</li>
+      <li>接受之前把栈清空；</li>
+      <li>每一步要么只压一个符号，要么只弹一个符号。</li>
+    </ol>
+
+    <p>然后给每一对状态 $(p,q)$ 造一个变元 $A_{(p,q)}$，表示「从 $p$ 的空栈走到 $q$ 的空栈，能读出的所有串」。规则分两类：</p>
+
+    <p>$$A_{(p,q)}\to a\,A_{(r,s)}\,b\,A_{(s,q)},\qquad A_{(p,q)}\to A_{(p,r)}\,A_{(r,q)}$$</p>
+
+    <p>第一类对应「读字符压栈、再读字符弹栈」：$a$ 压进去，$b$ 把它弹掉，中间和后面各用变元夹住。第二类对应「中途回到空栈」：一串在 $r$ 处分成两段，各自从空栈到空栈。</p>
+
+    <p>基础规则是 $A_{(p,p)}\to\varepsilon$：原地不动，什么也不读。所有从开始状态走到接受状态的 $A_{(q_0,q_f)}$ 并起来，就是这个 PDA 的语言。</p>
+
+    <h2 id="closure">7. 闭包：哪些运算保得住</h2>
+
+    <p>上下文无关语言对并、连接、星号封闭，构造和正则语言一样，只是把自动机换成文法：</p>
+
+    <ul>
+      <li><strong>并</strong>：新开始变元二选一，指向两套规则；</li>
+      <li><strong>连接</strong>：先第一套，再第二套；</li>
+      <li><strong>星号</strong>：空串，或者自我重复。</li>
+    </ul>
+
+    <p>它和正则语言求交也封闭：两台机器同时跑，读一个字符时两边都动，状态对作为新状态。乘积状态数最多是两台机器状态数的乘积。</p>
+
+    <p>但它对<strong>交</strong>不封闭。反例：</p>
+
+    <p>$$L_1=\{a^nb^nc^m\},\qquad L_2=\{a^mb^nc^n\},\qquad L_1\cap L_2=\{a^nb^nc^n\}$$</p>
+
+    <p>前两个都是上下文无关语言，交出来却不是。由德摩根律，对补也不封闭：如果对交封闭，补再取补就能得到交，矛盾。</p>
+
+    <h2 id="pump">8. 五段泵引理</h2>
+
+    <p>上下文无关语言的泵引理：存在泵长度 $p$，任何长度至少 $p$ 的串 $s$ 都能切成五段：</p>
+
+    <p>$$s=uvxyz$$</p>
+
+    <p>满足三个条件：</p>
+
+    <ol>
+      <li>$|vy|&gt;0$：第二段和第四段至少一个非空；</li>
+      <li>$|vxy|\le p$：中间三段总长不超过 $p$；</li>
+      <li>对所有 $i\ge 0$，$uv^ixy^iz\in L$：两段同时重复。</li>
+    </ol>
+
+    <p>为什么是两段同时泵？证明看语法树。设每个节点最多 $b$ 个孩子，高度 $h$ 的树最多 $b^h$ 个叶子。取泵长度 $p$ 为「分支数上限的、变元数加一次方」：长度至少 $p$ 的串，树一定够高，最长路径上必有一个变元重复。</p>
+
+    <p>同一个变元 $A$ 在路径上出现两次，上下两个 $A$ 各自展开一棵子树；从下 $A$ 到上 $A$ 之间的叶子就是 $v$ 和 $y$，中间夹着 $x$。把下 $A$ 的子树替换成上 $A$ 的子树，就重复了一次 $v$ 和 $y$；反过来裁掉，就泵零次。两段必须同时动，嵌套结构才不会散。</p>
+
+    <h2 id="noncfl">9. $a^nb^nc^n$ 不是 CFL</h2>
+
+    <p>取 $s=a^pb^pc^p$。泵引理给出某个切分 $s=uvxyz$，且 $|vxy|\le p$。</p>
+
+    <p>中间三段长度不超过 $p$，而每一段都是 $p$ 个同一种字母，所以 $vxy$ 最多覆盖两段：它不可能同时包含 a、b、c 三种字符。</p>
+
+    <p>泵一次以后，$v$ 和 $y$ 中至少有一段变长。由于只覆盖至多两段，三段的数量不可能仍然相等：要么 a 变多、b 和 c 不变，要么 b 变多，等等。于是 $uv^2xy^2z\notin L$，与泵引理矛盾。</p>
+
+    <p>结论：$a^nb^nc^n$ 不是上下文无关语言。注意泵引理只给必要条件：满足泵引理不一定是 CFL，它只能用来证明「不是」。</p>
+
+    <h2 id="decide">10. 三个判定问题</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>问题</th><th>方法</th><th>结论</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>接收（成员判定）</td><td>转 CNF，枚举长度 $2n-1$ 的推导；或 CYK 动态规划</td><td>可判定</td></tr>
+          <tr><td>空性</td><td>从开始变元出发，看能否推出纯终结符串</td><td>可判定</td></tr>
+          <tr><td>相等</td><td>两个 CFL 是否相同</td><td>不可判定</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>接收和空性可判定，方法都不复杂：CYK 是多项式时间，枚举推导是指数上界但仍然会停。相等不可判定，这一点和正则语言不同——正则语言先确定化再检查对称差，三个问题都能判定。</p>
+
+    <p>工程上因此有一条经验：能转成正则表达式或有限自动机的问题，尽量转；一旦需要完整 CFG 的相等判断，就要准备接受「没有通用算法」。</p>
+
+    <h2 id="where">11. 工程边界</h2>
+
+    <p>栈能记住任意深度的未完成嵌套，所以下面三类问题都能用 PDA 的思路建模：</p>
+
+    <ul>
+      <li><strong>JSON 与括号</strong>：遇到左括号压栈，遇到右括号弹栈，最后栈空；</li>
+      <li><strong>表达式</strong>：运算符优先级决定语法树的形状，解析器用栈或递归下降；</li>
+      <li><strong>递归调用</strong>：每次调用压一帧，返回时弹一帧，调用栈就是运行时的那条栈。</li>
+    </ul>
+
+    <p>但语法对不代表语义对。CFG 只检查形状：类型是否匹配、变量是否越权、业务规则是否满足，都要另外检查。把语法分析和语义检查分开，是编译器前端的标准做法。</p>
+
+    <h2 id="pitfalls">12. 常见错误</h2>
+
+    <ol>
+      <li><strong>把栈当普通数组。</strong>栈只能访问栈顶；能随机访问，模型就变强了。</li>
+      <li><strong>以为 PDA 是确定的。</strong>本文定义的 PDA 是非确定的；确定下推自动机（DPDA）只能识别一部分 CFL，两者不等价。</li>
+      <li><strong>忘记 $\varepsilon$ 转移。</strong>不读输入也能改状态或改栈，这是非确定性的重要来源。</li>
+      <li><strong>接收条件写错。</strong>必须读完整串后进入接受状态；读到一半进入接受不算。</li>
+      <li><strong>以为 CFL 对交封闭。</strong>$a^nb^nc^n$ 是两个 CFL 的交，却不是 CFL。</li>
+      <li><strong>把泵引理当充分条件。</strong>它只给必要条件，满足它不能证明是 CFL。</li>
+      <li><strong>只泵一段。</strong>PDA 泵引理要求 $v$ 和 $y$ 同时重复；只动一段会破坏嵌套。</li>
+      <li><strong>以为相等可判定。</strong>两个 CFL 是否相等不可判定，和正则语言不同。</li>
+    </ol>
+
+    <h2 id="quiz">13. 自测 8 题</h2>
+
+    <ol>
+      <li>下推自动机的六元组分别是什么？转移函数看哪三样输入？</li>
+      <li>为什么 $0^n1^n$ 用栈就能识别，而有限自动机不行？</li>
+      <li>PDA 的「非确定」具体指什么？接收条件是什么？</li>
+      <li>文法到 PDA 的构造里，栈顶是变元和栈顶是终结符，分别怎么处理？</li>
+      <li>PDA 到文法的构造里，$A_{(p,q)}$ 表示什么？两类规则各对应什么结构？</li>
+      <li>CFL 对哪些运算封闭？对哪些不封闭？给一个反例。</li>
+      <li>CFL 泵引理的五个段、三个条件分别是什么？为什么两段要同时泵？</li>
+      <li>为什么 $a^nb^nc^n$ 不是 CFL？接收、空性、相等三个问题各可不可判定？</li>
+    </ol>
+
+    <details>
+      <summary>答案</summary>
+      <ol>
+        <li>状态集、输入字母表、栈字母表、转移函数、初始状态、接受状态；转移函数看当前状态、下一个输入字符、栈顶。</li>
+        <li>栈的深度随输入增长，可以逐个记住 0；有限自动机的状态数固定，无法记住无界计数。</li>
+        <li>同一个局面可以有多条转移；只要存在一条路径读完整串后进入接受状态，就接收。</li>
+        <li>栈顶是变元：选一条规则，把变元替换成右边，最左符号放栈顶；栈顶是终结符：与下一个输入字符比较，相同就弹掉。</li>
+        <li>从 $p$ 的空栈走到 $q$ 的空栈能读出的所有串；第一类对应「压入再弹出」的夹住结构，第二类对应「中途回到空栈」的拆分结构。</li>
+        <li>对并、连接、星号封闭，与正则语言求交也封闭；对交不封闭，例如两个 CFL 交成 $a^nb^nc^n$；由德摩根，对补也不封闭。</li>
+        <li>切成 $uvxyz$；条件：$|vy|&gt;0$、$|vxy|\le p$、$uv^ixy^iz\in L$；两段同时泵是因为它们由同一对重复变元夹住，单独动会破坏嵌套。</li>
+        <li>$vxy$ 最多覆盖两段，泵一次后三段数量不可能仍相等；接收和空性可判定，相等不可判定。</li>
+      </ol>
+    </details>
+
+    <h2 id="takeaway">14. 收尾</h2>
+
+    <p>四句话记住这一集：</p>
+
+    <ol>
+      <li><strong>下推自动机 = 有限控制 + 栈</strong>：栈深不设上限，状态仍然有限。</li>
+      <li><strong>文法与机器等价</strong>：栈顶变元就展开，栈顶终结符就比对。</li>
+      <li><strong>闭包差在交</strong>：并、连接、星号封闭，交与补不封闭。</li>
+      <li><strong>五段泵引理证明非 CFL</strong>：$v$ 和 $y$ 必须同时重复。</li>
+    </ol>
+
+    <p>如果只用一句话记住它：<strong>栈记住未完成的嵌套，所以嵌套有深度，语言就有结构。</strong>下一章把栈也放开，给机器一条无限长的带子——图灵机。</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+  <script defer src="book-shell.js?v=2"></script>
+  <script defer src="katex/katex.min.js"></script>
+  <script defer src="katex/auto-render.min.js"></script>
+  <script defer src="katex/render-math.js"></script>
+</body>
+</html>
