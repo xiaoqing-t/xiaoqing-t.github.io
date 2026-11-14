@@ -113,6 +113,7 @@ export const navLinks: NavLink[] = [
   { label: '笔记', href: '#notes' },
   { label: '现在', href: 'now.html' },
   { label: '关于', href: '#about' },
+  { label: 'EN', href: 'en/' },
   { label: '简历', href: 'resume.html', cta: true },
 ]
 

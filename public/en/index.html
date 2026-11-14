@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zhao Yunzhe · Computer Science · EEG &amp; Deep Learning</title>
+  <meta name="description" content="Zhao Yunzhe (Zyz) — computer science undergraduate at Shanghai Jiao Tong University. EEG signal processing, deep learning, and systems projects." />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="canonical" href="https://xiaoqing-t.github.io/en/" />
+  <link rel="alternate" hreflang="en" href="https://xiaoqing-t.github.io/en/" />
+  <link rel="alternate" hreflang="zh-CN" href="https://xiaoqing-t.github.io/" />
+  <link rel="alternate" hreflang="x-default" href="https://xiaoqing-t.github.io/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:site_name" content="Zhao Yunzhe" />
+  <meta property="og:title" content="Zhao Yunzhe · Computer Science · EEG &amp; Deep Learning" />
+  <meta property="og:description" content="Computer science undergraduate at Shanghai Jiao Tong University. EEG signal processing, deep learning, and systems projects." />
+  <meta property="og:url" content="https://xiaoqing-t.github.io/en/" />
+  <meta property="og:image" content="https://xiaoqing-t.github.io/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Zhao Yunzhe · Computer Science · EEG &amp; Deep Learning" />
+  <meta name="twitter:description" content="Computer science undergraduate at Shanghai Jiao Tong University. EEG signal processing, deep learning, and systems projects." />
+  <meta name="twitter:image" content="https://xiaoqing-t.github.io/og-image.png" />
+  <link rel="alternate" type="application/rss+xml" title="Zhao Yunzhe · Notes (Chinese)" href="/feed.xml" />
+  <link rel="stylesheet" href="../legacy-v1.css" />
+  <link rel="stylesheet" href="../notes.css" />
+  <link rel="stylesheet" href="../cases.css" />
+  <link rel="stylesheet" href="en.css" />
+</head>
+<body>
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="../index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <button class="nav-toggle" id="navToggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#work">Work</a></li>
+        <li><a href="#research">Research</a></li>
+        <li><a href="#background">Background</a></li>
+        <li><a href="#now">Now</a></li>
+        <li><a href="../index.html">中文</a></li>
+        <li><a href="../resume.html" class="nav-cta">Résumé</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container case">
+    <p class="case-kicker">COMPUTER SCIENCE · EEG · SHANGHAI</p>
+    <h1 class="case-title">Zhao Yunzhe <span class="en-name">/ Zyz</span></h1>
+    <p class="case-lead">
+      I'm a computer science undergraduate at Shanghai Jiao Tong University.
+      I work on EEG signal processing and deep learning, and I build tools to understand
+      the systems I use — from a C coding agent to a preprocessing pipeline that has
+      handled 380+ hours of physiological data.
+    </p>
+
+    <ul class="case-meta">
+      <li><span>BASED IN</span><strong>Shanghai, China</strong></li>
+      <li><span>FOCUS</span><strong>EEG × deep learning</strong></li>
+      <li><span>OPEN TO</span><strong>Research / SWE internships · 2026</strong></li>
+      <li><span>EMAIL</span><strong><a href="mailto:zyz.sjtu@sjtu.edu.cn">zyz.sjtu@sjtu.edu.cn</a></strong></li>
+    </ul>
+
+    <blockquote class="case-claim">
+      Most of my work starts with the same question: which part of the system should stay fixed
+      while everything else changes?
+    </blockquote>
+
+    <section class="case-section" id="work">
+      <p class="case-num">01</p>
+      <h2>Selected work</h2>
+
+      <article class="work-item">
+        <div class="work-head">
+          <h3>Terminal Coding Agent</h3>
+          <span class="work-meta-line">C · ~2.3k lines · 2026</span>
+        </div>
+        <p>
+          A terminal coding agent written from scratch in C. The hard part is not calling the model:
+          it is keeping the main loop unchanged while tools, history, and execution order change.
+          It has a tool registry, one sandbox function guarding every file path, parallel read-only
+          execution, and two context policies — lossless offloading versus lossy summarization.
+        </p>
+        <p class="work-links">
+          <a href="https://github.com/xiaoqing-t/Project2-of-OS-2026-Fall" target="_blank" rel="noopener">GitHub ↗</a>
+          <a href="../case-coding-agent.html">Case study (中文) →</a>
+        </p>
+      </article>
+
+      <article class="work-item">
+        <div class="work-head">
+          <h3>Multimodal EEG Pipeline</h3>
+          <span class="work-meta-line">Python · 10 datasets · 380+ hours</span>
+        </div>
+        <p>
+          A QC-first preprocessing pipeline for EEG, ECG, and EOG. It checks units, channel statistics,
+          and reference electrodes before touching the signal, produces reproducible QC plots, and
+          writes per-subject HDF5. Packaged as a reusable skill so the decision rules — not only the
+          scripts — carry over to the next dataset.
+        </p>
+        <p class="work-links">
+          <a href="https://github.com/xiaoqing-t/EEG-preprocess-pipeline-skill" target="_blank" rel="noopener">GitHub ↗</a>
+          <a href="../case-eeg-pipeline.html">Case study (中文) →</a>
+        </p>
+      </article>
+
+      <article class="work-item">
+        <div class="work-head">
+          <h3>MIPS Single-Cycle CPU</h3>
+          <span class="work-meta-line">Verilog · 610 lines RTL</span>
+        </div>
+        <p>
+          A single-cycle MIPS processor built module by module: ALU, register file, control unit,
+          datapath, and top level. Seven testbenches, synthesized to a bitstream, and run on an FPGA.
+        </p>
+        <p class="work-links">
+          <a href="https://github.com/xiaoqing-t/CPU-by-vivado" target="_blank" rel="noopener">GitHub ↗</a>
+        </p>
+      </article>
+
+      <article class="work-item">
+        <div class="work-head">
+          <h3>CS231n Assignments</h3>
+          <span class="work-meta-line">NumPy · coursework</span>
+        </div>
+        <p>
+          CNNs, losses, and training loops implemented from scratch, including forward and backward
+          passes, without a framework.
+        </p>
+        <p class="work-links">
+          <a href="https://github.com/xiaoqing-t/CS231n-assignments" target="_blank" rel="noopener">GitHub ↗</a>
+        </p>
+      </article>
+    </section>
+
+    <section class="case-section" id="research">
+      <p class="case-num">02</p>
+      <h2>Research</h2>
+      <h3>BCMI Lab — EEG multimodal data preprocessing</h3>
+      <p class="work-meta-line research-date">Mar 2026 – present · Shanghai Jiao Tong University</p>
+      <p>
+        I build and maintain the preprocessing path for EEG, ECG, and EOG recordings: quality control
+        first, then filtering, notch, resampling, and normalization into HDF5. The work is less about
+        one model than about making data handling reproducible across datasets.
+      </p>
+      <p>
+        I'm currently reproducing BIOT on CHB-MIT; TUH EEG data access has been requested.
+      </p>
+    </section>
+
+    <section class="case-section" id="background">
+      <p class="case-num">03</p>
+      <h2>Education &amp; honors</h2>
+      <ul class="cv-list">
+        <li>
+          <b>Shanghai Jiao Tong University — B.Eng. in Computer Science</b>
+          <span>2024 – 2028 (expected)</span>
+        </li>
+        <li>
+          <b>Zhiyuan Honors Program · Yongqiang Class</b>
+          <span>2024 – present</span>
+        </li>
+        <li>
+          <b>Zhiyuan Honor Scholarship</b>
+          <span>×2</span>
+        </li>
+      </ul>
+    </section>
+
+    <section class="case-section" id="now">
+      <p class="case-num">04</p>
+      <h2>Now</h2>
+      <ul class="now-list">
+        <li>Six courses this semester: computational theory, machine learning, natural language processing, cryptography, computational economics, and computer ethics.</li>
+        <li>Building this site as the publishing end for course notes and short explainer videos.</li>
+        <li>BIOT reproduction: CHB-MIT preprocessing in progress; TUH EEG access requested.</li>
+      </ul>
+      <p><a href="../now.html">Now page (中文) →</a></p>
+    </section>
+
+    <section class="case-section" id="skills">
+      <p class="case-num">05</p>
+      <h2>Skills</h2>
+      <ul class="skills">
+        <li>Python</li>
+        <li>C / C++</li>
+        <li>EEG preprocessing</li>
+        <li>Deep learning</li>
+        <li>PyTorch</li>
+        <li>NumPy · MNE</li>
+        <li>Verilog · Vivado</li>
+        <li>React · TypeScript</li>
+        <li>Git · Linux</li>
+      </ul>
+    </section>
+
+    <section class="case-section" id="contact">
+      <p class="case-num">06</p>
+      <h2>Contact</h2>
+      <p>
+        Email is the best way to reach me. I'm open to research or engineering internships in 2026.
+      </p>
+      <p class="contact-links">
+        <a href="mailto:zyz.sjtu@sjtu.edu.cn">Email ↗</a>
+        <a href="https://github.com/xiaoqing-t" target="_blank" rel="noopener">GitHub ↗</a>
+        <a href="../resume.html">Résumé (中文)</a>
+        <a href="../index.html">中文主页</a>
+      </p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe</p>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear()
+    document.getElementById('navToggle').addEventListener('click', () => {
+      document.getElementById('navLinks').classList.toggle('open')
+    })
+    window.addEventListener('scroll', () => {
+      document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 8)
+    }, { passive: true })
+  </script>
+</body>
+</html>

@@ -21,6 +21,7 @@
 | `public/now.json` | `/now` 的数据快照，由 `npm run sync:now` 从笔记仓库的白名单线卡生成 |
 | `public/case-*.html` | 两个旗舰项目的独立案例页（Coding Agent / EEG 管线），从首页作品弹窗进入 |
 | `public/cases.css` | 案例页共享样式，沿用笔记页的墨纸配色 |
+| `public/en/` | 英文一页：定位、代表工作、研究与 CV 摘要；导航里的 `EN` 进来 |
 | **`React重构说明.md`** | **讲解 + 增删改查手册** ← 想改东西先看它 |
 
 ## 命令

@@ -1,0 +1,109 @@
+/* 英文一页：版式复用 cases.css，这里只补工作条目、CV 列表和技能标签。 */
+
+.en-name {
+  font-family: var(--mono);
+  font-size: 0.42em;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.work-item { padding: 22px 0; border-bottom: 1px solid var(--line); }
+.work-item:first-of-type { padding-top: 4px; }
+.work-item:last-of-type { border-bottom: 0; padding-bottom: 0; }
+.work-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px 20px;
+  flex-wrap: wrap;
+  margin-bottom: 7px;
+}
+.work-head h3 { font-size: 1.05rem; font-weight: 700; margin: 0; }
+.work-meta-line {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+.work-item p {
+  font-size: 0.94rem;
+  line-height: 1.8;
+  color: var(--ink-soft);
+  margin-bottom: 7px;
+}
+.work-links {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+.work-links a:hover { color: var(--accent); }
+
+.research-date {
+  white-space: normal;
+  margin-top: -8px;
+  font-size: 0.78rem;
+}
+
+.case-section .cv-list { list-style: none; padding-left: 0; }
+.cv-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4px 24px;
+  flex-wrap: wrap;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.cv-list li:last-child { border-bottom: 0; }
+.cv-list b { font-weight: 600; color: var(--ink); }
+.cv-list span { font-family: var(--mono); font-size: 0.78rem; color: var(--ink-faint); }
+
+.case-section .skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  padding-left: 0;
+}
+.skills li {
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  background: var(--bg-alt);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 12px;
+  margin-bottom: 0;
+}
+
+.case-section .now-list { list-style: none; padding-left: 0; }
+.now-list li {
+  position: relative;
+  padding: 7px 0 7px 18px;
+  color: var(--ink-soft);
+  margin-bottom: 0;
+}
+.now-list li::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+}
+
+.contact-links {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+  font-weight: 600;
+}
+
+@media (max-width: 560px) {
+  .en-name { display: block; margin-top: 6px; }
+  .cv-list li { flex-direction: column; gap: 2px; }
+}
