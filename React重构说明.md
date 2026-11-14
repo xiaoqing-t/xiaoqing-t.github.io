@@ -310,6 +310,7 @@ npm run preview  # 本地预览 dist/（≈ 将来线上的样子）
 npm run build
 ├─ tsc --noEmit                      类型检查
 ├─ vite build                        产出 index.html + assets/
+├─ node scripts/note-meta.mjs        生成 feed.xml + 给笔记页注入 OG/Twitter 标签
 └─ node scripts/inline-build.mjs     把 JS/CSS 内联进 index.html，并删掉已内联的 assets 文件
 ```
 
