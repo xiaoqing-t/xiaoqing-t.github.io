@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>现在 · Zhao Yunzhe</title>
+  <meta name="description" content="赵蕴哲现在在做什么：活跃线、课程与研究的最近推进，每周六复盘后更新。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="canonical" href="https://xiaoqing-t.github.io/now.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="zh_CN" />
+  <meta property="og:site_name" content="Zhao Yunzhe" />
+  <meta property="og:title" content="现在 · Zhao Yunzhe" />
+  <meta property="og:description" content="赵蕴哲现在在做什么：活跃线、课程与研究的最近推进，每周六复盘后更新。" />
+  <meta property="og:url" content="https://xiaoqing-t.github.io/now.html" />
+  <meta property="og:image" content="https://xiaoqing-t.github.io/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="现在 · Zhao Yunzhe" />
+  <meta name="twitter:description" content="赵蕴哲现在在做什么：活跃线、课程与研究的最近推进，每周六复盘后更新。" />
+  <meta name="twitter:image" content="https://xiaoqing-t.github.io/og-image.png" />
+  <link rel="alternate" type="application/rss+xml" title="Zhao Yunzhe · 学习笔记" href="/feed.xml" />
+  <link rel="stylesheet" href="legacy-v1.css" />
+  <link rel="stylesheet" href="notes.css" />
+  <style>
+    .nav-links a.active { color: var(--accent); }
+    .now-page { max-width: 940px; margin-inline: auto; padding: 56px 0 80px; }
+    .now-kicker {
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+    .now-title {
+      font-family: var(--serif);
+      font-size: clamp(2.2rem, 5vw, 3rem);
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+    .now-lead {
+      font-size: 1.08rem;
+      line-height: 1.8;
+      color: var(--ink-soft);
+      max-width: 46em;
+    }
+    .now-section { margin-top: 46px; }
+    .now-section h2 {
+      font-family: var(--serif);
+      font-size: 1.35rem;
+      margin-bottom: 18px;
+    }
+    .line-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+    }
+    .line-card {
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px 18px 16px;
+    }
+    .line-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-family: var(--mono);
+      font-size: 0.76rem;
+      color: var(--ink-faint);
+    }
+    .line-status { display: inline-flex; align-items: center; gap: 6px; }
+    .line-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      border: 1px solid var(--ink-faint);
+    }
+    .line-dot.active { background: var(--ink); border-color: var(--ink); }
+    .line-card h3 { font-size: 1.05rem; margin: 12px 0 8px; }
+    .line-card p { font-size: 0.92rem; line-height: 1.7; color: var(--ink-soft); }
+    .line-meta {
+      margin-top: 14px;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--ink-faint);
+    }
+    .line-meta .stale { color: var(--accent); }
+    .recent-list { list-style: none; border-top: 1px solid var(--line); }
+    .recent-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .recent-list a { font-weight: 600; }
+    .recent-list a:hover { color: var(--accent); }
+    .recent-list time {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--ink-faint);
+      white-space: nowrap;
+    }
+    .now-empty, .now-error { color: var(--ink-faint); font-size: 0.9rem; }
+    @media (max-width: 560px) {
+      .recent-list li { flex-direction: column; gap: 4px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#work">作品</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="now.html" class="active">现在</a></li>
+        <li><a href="resume.html" class="nav-cta">简历</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container now-page">
+    <p class="now-kicker" id="now-kicker">NOW</p>
+    <h1 class="now-title">现在</h1>
+    <p class="now-lead" id="now-focus">正在读取最近的状态……</p>
+
+    <section class="now-section" aria-labelledby="lines-title">
+      <h2 id="lines-title">活跃线</h2>
+      <div class="line-grid" id="line-grid">
+        <p class="now-empty">正在加载……</p>
+      </div>
+    </section>
+
+    <section class="now-section" aria-labelledby="recent-title">
+      <h2 id="recent-title">最近更新</h2>
+      <ul class="recent-list" id="recent-list">
+        <li><span class="now-empty">正在加载……</span></li>
+      </ul>
+    </section>
+
+    <noscript>
+      <p class="now-error">活跃线与最近更新需要 JavaScript 才能显示。</p>
+    </noscript>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+  <script type="application/json" id="now-data">{"generatedAt":"2026-11-14","review":{"last":"2026-11-14","next":"2026-11-21"},"focus":"把个人网站继续做成课内内容的发布端；同时推进 BIOT 复现的数据处理。","lines":[{"title":"个人网站","status":"active","updated":"2026-11-11","summary":"首页改版为编辑式作品集，笔记与短片持续发布。接下来做构建期预渲染和笔记 Markdown 管线。"},{"title":"大三上课程","status":"active","updated":"2026-11-13","summary":"六门课同步推进：计算理论、机器学习、计算经济学、密码学、NLP、计算机伦理学。"},{"title":"侵入式BCI调研","status":"active","updated":"2026-10-14","summary":"BIOT 复现进行中：CHB-MIT 数据预处理推进，TUH 数据申请已发出。"},{"title":"睡眠EEG研究线","status":"paused","updated":"2026-09-14","summary":"挂起，等上游研究决策；暂不排任务。"}]}</script>
+  <script type="application/json" id="recent-data">[{"title":"词性标注与 HMM：三张表、两次动态规划","href":"note-pos-hmm.html","meta":"2026-11 · 推导 · 附短片"},{"title":"中文分词与 CRF：从查词典到整句打分","href":"note-seg-crf.html","meta":"2026-11 · 推导 · 附短片"},{"title":"BPE：模型眼里的词，是长出来的零件","href":"note-bpe.html","meta":"2026-11 · 推导 · 附短片"}]</script>
+  <script>
+    (() => {
+      const statusLabels = { active: '进行中', paused: '暂停', archived: '归档' }
+
+      const el = (tag, className, text) => {
+        const node = document.createElement(tag)
+        if (className) node.className = className
+        if (text != null) node.textContent = text
+        return node
+      }
+
+      const daysSince = (date) => {
+        if (!date) return null
+        const then = Date.parse(`${date}T00:00:00`)
+        if (Number.isNaN(then)) return null
+        return Math.max(0, Math.floor((Date.now() - then) / 86400000))
+      }
+
+      const shortDate = (date) => (date ? date.replaceAll('-', '.') : '未知')
+
+      function renderLines(data) {
+        const grid = document.getElementById('line-grid')
+        grid.textContent = ''
+
+        if (!data.lines?.length) {
+          grid.append(el('p', 'now-empty', '这周还没有公开的活跃线。'))
+          return
+        }
+
+        for (const line of data.lines) {
+          const card = el('article', 'line-card')
+
+          const head = el('div', 'line-head')
+          const status = el('span', 'line-status')
+          status.append(el('span', `line-dot ${line.status === 'active' ? 'active' : ''}`))
+          status.append(el('span', '', statusLabels[line.status] ?? line.status))
+          head.append(status)
+
+          const days = daysSince(line.updated)
+          head.append(
+            el('span', '', line.status === 'active' && days != null ? `${days} 天前` : shortDate(line.updated)),
+          )
+          card.append(head)
+
+          card.append(el('h3', '', line.title))
+          card.append(el('p', '', line.summary))
+
+          const meta = el('p', 'line-meta')
+          meta.append(el('span', '', `最后推进 ${shortDate(line.updated)}`))
+          if (line.status === 'active' && days != null && days >= 14) {
+            meta.append(el('span', 'stale', ` · 停滞 ${days} 天`))
+          }
+          card.append(meta)
+
+          grid.append(card)
+        }
+      }
+
+      function noteDate(meta) {
+        const m = /^(\d{4})-(\d{2})(?:-(\d{2}))?/.exec(meta ?? '')
+        if (!m) return null
+        return {
+          key: Date.UTC(Number(m[1]), Number(m[2]) - 1, m[3] ? Number(m[3]) : 1),
+          label: `${m[1]}.${m[2]}${m[3] ? `.${m[3]}` : ''}`,
+        }
+      }
+
+      function renderRecent() {
+        const list = document.getElementById('recent-list')
+        const notes = readJSON('recent-data', [])
+
+        list.textContent = ''
+        if (!notes.length) {
+          const item = document.createElement('li')
+          item.append(el('span', 'now-error', '最近更新暂时读不到。'))
+          list.append(item)
+          return
+        }
+
+        for (const note of notes) {
+          const item = document.createElement('li')
+          const link = el('a', '', note.title)
+          link.href = note.href
+          const date = noteDate(note.meta)
+          const time = el('time', '', date?.label ?? '')
+          if (note.meta) time.dateTime = note.meta.slice(0, 10)
+          item.append(link, time)
+          list.append(item)
+        }
+      }
+
+      function readJSON(id, fallback) {
+        try {
+          return JSON.parse(document.getElementById(id).textContent)
+        } catch {
+          return fallback
+        }
+      }
+
+      function boot() {
+        const data = readJSON('now-data', null)
+
+        if (!data) {
+          document.getElementById('now-focus').textContent = '活跃线数据缺失。'
+          const grid = document.getElementById('line-grid')
+          grid.textContent = ''
+          grid.append(el('p', 'now-error', '请在笔记仓库运行 npm run sync:now 后重新构建。'))
+          return
+        }
+
+        if (data.focus) document.getElementById('now-focus').textContent = data.focus
+        if (data.generatedAt) {
+          document.getElementById('now-kicker').textContent =
+            `NOW · 更新于 ${data.generatedAt.replaceAll('-', '.')}`
+        }
+        renderLines(data)
+        renderRecent()
+      }
+
+      boot()
+    })()
+  </script>
+</body>
+</html>

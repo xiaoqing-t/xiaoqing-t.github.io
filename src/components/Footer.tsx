@@ -17,7 +17,6 @@ export default function Footer() {
           <a href={profile.github} target="_blank" rel="noopener">
             GitHub ↗
           </a>
-          <a href="/feed.xml">RSS</a>
           <a href="#top">回到顶部 ↑</a>
         </nav>
       </div>

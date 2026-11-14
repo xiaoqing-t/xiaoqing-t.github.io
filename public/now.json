@@ -1,0 +1,34 @@
+{
+  "generatedAt": "2026-11-14",
+  "review": {
+    "last": "2026-11-14",
+    "next": "2026-11-21"
+  },
+  "focus": "把个人网站继续做成课内内容的发布端；同时推进 BIOT 复现的数据处理。",
+  "lines": [
+    {
+      "title": "个人网站",
+      "status": "active",
+      "updated": "2026-11-11",
+      "summary": "首页改版为编辑式作品集，笔记与短片持续发布。接下来做构建期预渲染和笔记 Markdown 管线。"
+    },
+    {
+      "title": "大三上课程",
+      "status": "active",
+      "updated": "2026-11-13",
+      "summary": "六门课同步推进：计算理论、机器学习、计算经济学、密码学、NLP、计算机伦理学。"
+    },
+    {
+      "title": "侵入式BCI调研",
+      "status": "active",
+      "updated": "2026-10-14",
+      "summary": "BIOT 复现进行中：CHB-MIT 数据预处理推进，TUH 数据申请已发出。"
+    },
+    {
+      "title": "睡眠EEG研究线",
+      "status": "paused",
+      "updated": "2026-09-14",
+      "summary": "挂起，等上游研究决策；暂不排任务。"
+    }
+  ]
+}

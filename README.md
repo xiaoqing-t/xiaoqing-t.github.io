@@ -17,6 +17,8 @@
 | `public/notes.json` | **笔记书目**（5 本书 / 21 篇，按阅读顺序）← 加笔记改它，首页和笔记页侧栏都读这一份 |
 | `src/styles/global.css` | 全站样式（设计变量在顶部 `:root`） |
 | `public/` | 原样保留的静态页：简历 2 页 + 21 篇笔记 + v1 主页冻结副本 + `robots.txt` / `sitemap.xml` / `404.html` / `notes.css`（笔记页配色覆盖）+ `book-shell.css/js`（笔记页侧栏）—— **URL 一个都没变** |
+| `public/now.html` | **现在**页：活跃线卡片 + 最近更新；数据由 `sync:now` 直接内嵌，本地双击也能看 |
+| `public/now.json` | `/now` 的数据快照，由 `npm run sync:now` 从笔记仓库的白名单线卡生成 |
 | **`React重构说明.md`** | **讲解 + 增删改查手册** ← 想改东西先看它 |
 
 ## 命令
@@ -26,6 +28,7 @@ npm install      # 第一次（或换了依赖）
 npm run dev      # 开发服务器 → http://localhost:5173 （改完自动刷新）
 npm run build    # 类型检查 + 打包到 dist/
 npm run preview  # 本地预览打包结果
+npm run sync:now # 从笔记仓库的活跃线白名单生成 public/now.json（每周六复盘后）
 ```
 
 ## 部署

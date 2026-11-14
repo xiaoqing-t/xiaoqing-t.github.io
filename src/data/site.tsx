@@ -109,6 +109,7 @@ export const profile = {
 export const navLinks: NavLink[] = [
   { label: '作品', href: '#work' },
   { label: '笔记', href: '#notes' },
+  { label: '现在', href: 'now.html' },
   { label: '关于', href: '#about' },
   { label: '简历', href: 'resume.html', cta: true },
 ]
