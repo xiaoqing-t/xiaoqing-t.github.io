@@ -253,7 +253,6 @@ a:hover { text-decoration: underline; }
 
 /* ===== Section 通用 ===== */
 .section { padding: 66px 0; border-top: 1px solid var(--line); }
-.section-alt { background: var(--bg-alt); }
 .section-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 36px; }
 .section-title { display: inline-flex; align-items: baseline; gap: 12px; flex: none; }
 .section-num {

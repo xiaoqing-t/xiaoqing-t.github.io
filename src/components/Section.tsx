@@ -15,14 +15,12 @@ interface SectionProps {
   meta?: string
   /** 标题下面那行小字（可选） */
   lead?: string
-  /** 是否用浅灰底色（让相邻区块交替，视觉上分得开） */
-  alt?: boolean
   children: ReactNode
 }
 
-export default function Section({ id, num, title, en, meta, lead, alt, children }: SectionProps) {
+export default function Section({ id, num, title, en, meta, lead, children }: SectionProps) {
   return (
-    <section id={id} className={alt ? 'section section-alt' : 'section'}>
+    <section id={id} className="section">
       <div className="container">
         <header className="section-head">
           <h2 className="section-title">
