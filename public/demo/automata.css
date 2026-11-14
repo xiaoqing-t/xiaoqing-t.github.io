@@ -350,3 +350,21 @@
   .graph-frame { overflow-x: auto; }
   .graph-frame svg { min-width: 560px; }
 }
+
+.demo-tabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 24px;
+  border-bottom: 1px solid var(--line);
+}
+.demo-tabs a,
+.demo-tabs span {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  padding: 8px 13px;
+  color: var(--ink-faint);
+  border-bottom: 2px solid transparent;
+}
+.demo-tabs a:hover { color: var(--accent); text-decoration: none; }
+.demo-tabs .is-active { color: var(--ink); border-bottom-color: var(--accent); }

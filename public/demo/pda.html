@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDA / DPDA · 自动机模拟器 · Zhao Yunzhe</title>
+  <meta name="description" content="在浏览器里逐步运行下推自动机：查看栈的变化、非确定分支和结束标记。内置 0ⁿ1ⁿ、括号匹配与偶数回文三台机器。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="canonical" href="https://xiaoqing-t.github.io/demo/pda.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="zh_CN" />
+  <meta property="og:site_name" content="Zhao Yunzhe" />
+  <meta property="og:title" content="PDA / DPDA · 自动机模拟器" />
+  <meta property="og:description" content="逐步运行下推自动机：看栈、看分支、看结束标记。" />
+  <meta property="og:url" content="https://xiaoqing-t.github.io/demo/pda.html" />
+  <meta property="og:image" content="https://xiaoqing-t.github.io/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="PDA / DPDA · 自动机模拟器" />
+  <meta name="twitter:description" content="逐步运行下推自动机：看栈、看分支、看结束标记。" />
+  <meta name="twitter:image" content="https://xiaoqing-t.github.io/og-image.png" />
+  <link rel="alternate" type="application/rss+xml" title="Zhao Yunzhe · 学习笔记" href="/feed.xml" />
+  <link rel="stylesheet" href="../legacy-v1.css" />
+  <link rel="stylesheet" href="../notes.css" />
+  <link rel="stylesheet" href="automata.css" />
+  <link rel="stylesheet" href="pda.css" />
+</head>
+<body>
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="../index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <button class="nav-toggle" id="navToggle" aria-label="菜单">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="../index.html#work">作品</a></li>
+        <li><a href="../index.html#notes" class="active">笔记</a></li>
+        <li><a href="../now.html">现在</a></li>
+        <li><a href="../index.html#about">关于</a></li>
+        <li><a href="../en/">EN</a></li>
+        <li><a href="../resume.html" class="nav-cta">简历</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container demo-page">
+    <a class="back-link" href="../index.html#notes">← 返回学习笔记</a>
+
+    <p class="demo-kicker">DEMO · 计算理论</p>
+    <h1 class="demo-title">PDA / DPDA</h1>
+    <p class="demo-lead">
+      选一台下推自动机，输入一个串，看状态和栈一步一步变化。确定机器只有一条路径；
+      非确定机器会把所有可能的分支都摆出来，只要有一条走到接受，串就算被接收。
+    </p>
+
+    <nav class="demo-tabs" aria-label="模拟器">
+      <a href="automata.html">正则 → DFA</a>
+      <span class="is-active" aria-current="page">PDA / DPDA</span>
+    </nav>
+
+    <section class="demo-app" aria-label="下推自动机模拟器">
+      <div class="demo-controls">
+        <div class="field">
+          <label>机器</label>
+          <div class="machine-picker" id="machines" role="group" aria-label="预设机器">
+            <button class="preset is-active" type="button" data-machine="zeros">0ⁿ1ⁿ</button>
+            <button class="preset" type="button" data-machine="paren">括号匹配</button>
+            <button class="preset" type="button" data-machine="pal">偶数回文</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="word">输入串</label>
+          <input id="word" type="text" value="0011" autocomplete="off" autocapitalize="off" spellcheck="false" />
+        </div>
+        <p class="demo-hint">
+          输入末尾会自动补结束标记 <code>⊣</code>，读完整串（含 <code>⊣</code>）并停在接受状态才算接受。
+          三台机器是只读预设，规则见下方表格。
+        </p>
+      </div>
+
+      <div class="pda-meta">
+        <span id="kind" class="kind-badge">DPDA</span>
+        <p id="machine-note"></p>
+      </div>
+
+      <p id="build-error" class="demo-error" role="alert" hidden></p>
+
+      <div class="demo-toolbar">
+        <p id="status" class="demo-status" role="status" aria-live="polite">正在构建……</p>
+        <div class="demo-actions">
+          <button id="btn-step" class="demo-btn" type="button">单步</button>
+          <button id="btn-run" class="demo-btn demo-btn-primary" type="button">运行</button>
+          <button id="btn-reset" class="demo-btn" type="button">重置</button>
+        </div>
+      </div>
+
+      <div class="demo-grid">
+        <figure class="demo-graph">
+          <div class="graph-frame">
+            <svg id="graph" viewBox="0 0 760 520" role="img" aria-label="PDA 状态图"></svg>
+          </div>
+          <figcaption>圆点是状态，双圈是接受状态；边上是读入符号，栈顶条件见下方规则表。</figcaption>
+        </figure>
+
+        <aside class="demo-side">
+          <section class="demo-panel" aria-labelledby="now-title">
+            <h2 id="now-title">当前</h2>
+            <div class="now-line">
+              <span id="current-state" class="now-state">q0</span>
+              <div>
+                <p id="current-detail" class="now-detail">正在构建……</p>
+                <p id="accepting" class="now-accept"></p>
+              </div>
+            </div>
+            <div id="tape" class="tape" aria-label="输入带"></div>
+            <p class="stack-head">栈顶在上</p>
+            <div id="stack" class="stack" aria-label="栈"></div>
+          </section>
+
+          <section class="demo-panel" id="branches-panel" aria-labelledby="branches-title">
+            <h2 id="branches-title">分支</h2>
+            <div id="branches" class="branches"></div>
+          </section>
+        </aside>
+      </div>
+
+      <details class="demo-details" open>
+        <summary>转移规则</summary>
+        <p id="build-info" class="build-info"></p>
+        <div class="table-wrap">
+          <table id="rules-table" class="rules-table">
+            <caption class="sr-only">PDA 转移规则</caption>
+          </table>
+        </div>
+      </details>
+
+      <p class="demo-foot">
+        相关笔记：<a href="../note-pda.html">下推自动机</a> ·
+        <a href="../note-dpda.html">确定下推自动机</a> ·
+        <a href="automata.html">正则 → DFA 模拟器</a>
+      </p>
+    </section>
+
+    <noscript>
+      <p class="demo-error">这个模拟器需要 JavaScript 才能运行。</p>
+    </noscript>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe</p>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear()
+    document.getElementById('navToggle').addEventListener('click', () => {
+      document.getElementById('navLinks').classList.toggle('open')
+    })
+    window.addEventListener('scroll', () => {
+      document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 8)
+    }, { passive: true })
+  </script>
+  <script src="pda-core.js"></script>
+  <script src="pda.js"></script>
+</body>
+</html>
