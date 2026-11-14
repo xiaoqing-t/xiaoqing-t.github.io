@@ -117,8 +117,8 @@ export const navLinks: NavLink[] = [
 export const hero = {
   eyebrow: 'CS · BCI · BUILDING THINGS',
   /** 标题拆成三段，中间那段用衬线斜体 + 棕色（.accent） */
-  titleLead: '做东西，想问题，',
-  titleAccent: '把基本功练扎实',
+  titleLead: '欢迎来到 ',
+  titleAccent: 'Zyz 的主页',
   titleTail: '。',
   subLines: [
     '计算机科学专业，在 BCMI 实验室做 EEG 数据处理。',
