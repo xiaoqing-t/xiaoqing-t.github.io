@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>正则 → DFA · 自动机模拟器 · Zhao Yunzhe</title>
+  <meta name="description" content="输入一条正则和一个串，看 Thompson NFA 经子集构造得到的 DFA 一步一步读完。支持单步、自动运行、转移表与共享链接。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="canonical" href="https://xiaoqing-t.github.io/demo/automata.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="zh_CN" />
+  <meta property="og:site_name" content="Zhao Yunzhe" />
+  <meta property="og:title" content="正则 → DFA · 自动机模拟器" />
+  <meta property="og:description" content="把一条正则经 NFA 和子集构造变成 DFA，一步一步读输入。" />
+  <meta property="og:url" content="https://xiaoqing-t.github.io/demo/automata.html" />
+  <meta property="og:image" content="https://xiaoqing-t.github.io/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="正则 → DFA · 自动机模拟器" />
+  <meta name="twitter:description" content="把一条正则经 NFA 和子集构造变成 DFA，一步一步读输入。" />
+  <meta name="twitter:image" content="https://xiaoqing-t.github.io/og-image.png" />
+  <link rel="alternate" type="application/rss+xml" title="Zhao Yunzhe · 学习笔记" href="/feed.xml" />
+  <link rel="stylesheet" href="../legacy-v1.css" />
+  <link rel="stylesheet" href="../notes.css" />
+  <link rel="stylesheet" href="automata.css" />
+</head>
+<body>
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="../index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <button class="nav-toggle" id="navToggle" aria-label="菜单">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="../index.html#work">作品</a></li>
+        <li><a href="../index.html#notes" class="active">笔记</a></li>
+        <li><a href="../now.html">现在</a></li>
+        <li><a href="../index.html#about">关于</a></li>
+        <li><a href="../en/">EN</a></li>
+        <li><a href="../resume.html" class="nav-cta">简历</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container demo-page">
+    <a class="back-link" href="../index.html#notes">← 返回学习笔记</a>
+
+    <p class="demo-kicker">DEMO · 计算理论</p>
+    <h1 class="demo-title">正则 → DFA</h1>
+    <p class="demo-lead">
+      输入一条正则和一个串，看它先变成 Thompson NFA，再经子集构造变成 DFA，然后一步一步把串读完。
+      单步看状态怎么走，也可以直接运行；改完地址栏就是一条能分享的链接。
+    </p>
+
+    <section class="demo-app" aria-label="自动机模拟器">
+      <div class="demo-controls">
+        <div class="field">
+          <label for="regex">正则</label>
+          <input id="regex" type="text" value="(a|b)*abb" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="demo-hint" />
+        </div>
+        <div class="field">
+          <label for="word">输入串</label>
+          <input id="word" type="text" value="aababb" autocomplete="off" autocapitalize="off" spellcheck="false" />
+        </div>
+        <div class="presets" role="group" aria-label="示例">
+          <span class="presets-label">示例</span>
+          <button class="preset" type="button" data-re="(a|b)*abb" data-w="aababb">(a|b)*abb</button>
+          <button class="preset" type="button" data-re="ab*c" data-w="abbbc">ab*c</button>
+          <button class="preset" type="button" data-re="(ab)+" data-w="abab">(ab)+</button>
+          <button class="preset" type="button" data-re="a?b" data-w="b">a?b</button>
+          <button class="preset" type="button" data-re="(ON|OFF)" data-w="OFF">(ON|OFF)</button>
+        </div>
+        <p class="demo-hint" id="demo-hint">
+          支持字母、连接、<code>|</code>、<code>*</code>、<code>+</code>、<code>?</code> 和括号；
+          特殊字符用 <code>\</code> 转义。空格按普通字符处理，暂不支持 <code>.</code> 和字符类。
+        </p>
+      </div>
+
+      <p id="build-error" class="demo-error" role="alert" hidden></p>
+
+      <div class="demo-toolbar">
+        <p id="status" class="demo-status" role="status" aria-live="polite">正在构建……</p>
+        <div class="demo-actions">
+          <button id="btn-step" class="demo-btn" type="button">单步</button>
+          <button id="btn-run" class="demo-btn demo-btn-primary" type="button">运行</button>
+          <button id="btn-reset" class="demo-btn" type="button">重置</button>
+        </div>
+      </div>
+
+      <div class="demo-grid">
+        <figure class="demo-graph">
+          <div class="graph-frame">
+            <svg id="graph" viewBox="0 0 760 520" role="img" aria-label="DFA 状态图"></svg>
+          </div>
+          <figcaption>圆点是状态，双圈是接受状态；当前状态用锈红标出，卡住时用虚线。</figcaption>
+        </figure>
+
+        <aside class="demo-side">
+          <section class="demo-panel" aria-labelledby="now-title">
+            <h2 id="now-title">当前</h2>
+            <div class="now-line">
+              <span id="current-state" class="now-state">A</span>
+              <div>
+                <p id="current-detail" class="now-detail">正在构建……</p>
+                <p id="accepting" class="now-accept"></p>
+              </div>
+            </div>
+            <div id="tape" class="tape" aria-label="输入带"></div>
+          </section>
+
+          <section class="demo-panel" aria-labelledby="table-title">
+            <h2 id="table-title">转移表</h2>
+            <div class="table-wrap">
+              <table id="dfa-table">
+                <caption class="sr-only">DFA 转移表</caption>
+              </table>
+            </div>
+            <p id="alphabet" class="table-note"></p>
+          </section>
+        </aside>
+      </div>
+
+      <details class="demo-details">
+        <summary>构建过程：NFA → 子集构造</summary>
+        <p id="build-info" class="build-info"></p>
+        <div class="table-wrap">
+          <table id="subset-table">
+            <caption class="sr-only">DFA 状态与对应的 NFA 状态集合</caption>
+          </table>
+        </div>
+      </details>
+
+      <p class="demo-foot">
+        只演示 DFA 的运行；推导和相关证明在
+        <a href="../note-dfa-nfa.html">DFA 与 NFA</a> 和
+        <a href="../note-regex-pump.html">正则表达式与泵引理</a>。
+      </p>
+    </section>
+
+    <noscript>
+      <p class="demo-error">这个模拟器需要 JavaScript 才能运行。</p>
+    </noscript>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe</p>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear()
+    document.getElementById('navToggle').addEventListener('click', () => {
+      document.getElementById('navLinks').classList.toggle('open')
+    })
+    window.addEventListener('scroll', () => {
+      document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 8)
+    }, { passive: true })
+  </script>
+  <script src="automata-core.js"></script>
+  <script src="automata.js"></script>
+</body>
+</html>

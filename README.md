@@ -23,6 +23,7 @@
 | `public/cases.css` | 案例页共享样式，沿用笔记页的墨纸配色 |
 | `public/en/` | 英文一页：定位、代表工作、研究与 CV 摘要；导航里的 `EN` 进来 |
 | `public/uses.html` | **在用什么**：机器、Obsidian 工作流、网站栈、视频流程、字体配色；联系区的「在用什么」进来 |
+| `public/demo/` | **自动机模拟器**：正则 → NFA → DFA，单步运行；入口在 DFA/NFA 与正则两篇笔记 |
 | **`React重构说明.md`** | **讲解 + 增删改查手册** ← 想改东西先看它 |
 
 ## 命令
@@ -33,6 +34,7 @@ npm run dev      # 开发服务器 → http://localhost:5173 （改完自动刷�
 npm run build    # 类型检查 + 打包到 dist/
 npm run preview  # 本地预览打包结果
 npm run sync:now # 从笔记仓库的活跃线白名单生成 public/now.json（每周六复盘后）
+npm run test:automata # 自动机核心的单元测试（node --test）
 ```
 
 ## 部署
