@@ -15,6 +15,7 @@
 }
 
 /* 导航里的打印按钮 */
+.resume-nav-actions { display: flex; align-items: center; gap: 8px; }
 .btn-print {
   border: 1px solid var(--line);
   background: var(--bg);
@@ -143,6 +144,11 @@
 @media (max-width: 640px) {
   .resume-head { flex-direction: column; }
   .resume-contact { text-align: left; }
+}
+
+@media (max-width: 480px) {
+  .resume-nav-actions { gap: 4px; }
+  .resume-nav-actions .btn-print { padding: 6px 10px; font-size: 0.78rem; }
 }
 
 /* ===== 打印样式(导出 PDF,单页 A4) ===== */

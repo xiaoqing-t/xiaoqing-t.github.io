@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build && node scripts/note-meta.mjs && node scripts/inline-build.mjs",
+    "build": "node scripts/resume-sync.mjs && tsc --noEmit && vite build && node scripts/note-meta.mjs && node scripts/inline-build.mjs",
     "preview": "vite preview",
     "sync:now": "node scripts/sync-now.mjs",
+    "sync:resume": "node scripts/resume-sync.mjs",
     "test:automata": "node --test scripts/automata.test.mjs",
     "test:pda": "node --test scripts/pda.test.mjs"
   },
