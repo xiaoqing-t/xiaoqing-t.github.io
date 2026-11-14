@@ -94,6 +94,11 @@ export default function ProjectModal({ project, onClose }: { project: Project; o
           </section>
 
           <div className="modal-links">
+            {project.case && (
+              <a className="btn btn-primary" href={project.case}>
+                阅读完整案例 →
+              </a>
+            )}
             {project.links.map((l) => (
               <a key={l.href} className="btn btn-ghost" href={l.href} target="_blank" rel="noopener">
                 {l.label} ↗

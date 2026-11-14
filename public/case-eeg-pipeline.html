@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>多模态 EEG 预处理管线 · 案例 · Zhao Yunzhe</title>
+  <meta name="description" content="在 BCMI 实验室处理 10 个公开数据集、380+ 小时 EEG / ECG / EOG：先 QC 再预处理，配置驱动、可复现，并把判断规则打包成一个可复用的 skill。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="canonical" href="https://xiaoqing-t.github.io/case-eeg-pipeline.html" />
+  <meta property="og:type" content="article" />
+  <meta property="og:locale" content="zh_CN" />
+  <meta property="og:site_name" content="Zhao Yunzhe" />
+  <meta property="og:title" content="多模态 EEG 预处理管线 · 案例" />
+  <meta property="og:description" content="先 QC 再预处理：10 个公开数据集、380+ 小时多模态信号，把判断规则打包成一个可复用的 skill。" />
+  <meta property="og:url" content="https://xiaoqing-t.github.io/case-eeg-pipeline.html" />
+  <meta property="og:image" content="https://xiaoqing-t.github.io/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="多模态 EEG 预处理管线 · 案例" />
+  <meta name="twitter:description" content="先 QC 再预处理：10 个公开数据集、380+ 小时多模态信号，把判断规则打包成一个可复用的 skill。" />
+  <meta name="twitter:image" content="https://xiaoqing-t.github.io/og-image.png" />
+  <link rel="alternate" type="application/rss+xml" title="Zhao Yunzhe · 学习笔记" href="/feed.xml" />
+  <link rel="stylesheet" href="legacy-v1.css" />
+  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="cases.css" />
+</head>
+<body>
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <button class="nav-toggle" id="navToggle" aria-label="菜单">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html#work" class="active">作品</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="now.html">现在</a></li>
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="resume.html" class="nav-cta">简历</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container case">
+    <a class="back-link" href="index.html#work">← 返回精选作品</a>
+
+    <p class="case-kicker">CASE 02 · BCI · EEG</p>
+    <h1 class="case-title">多模态 EEG 预处理管线</h1>
+    <p class="case-lead">
+      在 BCMI 实验室处理 10 个公开数据集、累计 380+ 小时的 EEG / ECG / EOG。
+      管线的价值不在滤波那几行，而在把「拿到数据先别跑」的判断规则写成了一个可复用的 skill：
+      先 QC，再人工决策，最后才预处理。
+    </p>
+
+    <ul class="case-meta">
+      <li><span>角色</span><strong>独立开发</strong></li>
+      <li><span>场景</span><strong>BCMI 实验室 · OpenNeuro 公开数据</strong></li>
+      <li><span>规模</span><strong>10 个数据集 · 380+ 小时</strong></li>
+      <li><span>仓库</span><strong><a href="https://github.com/xiaoqing-t/EEG-preprocess-pipeline-skill" target="_blank" rel="noopener">EEG-preprocess-pipeline-skill ↗</a></strong></li>
+    </ul>
+
+    <blockquote class="case-claim">
+      工具负责执行和出证据，人负责判断哪些数据不该进管线。这条分工写进了流程，也写进了 skill。
+    </blockquote>
+
+    <section class="case-section" id="problem">
+      <p class="case-num">01</p>
+      <h2>问题：每个数据集都从同几个坑开始</h2>
+      <p>
+        公开 EEG 数据的麻烦很少在算法，而在进入算法之前：<code>.vhdr</code> 和
+        <code>.set</code> 有的存伏特、有的存微伏；原始信号的 std 常常是几千 µV，
+        但这不代表数据坏了；参考电极有时是记录通道，有时只是一个名字；
+        同一数据集里通道数还会从 63 变成 61、从 64 变成 256。
+      </p>
+      <p>
+        如果每换一个数据集都重新发现一遍，就会在无效预处理上浪费算力。
+        更糟的是把错误静默带进下游：线上模型不会告诉你，它学的是没换算单位的信号。
+      </p>
+    </section>
+
+    <section class="case-section" id="design">
+      <p class="case-num">02</p>
+      <h2>做法：先 QC，再预处理</h2>
+
+      <figure class="diagram">
+        <div class="frame">
+          <svg viewBox="0 0 760 268" role="img" aria-label="预处理流程：原始数据经过 QC，由人查看报告做决策；通过后进入预处理，再按通道数合并成 HDF5">
+            <title>先 QC 再预处理的四段流程</title>
+            <defs>
+              <marker id="arrow-eeg" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 z" class="d-arrow" />
+              </marker>
+            </defs>
+
+            <rect class="d-box" x="16" y="36" width="124" height="64" rx="8" />
+            <text class="d-label" x="78" y="62" text-anchor="middle">原始数据</text>
+            <text class="d-sub" x="78" y="80" text-anchor="middle">BIDS / sub-*</text>
+
+            <rect class="d-box" x="162" y="36" width="124" height="64" rx="8" />
+            <text class="d-label" x="224" y="62" text-anchor="middle">01 QC</text>
+            <text class="d-sub" x="224" y="80" text-anchor="middle">统计 · 种子图 · 报告</text>
+
+            <rect class="d-box-accent" x="308" y="36" width="124" height="64" rx="8" />
+            <text class="d-label" x="370" y="62" text-anchor="middle">人工决策</text>
+            <text class="d-sub" x="370" y="80" text-anchor="middle">弃 / 排除 / 丢 / 调参</text>
+
+            <rect class="d-box" x="454" y="36" width="124" height="64" rx="8" />
+            <text class="d-label" x="516" y="62" text-anchor="middle">02 预处理</text>
+            <text class="d-sub" x="516" y="80" text-anchor="middle">滤波 · 陷波 · 重采样</text>
+
+            <rect class="d-box" x="600" y="36" width="124" height="64" rx="8" />
+            <text class="d-label" x="662" y="62" text-anchor="middle">03 合并</text>
+            <text class="d-sub" x="662" y="80" text-anchor="middle">按通道数拆分</text>
+
+            <line class="d-line" x1="140" y1="68" x2="156" y2="68" marker-end="url(#arrow-eeg)" />
+            <line class="d-line" x1="286" y1="68" x2="302" y2="68" marker-end="url(#arrow-eeg)" />
+            <line class="d-line" x1="432" y1="68" x2="448" y2="68" marker-end="url(#arrow-eeg)" />
+            <line class="d-line" x1="578" y1="68" x2="594" y2="68" marker-end="url(#arrow-eeg)" />
+
+            <rect class="d-box" x="308" y="172" width="270" height="52" rx="8" />
+            <text class="d-label" x="443" y="194" text-anchor="middle">QC 报告不过关</text>
+            <text class="d-sub" x="443" y="211" text-anchor="middle">弃数据集 / 排除被试 / 丢通道 / 调参后重跑</text>
+            <line class="d-line-dash" x1="370" y1="100" x2="370" y2="166" marker-end="url(#arrow-eeg)" />
+
+            <rect class="d-box-accent" x="600" y="172" width="124" height="52" rx="8" />
+            <text class="d-label" x="662" y="194" text-anchor="middle">HDF5</text>
+            <text class="d-sub" x="662" y="211" text-anchor="middle">每人一个文件</text>
+            <line class="d-line" x1="662" y1="100" x2="662" y2="166" marker-end="url(#arrow-eeg)" />
+          </svg>
+        </div>
+        <figcaption>QC 不是可选步骤，而是一道人工闸门：报告给不出通过的理由，就不进入预处理。</figcaption>
+      </figure>
+
+      <h3>阶段 A：QC 只体检，不动数据</h3>
+      <p>
+        先做单位换算，再逐通道算 mean / std / min / max，检查 NaN / Inf，
+        按阈值把通道分成 bad / noisy / normal，并为每个被试生成一张固定随机段的 10 秒 QC 图
+        —— 种子取自被试编号，所以同一份数据每次生成的图完全一样。
+        最后汇总成一份跨被试的 <code>qc_report.txt</code>，附排除建议。
+      </p>
+      <p>
+        QC 本身<strong>不滤波、不降采样、不归一化</strong>。
+        它只回答「这份数据现在长什么样」，不替人做决定。
+      </p>
+
+      <h3>阶段 B：预处理与合并</h3>
+      <p>
+        通道选择 → 带通滤波 → 陷波 → 降采样 → z-score，按被试写成 HDF5。
+        ECG 不存连续信号，切成 10 秒 epoch；EMG、GSR 这类通道直接丢弃。
+        合并时如果同一数据集的通道数不一致，就按通道数拆成多个 H5，不硬凑成一个。
+      </p>
+      <pre><code>/EEG/{idx}   (n_ch, N)      chunks=(n_ch, 200)
+/EOG/{idx}   (m_ch, N)
+/ECG/{idx}   (N, 1, 5000)   10 s epoch</code></pre>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>信号</th><th>高通</th><th>低通</th><th>陷波</th><th>目标采样率</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>EEG</td><td>0.3 Hz</td><td>75 Hz</td><td>50 / 60 Hz</td><td>200 Hz</td></tr>
+            <tr><td>EOG</td><td>0.1 Hz</td><td>30 Hz</td><td>50 / 60 Hz</td><td>200 Hz</td></tr>
+            <tr><td>ECG</td><td>0.5 Hz</td><td>50 Hz</td><td>50 / 60 Hz</td><td>500 Hz</td></tr>
+            <tr><td>EMG</td><td colspan="4">通常丢弃</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>skill 化的不是脚本，是判断规则</h3>
+      <p>
+        管线最终打包成一个 skill，核心是一份 <code>SKILL.md</code>：
+        单位换算的判定表、12 个数据集的参考电极处置、通道分类阈值、
+        HDF5 的目录结构、多通道数的合并策略，全部写成可执行的规则。
+        agent 读到规则再动手，同一批坑不需要在第二个数据集上再踩一次。
+      </p>
+      <ul>
+        <li><strong>ds005114</strong>：63 通道（有 T7/T8）和 61 通道（无）分开合并，不强行对齐。</li>
+        <li><strong>ds004118</strong>：64 通道和 256 通道分成两个 H5；E129 是记录到的参考通道，要丢。</li>
+        <li><strong>ds005087</strong>：Cz 只是参考电极的名字，不在 63 个通道里，不能当通道删。</li>
+      </ul>
+    </section>
+
+    <section class="case-section" id="pitfalls">
+      <p class="case-num">03</p>
+      <h2>最容易错的地方</h2>
+      <ul class="pitfalls">
+        <li>
+          <b>所有通道 std 都接近 0</b>
+          <span>
+            数据存的是伏特，没有换算。统一做 <code>raw._data *= 1e6</code>；
+            即使原本已经是 µV，放大后的量级也会被后面的 z-score 抹平。
+          </span>
+        </li>
+        <li>
+          <b>看到 std 两三千 µV 就想弃数据集</b>
+          <span>
+            原始 µV 信号带 DC 偏移，std 在 2000–10000 µV 很常见。
+            先跑 0.3 Hz 高通，再判断滤波后的结果。
+          </span>
+        </li>
+        <li>
+          <b>把参考电极当成普通通道删掉</b>
+          <span>
+            先查 <code>_eeg.json</code> 的 <code>EEGReference</code>，
+            再看这个名字是否真的在 <code>raw.ch_names</code> 里：在就丢，不在就不操作。
+          </span>
+        </li>
+        <li>
+          <b>不同被试通道数不一致</b>
+          <span>
+            不要强行拼成一个 H5。按通道数分组，各自合并，下游按组读取。
+          </span>
+        </li>
+      </ul>
+    </section>
+
+    <section class="case-section" id="result">
+      <p class="case-num">04</p>
+      <h2>结果</h2>
+      <div class="stat-grid">
+        <div class="stat"><b>10</b><span>个 OpenNeuro 数据集</span></div>
+        <div class="stat"><b>380+</b><span>小时多模态信号</span></div>
+        <div class="stat"><b>3</b><span>个阶段：QC / 预处理 / 合并</span></div>
+        <div class="stat"><b>1</b><span>个可复用的 skill</span></div>
+      </div>
+      <p>
+        已处理的数据集包括 ds004118（驾驶）、ds004995（食物）、ds005087（视觉对象）、
+        ds005089（选择性注意）、ds005114（TBI）、ds005273（意识）、ds005795、
+        ds006018、ds006260 和 ds006434（听觉脑干）。每个数据集的参考电极和工频选择
+        都记在 <code>SKILL.md</code> 里，不靠记忆。
+      </p>
+      <p>
+        代码以 MIT 协议开源。换一台机器，只要改脚本顶部的 <code>BASE</code> 和
+        <code>TASK</code> 两个配置项，就能按同样的顺序重跑。
+      </p>
+    </section>
+
+    <section class="case-section" id="reflection">
+      <p class="case-num">05</p>
+      <h2>反思</h2>
+      <p>
+        这套管线真正可复用的部分不是代码，而是那张「每个数据集必须回答的问题」清单：
+        单位是什么、参考电极在不在通道里、通道数是否一致、哪些通道该丢。
+        脚本只是把这些答案落了地。
+      </p>
+      <p>
+        局限也清楚：QC 阈值是起点不是真理，遇到 TBI 或临床数据要把 BAD / NOISY
+        调到 1000 / 10000 µV；坏通道最终仍靠人看图判断。下一步我想做两件事：
+        一是让坏通道检测给出可复查的证据，而不只给一个标签；
+        二是用下游模型的效果反过来验证预处理选择，而不是只看图好不好看。
+      </p>
+      <p>
+        <strong>一句话：先让数据通过体检，再让它进入模型。</strong>
+      </p>
+    </section>
+
+    <nav class="case-next" aria-label="案例导航">
+      <span>另一个案例</span>
+      <a href="case-coding-agent.html">终端 Coding Agent →</a>
+    </nav>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe</p>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear()
+    document.getElementById('navToggle').addEventListener('click', () => {
+      document.getElementById('navLinks').classList.toggle('open')
+    })
+    window.addEventListener('scroll', () => {
+      document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 8)
+    }, { passive: true })
+  </script>
+</body>
+</html>

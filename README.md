@@ -19,6 +19,8 @@
 | `public/` | 原样保留的静态页：简历 2 页 + 21 篇笔记 + v1 主页冻结副本 + `robots.txt` / `sitemap.xml` / `404.html` / `notes.css`（笔记页配色覆盖）+ `book-shell.css/js`（笔记页侧栏）—— **URL 一个都没变** |
 | `public/now.html` | **现在**页：活跃线卡片 + 最近更新；数据由 `sync:now` 直接内嵌，本地双击也能看 |
 | `public/now.json` | `/now` 的数据快照，由 `npm run sync:now` 从笔记仓库的白名单线卡生成 |
+| `public/case-*.html` | 两个旗舰项目的独立案例页（Coding Agent / EEG 管线），从首页作品弹窗进入 |
+| `public/cases.css` | 案例页共享样式，沿用笔记页的墨纸配色 |
 | **`React重构说明.md`** | **讲解 + 增删改查手册** ← 想改东西先看它 |
 
 ## 命令

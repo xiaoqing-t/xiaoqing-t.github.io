@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>终端 Coding Agent · 案例 · Zhao Yunzhe</title>
+  <meta name="description" content="用 C 从零写的终端 coding agent：工具注册表、沙箱边界、只读并行执行与两套上下文压缩策略。约 2.3k 行，含端到端评测。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="canonical" href="https://xiaoqing-t.github.io/case-coding-agent.html" />
+  <meta property="og:type" content="article" />
+  <meta property="og:locale" content="zh_CN" />
+  <meta property="og:site_name" content="Zhao Yunzhe" />
+  <meta property="og:title" content="终端 Coding Agent · 案例" />
+  <meta property="og:description" content="用 C 从零写的终端 coding agent：工具注册表、沙箱边界、只读并行执行与两套上下文压缩策略。" />
+  <meta property="og:url" content="https://xiaoqing-t.github.io/case-coding-agent.html" />
+  <meta property="og:image" content="https://xiaoqing-t.github.io/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="终端 Coding Agent · 案例" />
+  <meta name="twitter:description" content="用 C 从零写的终端 coding agent：工具注册表、沙箱边界、只读并行执行与两套上下文压缩策略。" />
+  <meta name="twitter:image" content="https://xiaoqing-t.github.io/og-image.png" />
+  <link rel="alternate" type="application/rss+xml" title="Zhao Yunzhe · 学习笔记" href="/feed.xml" />
+  <link rel="stylesheet" href="legacy-v1.css" />
+  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="cases.css" />
+</head>
+<body>
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <button class="nav-toggle" id="navToggle" aria-label="菜单">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html#work" class="active">作品</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="now.html">现在</a></li>
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="resume.html" class="nav-cta">简历</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container case">
+    <a class="back-link" href="index.html#work">← 返回精选作品</a>
+
+    <p class="case-kicker">CASE 01 · AI AGENT</p>
+    <h1 class="case-title">终端 Coding Agent</h1>
+    <p class="case-lead">
+      用 C 从零写一个能在终端里读代码、跑命令、改文件的 agent。真正的工作量不在调模型，
+      而在三件事：把工具调用收进一张注册表，把路径检查收进一道沙箱边界，
+      把无限增长的历史收进一套可替换的上下文策略。
+    </p>
+
+    <ul class="case-meta">
+      <li><span>角色</span><strong>独立开发</strong></li>
+      <li><span>时间</span><strong>2026 秋 · 操作系统课设延伸</strong></li>
+      <li><span>规模</span><strong>约 2.3k 行 C</strong></li>
+      <li><span>仓库</span><strong><a href="https://github.com/xiaoqing-t/Project2-of-OS-2026-Fall" target="_blank" rel="noopener">Project2-of-OS-2026-Fall ↗</a></strong></li>
+    </ul>
+
+    <blockquote class="case-claim">
+      稳定接口，可替换实现：agent 主循环不知道有哪些工具，也不关心历史用哪种压缩策略。
+    </blockquote>
+
+    <section class="case-section" id="problem">
+      <p class="case-num">01</p>
+      <h2>问题：每加一个工具，要改三个地方</h2>
+      <p>
+        Part 1 只有一个 <code>bash</code> 工具，调度就是一个
+        <code>if (strcmp(name, "bash"))</code>。等 Part 2 要加
+        <code>read_file</code>、<code>write_file</code>、<code>edit_file</code>，
+        同一个分支要在 <code>agent.c</code> 和 <code>llm_client.c</code> 里各写一遍：
+        前者负责执行，后者负责把工具描述发给模型。工具一多，两处描述就开始漂移。
+      </p>
+      <p>
+        第二个压力来自历史。每一轮都把旧的工具输出重新发一遍，上下文窗口、费用和模型的注意力
+        同时被吃掉。第三个压力在执行：一批三个互不依赖的读，被排成一队串行跑。
+      </p>
+    </section>
+
+    <section class="case-section" id="design">
+      <p class="case-num">02</p>
+      <h2>做法：把变化收进四个点</h2>
+
+      <h3>工具注册表</h3>
+      <p>
+        <code>ToolDef</code> 把名字、描述、参数 schema、执行函数和只读标记放在一起。
+        启动时 <code>tool_register</code> 注册，执行时 <code>tool_find</code> 查表。
+        新增工具 = 写一个 <code>.c</code> 文件，再在 <code>tools_init()</code> 里加一行；
+        <code>agent.c</code> 和 <code>llm_client.c</code> 完全不用改。
+        <code>read_only</code> 不只是文档字段，它是执行器决定能不能并行的依据。
+      </p>
+
+      <h3>沙箱只有一道门</h3>
+      <p>
+        文件工具不能让模型读 <code>/etc/passwd</code>。
+        <code>resolve_workspace_path</code> 用 <code>realpath</code> 解开符号链接和
+        <code>..</code>，再检查结果是否落在工作目录内；每个文件工具打开前都必须过这一道。
+        验证逻辑散在各工具里迟早会漏检，集中在一处才能保证一致。
+      </p>
+
+      <h3>执行器：只读并行，写入保序</h3>
+      <p>
+        一轮里模型可以返回多个工具调用。执行器按 <code>read_only</code> 拆批：只读的并发跑，
+        写入和编辑保持请求顺序；结果再按原顺序拼回去，模型看到的历史顺序是稳定的。
+        线程池来自课设的 shell / HTTP 底座，并发正确性用 ThreadSanitizer 验证。
+      </p>
+
+      <h3>上下文策略</h3>
+      <p>
+        <code>ContextPolicy</code> 只有三个字段：名字、<code>should_apply</code>、<code>apply</code>。
+        每次请求前 <code>ctx_reclaim</code> 按注册顺序走一遍，两种策略按代价从低到高排：
+      </p>
+      <ul>
+        <li>
+          <strong>offload 先跑，无损。</strong>把旧的超长工具输出写到
+          <code>.agent/offload/</code>，历史里只留一个能被 <code>read_file</code>
+          找回的指针。
+        </li>
+        <li>
+          <strong>summary 后跑，有损。</strong>让模型把旧对话压成一条交接消息，
+          最近的 K 条原样保留。
+        </li>
+      </ul>
+      <p>
+        阈值由 <code>CONTEXT_WINDOW</code>、<code>OFFLOAD_THRESHOLD</code>、
+        <code>SUMMARY_THRESHOLD</code> 三个环境变量控制。以后加第三种策略，
+        只需要实现两个函数再注册，agent 核心不动。
+      </p>
+
+      <figure class="diagram">
+        <div class="frame">
+          <svg viewBox="0 0 760 300" role="img" aria-label="Coding Agent 单轮循环：用户输入进入上下文预算检查，再请求模型，模型返回工具调用批次，执行器执行后把结果写回历史，循环直到模型不再调用工具">
+            <title>一轮 agent 循环</title>
+            <defs>
+              <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 z" class="d-arrow" />
+              </marker>
+            </defs>
+
+            <rect class="d-box" x="16" y="34" width="150" height="56" rx="8" />
+            <text class="d-label" x="91" y="60" text-anchor="middle">用户输入</text>
+            <text class="d-sub" x="91" y="77" text-anchor="middle">终端 prompt</text>
+
+            <rect class="d-box" x="192" y="34" width="150" height="56" rx="8" />
+            <text class="d-label" x="267" y="60" text-anchor="middle">Context</text>
+            <text class="d-sub" x="267" y="77" text-anchor="middle">offload → summary</text>
+
+            <rect class="d-box" x="368" y="34" width="150" height="56" rx="8" />
+            <text class="d-label" x="443" y="60" text-anchor="middle">LLM</text>
+            <text class="d-sub" x="443" y="77" text-anchor="middle">HTTP / JSON</text>
+
+            <rect class="d-box" x="544" y="34" width="150" height="56" rx="8" />
+            <text class="d-label" x="619" y="60" text-anchor="middle">工具调用批次</text>
+            <text class="d-sub" x="619" y="77" text-anchor="middle">一轮可返回多个</text>
+
+            <rect class="d-box" x="368" y="186" width="150" height="56" rx="8" />
+            <text class="d-label" x="443" y="212" text-anchor="middle">结果写回历史</text>
+            <text class="d-sub" x="443" y="229" text-anchor="middle">ctx_push</text>
+
+            <rect class="d-box-accent" x="544" y="186" width="150" height="56" rx="8" />
+            <text class="d-label" x="619" y="212" text-anchor="middle">Executor</text>
+            <text class="d-sub" x="619" y="229" text-anchor="middle">只读并行 · 写入串行</text>
+
+            <line class="d-line" x1="166" y1="62" x2="186" y2="62" marker-end="url(#arrow)" />
+            <line class="d-line" x1="342" y1="62" x2="362" y2="62" marker-end="url(#arrow)" />
+            <line class="d-line" x1="518" y1="62" x2="538" y2="62" marker-end="url(#arrow)" />
+            <line class="d-line" x1="619" y1="90" x2="619" y2="180" marker-end="url(#arrow)" />
+            <line class="d-line" x1="544" y1="214" x2="524" y2="214" marker-end="url(#arrow)" />
+            <polyline class="d-line" points="368,214 267,214 267,96" marker-end="url(#arrow)" />
+            <text class="d-sub" x="280" y="204">下一轮</text>
+
+            <line class="d-line-dash" x1="443" y1="242" x2="443" y2="266" />
+            <line class="d-line-dash" x1="443" y1="266" x2="552" y2="266" marker-end="url(#arrow)" />
+            <rect class="d-box" x="558" y="248" width="186" height="36" rx="6" />
+            <text class="d-label" x="651" y="270" text-anchor="middle">不再调用工具 → 结束</text>
+          </svg>
+        </div>
+        <figcaption>一次请求的处理路径。压缩发生在请求之前，并行的决定发生在执行器里，两者都不改主循环。</figcaption>
+      </figure>
+    </section>
+
+    <section class="case-section" id="pitfalls">
+      <p class="case-num">03</p>
+      <h2>踩到的坑</h2>
+      <ul class="pitfalls">
+        <li>
+          <b>HTTP 一直卡到 120 秒超时</b>
+          <span>
+            <code>curl</code> 正常，自己写的 <code>recv_all</code> 却等不到结尾。
+            HTTP/1.1 默认持久连接，服务器发完响应不关连接；我们的代码靠读到 EOF 判断结束。
+            请求头加上 <code>Connection: close</code>。
+          </span>
+        </li>
+        <li>
+          <b>阈值设 0.9，却在 36% 就触发压缩</b>
+          <span>
+            <code>parse_env_int</code> 把 <code>0.9</code> 解析失败，返回 0，再除以 100 还是 0。
+            浮点阈值改用 <code>atof</code> 单独处理。
+          </span>
+        </li>
+        <li>
+          <b>实现了 load_skill，模型却从不调用</b>
+          <span>
+            模型不知道有这个工具。启动时扫描 <code>skills/</code> 目录，
+            把技能列表注入 system prompt，工具才真正可达。
+          </span>
+        </li>
+        <li>
+          <b>strncat 的截断警告</b>
+          <span>
+            每次拼接前重算剩余空间 <code>sizeof(buffer) - strlen(buffer) - 1</code>，
+            给结束符留一个字节。
+          </span>
+        </li>
+      </ul>
+
+      <pre><code>const char *s = getenv("SUMMARY_THRESHOLD");
+g_config.summary_threshold = (s &amp;&amp; s[0]) ? atof(s) : 0.9f;</code></pre>
+    </section>
+
+    <section class="case-section" id="result">
+      <p class="case-num">04</p>
+      <h2>结果</h2>
+      <div class="stat-grid">
+        <div class="stat"><b>2.3k</b><span>行自研 C 代码</span></div>
+        <div class="stat"><b>5</b><span>个注册工具：bash / read / write / edit / skill</span></div>
+        <div class="stat"><b>4/4</b><span>端到端评测场景通过</span></div>
+      </div>
+      <p>
+        评测脚本是黑盒的：起子进程、喂 prompt、按关键词判成功，超时 60 秒。
+        单次运行 4–6 秒，四个场景全部通过：
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>场景</th><th>检查</th><th>结果</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>统计目录里的 .c 文件</td><td>数量是否正确</td><td>通过</td></tr>
+            <tr><td>找出 main 函数所在行</td><td>关键字 main</td><td>通过</td></tr>
+            <tr><td>读一个文本文件</td><td>Hello, world</td><td>通过</td></tr>
+            <tr><td>写入后再读回</td><td>test content</td><td>通过</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        模块级有 CUnit 测试覆盖注册表、沙箱、执行器、卸载和摘要；
+        整机并发用 ThreadSanitizer 跑过。测试和评测都接在 <code>Makefile</code> 里，
+        换机器不用重新记命令。
+      </p>
+    </section>
+
+    <section class="case-section" id="reflection">
+      <p class="case-num">05</p>
+      <h2>反思</h2>
+      <p>
+        注册表、沙箱、上下文策略其实是同一件事：把会变的东西收进一个点，让主循环不变。
+        课程里把它叫作「稳定接口，可替换实现」；放到操作系统里，就是系统调用表、VFS 操作表
+        和设备驱动接口的同一形状。
+      </p>
+      <p>
+        还不够的地方也很明确：评测只有四个短任务、一个模型，证明不了真实代码库里的能力；
+        token 统计是估算；还没有 streaming、失败重试、子 agent 和会话恢复。
+        下一步我会先把上下文决策记成可回放的日志——先能解释「这一步为什么被压缩」，
+        再谈压得好不好。
+      </p>
+      <p>
+        <strong>一句话：agent 的难点不是让它会调工具，而是工具的增减、历史的涨落都不改主循环。</strong>
+      </p>
+    </section>
+
+    <nav class="case-next" aria-label="案例导航">
+      <span>另一个案例</span>
+      <a href="case-eeg-pipeline.html">多模态 EEG 预处理管线 →</a>
+    </nav>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe</p>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear()
+    document.getElementById('navToggle').addEventListener('click', () => {
+      document.getElementById('navLinks').classList.toggle('open')
+    })
+    window.addEventListener('scroll', () => {
+      document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 8)
+    }, { passive: true })
+  </script>
+</body>
+</html>

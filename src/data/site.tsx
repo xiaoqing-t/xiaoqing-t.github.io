@@ -59,6 +59,8 @@ export interface Project {
   outcomes: string[]
   /** 底部外链按钮 */
   links: Link[]
+  /** 独立案例页（只有旗舰项目有） */
+  case?: string
 }
 
 /** 一篇学习笔记 */
@@ -206,6 +208,7 @@ export const projects: Project[] = [
       { label: 'Coding Agent', href: 'https://github.com/xiaoqing-t/Project2-of-OS-2026-Fall' },
       { label: 'Shell / HTTP / 线程池', href: 'https://github.com/xiaoqing-t/Project1-of-OS-2026-fall' },
     ],
+    case: 'case-coding-agent.html',
   },
   {
     tag: 'ARCHITECTURE',
@@ -239,6 +242,7 @@ export const projects: Project[] = [
       '打包成可复用 skill 并开源',
     ],
     links: [{ label: '查看仓库', href: 'https://github.com/xiaoqing-t/EEG-preprocess-pipeline-skill' }],
+    case: 'case-eeg-pipeline.html',
   },
   {
     tag: 'DEEP LEARNING',
