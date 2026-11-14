@@ -26,6 +26,8 @@
 | `public/en/` | 英文一页：定位、代表工作、研究与 CV 摘要；导航里的 `EN` 进来 |
 | `public/uses.html` | **在用什么**：机器、Obsidian 工作流、网站栈、视频流程、字体配色；联系区的「在用什么」进来 |
 | `public/demo/` | **自动机模拟器**：正则 → NFA → DFA 单步运行；`pda.html` 是 PDA / DPDA 模式，栈与分支可视化；入口在 DFA/NFA、正则、PDA、DPDA 四篇笔记 |
+| `public/og-image.png` | 首页分享卡（1200×630，英文） |
+| `public/og/` | 21 篇笔记各自的分享卡，由 `npm run sync:og` 从 `notes.json` 生成 |
 | **`React重构说明.md`** | **讲解 + 增删改查手册** ← 想改东西先看它 |
 
 ## 命令
@@ -37,6 +39,7 @@ npm run build    # 类型检查 + 打包到 dist/
 npm run preview  # 本地预览打包结果
 npm run sync:now # 从笔记仓库的活跃线白名单生成 public/now.json（每周六复盘后）
 npm run sync:resume # 从中文简历生成英文简历（改完中文简历跑）
+npm run sync:og # 从 notes.json 重新生成首页与笔记分享卡（需要 Pillow）
 npm run test:automata # 自动机核心的单元测试（node --test）
 npm run test:pda # PDA / DPDA 模拟核心的单元测试
 ```
@@ -62,6 +65,10 @@ npm run test:pda # PDA / DPDA 模拟核心的单元测试
 | 改版面、配色 | `public/resume.css`（两页共用） |
 
 `npm run build` 会先跑同步：中文改过但英文没补译时直接失败，不会把半中半英的页面发上线。译文对照表按中文原文索引，所以中文句子一改就会被当成新句子要求翻译——这是有意的，避免英文悄悄引用旧信息。
+
+## 分享卡（OG 图）
+
+首页和每篇笔记各有一张 1200×630 的分享卡：`public/og-image.png` 和 `public/og/note-*.png`。改标题、加笔记之后跑 `npm run sync:og`，脚本从 `public/notes.json` 重新生成全部卡片（需要本机有 Pillow）。构建不跑这个脚本，CI 用的是仓库里已提交的图；新增笔记漏图时 `note-meta.mjs` 会警告并退回首页卡，不会让页面报错。
 
 ## 笔记怎么组织（2026-11）
 

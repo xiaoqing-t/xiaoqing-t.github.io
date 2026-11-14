@@ -4,7 +4,7 @@
  *   1. dist/feed.xml —— 由 public/notes.json 生成的 RSS 2.0，
  *      按笔记日期倒序，条目链接指向对应的 note-*.html。
  *   2. 每个笔记页 <head> 里的 canonical / OG / Twitter 标签，
- *      标题与摘要取自 notes.json，图片统一用站点 og-image.png。
+ *      标题与摘要取自 notes.json，图片用 public/og/ 下对应的笔记图。
  *
  * 用法：node scripts/note-meta.mjs
  * 位置：必须放在 vite build 之后、inline-build 之前（dist 已存在，入口还没内联）。
@@ -19,7 +19,7 @@ const dist = join(root, 'dist')
 const SITE = 'https://xiaoqing-t.github.io'
 const FEED_TITLE = 'Zhao Yunzhe · 学习笔记'
 const FEED_DESC = '读论文、做推导、踩坑排查的笔记，按主题编成书。'
-const OG_IMAGE = `${SITE}/og-image.png`
+const OG_FALLBACK = `${SITE}/og-image.png`
 
 const data = JSON.parse(readFileSync(join(root, 'public/notes.json'), 'utf8'))
 
@@ -69,7 +69,7 @@ ${notes.map(feedItem).join('\n')}
 </rss>
 `
 
-function metaBlock(note) {
+function metaBlock(note, image) {
   const url = `${SITE}/${note.href}`
   return `<!-- note-meta:start -->
 <link rel="canonical" href="${url}" />
@@ -79,7 +79,7 @@ function metaBlock(note) {
 <meta property="og:title" content="${attr(note.title)}" />
 <meta property="og:description" content="${attr(note.desc)}" />
 <meta property="og:url" content="${url}" />
-<meta property="og:image" content="${OG_IMAGE}" />
+<meta property="og:image" content="${image}" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
@@ -87,7 +87,7 @@ function metaBlock(note) {
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="${attr(note.title)}" />
 <meta name="twitter:description" content="${attr(note.desc)}" />
-<meta name="twitter:image" content="${OG_IMAGE}" />
+<meta name="twitter:image" content="${image}" />
 <link rel="alternate" type="application/rss+xml" title="${attr(FEED_TITLE)}" href="${SITE}/feed.xml" />
 <!-- note-meta:end -->`
 }
@@ -106,13 +106,20 @@ for (const note of notes) {
   let html = readFileSync(file, 'utf8')
   html = html.replace(/<!-- note-meta:start -->[\s\S]*?<!-- note-meta:end -->\n?/g, '')
 
+  const imageName = note.href.replace(/\.html$/, '.png')
+  const localImage = join(root, 'public/og', imageName)
+  const image = existsSync(localImage) ? `${SITE}/og/${imageName}` : OG_FALLBACK
+  if (!existsSync(localImage)) {
+    console.warn(`[note-meta] 缺少 public/og/${imageName}，暂用站点 og-image.png`)
+  }
+
   if (!html.includes('</head>')) {
     console.warn(`[note-meta] ${note.href} 没有 </head>，跳过`)
     missing += 1
     continue
   }
 
-  html = html.replace('</head>', `${metaBlock(note)}\n</head>`)
+  html = html.replace('</head>', `${metaBlock(note, image)}\n</head>`)
   writeFileSync(file, html)
   injected += 1
 }

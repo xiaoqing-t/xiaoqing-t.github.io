@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "sync:now": "node scripts/sync-now.mjs",
     "sync:resume": "node scripts/resume-sync.mjs",
+    "sync:og": "python scripts/make-og.py",
     "test:automata": "node --test scripts/automata.test.mjs",
     "test:pda": "node --test scripts/pda.test.mjs"
   },
