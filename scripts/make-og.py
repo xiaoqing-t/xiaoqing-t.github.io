@@ -21,11 +21,47 @@ SOFT = (87, 80, 71)
 LINE = (216, 203, 184)
 WHITE = (255, 255, 255)
 
-FONT_DIR = Path("C:/Windows/Fonts")
-SEGOE = FONT_DIR / "segoeui.ttf"
-SEGOE_BOLD = FONT_DIR / "segoeuib.ttf"
-CONSOLAS = FONT_DIR / "consola.ttf"
-CJK_BOLD = FONT_DIR / "msyhbd.ttc"
+FONT_DIRS = [
+    Path("C:/Windows/Fonts"),
+    Path.home() / "AppData/Local/Microsoft/Windows/Fonts",
+    Path("/System/Library/Fonts"),
+    Path("/Library/Fonts"),
+    Path.home() / "Library/Fonts",
+    Path("/usr/share/fonts"),
+    Path("/usr/local/share/fonts"),
+]
+
+FONT_CANDIDATES = {
+    "Segoe UI": ("segoeui.ttf", "DejaVuSans.ttf", "Arial.ttf"),
+    "Segoe UI Bold": ("segoeuib.ttf", "DejaVuSans-Bold.ttf", "Arial Bold.ttf"),
+    "Consolas": ("consola.ttf", "DejaVuSansMono.ttf", "Menlo.ttc"),
+    "中文字体粗体": ("msyhbd.ttc", "NotoSansCJK-Bold.ttc", "NotoSansCJKsc-Bold.otf", "PingFang.ttc"),
+}
+
+
+def find_font(label, names):
+    for directory in FONT_DIRS:
+        if not directory.is_dir():
+            continue
+        for name in names:
+            path = directory / name
+            if path.is_file():
+                return path
+        for name in names:
+            matches = sorted(directory.rglob(name))
+            if matches:
+                return matches[0]
+    raise SystemExit(
+        f"[og] 找不到 {label} 字体。需要以下任一文件：{', '.join(names)}；"
+        f"查找目录：{', '.join(str(d) for d in FONT_DIRS)}。"
+        "Windows 可安装 Microsoft YaHei / Segoe UI，Linux 可安装 Noto Sans CJK / DejaVu。"
+    )
+
+
+SEGOE = find_font("Segoe UI", FONT_CANDIDATES["Segoe UI"])
+SEGOE_BOLD = find_font("Segoe UI Bold", FONT_CANDIDATES["Segoe UI Bold"])
+CONSOLAS = find_font("Consolas", FONT_CANDIDATES["Consolas"])
+CJK_BOLD = find_font("中文字体粗体", FONT_CANDIDATES["中文字体粗体"])
 
 BOOK_LABELS = {
     "engineering": "ENGINEERING",
@@ -38,6 +74,13 @@ BOOK_LABELS = {
 CLOSING = set("，。：、；！？）」』】%")
 OPENING = set("（「『【")
 TOKEN = re.compile(r"[A-Za-z0-9][A-Za-z0-9./+:_-]*|\s+|.", re.S)
+
+
+def og_image_name(href):
+    """约定：笔记 href 是 public/ 下扁平的 .html 文件名，OG 图同名换成 .png，放在 public/og/。"""
+    if "/" in href or "\\" in href or not href.endswith(".html"):
+        raise SystemExit(f"[og] 笔记 href 不符合约定（public/ 下扁平 .html 文件名）：{href}")
+    return href[:-5] + ".png"
 
 
 def font(path, size, index=0):
@@ -217,11 +260,11 @@ def main():
     out_dir.mkdir(exist_ok=True)
     count = 0
     for book in data["books"]:
-        label = BOOK_LABELS[book["id"]]
+        label = BOOK_LABELS.get(book["id"], book.get("title") or book["id"])
         for index, note in enumerate(book["notes"], start=1):
             kicker = f"{label} · NOTE {index:02d}"
             card = build_note(base, note["title"], kicker)
-            card.convert("RGB").save(out_dir / note["href"].replace(".html", ".png"), optimize=True)
+            card.convert("RGB").save(out_dir / og_image_name(note["href"]), optimize=True)
             count += 1
 
     print(f"[og] 写入 og-image.png + {count} 张笔记图（public/og/）")
