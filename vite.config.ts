@@ -17,6 +17,12 @@ export default defineConfig({
   // 单文件化之后 JS/CSS 已内联，这里只对仍需外部引用的资源（如 public/ 里的图片）有意义。
   base: '/',
 
+  build: {
+    // 每次主站构建先清空 dist，避免上一次的 hashed 资源残留；
+    // 简历页的第二次构建会把文件追加回来（那边是 emptyOutDir: false）。
+    emptyOutDir: true,
+  },
+
   // 刻意**不设** build.assetsInlineLimit（Vite 默认 4 KB 以下的资源才内联）。
   // 内联脚本负责的是 JS/CSS；将来若放较大的作品图，让它们留在 public/ 或输出成
   // 独立的 assets/ 文件更好 —— 否则整张图会 base64 进 HTML，改一个字就要重下整包。

@@ -13,13 +13,14 @@
  *   1. 读 dist/index.html
  *   2. 把 <script … src="/assets/x.js"></script> 换成内联的 <script type="module">…</script>
  *   3. 把 <link rel="stylesheet" … href="/assets/x.css"> 换成内联的 <style>…</style>
- *   4. 删掉已经被内联的那几个 assets 文件
+ *   4. 删掉已经被内联、且没有被其他页面引用的 assets 文件
  *
  * ── 边界（重要）────────────────────────────────────────────────────────────
- * 只处理「被 index.html 引用到的 js/css」。public/ 拷出来的东西
- * （简历 PDF、四篇笔记 HTML、legacy-v1.css、v1-index.html…）**一律不碰**。
+ * 只处理「被 index.html 引用到的 js/css」。简历页（resume.html / resume-en.html）
+ * 也由 Vite 构建，可能和主页共用 vendor chunk：这类仍被其他页面引用的资产会保留，
+ * 不能跟着 index 的副本一起删掉。public/ 拷出来的东西一律不碰。
  */
-import { existsSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -33,7 +34,6 @@ if (!existsSync(htmlPath)) {
 
 let html = readFileSync(htmlPath, 'utf8')
 const inlined = []
-
 /** HTML 里写的是 /assets/x.js（base 是 '/'），换成磁盘路径就得到 dist 下 */
 const toDiskPath = (url) => join(dist, url.replace(/^\//, ''))
 
@@ -50,7 +50,7 @@ html = html.replace(/<script\b[^>]*\bsrc="([^"]+)"[^>]*><\/script>/g, (whole, sr
   const file = toDiskPath(src)
   if (!existsSync(file)) return whole
   const code = guard(readFileSync(file, 'utf8'), 'script')
-  inlined.push(file)
+  inlined.push({ file, url: src })
   console.log(`[inline] <script>  ${src}  ${sizeKb(file)} KB`)
   return `<script type="module">\n${code}\n</script>`
 })
@@ -60,21 +60,34 @@ html = html.replace(/<link\b[^>]*\brel="stylesheet"[^>]*\bhref="([^"]+)"[^>]*>/g
   const file = toDiskPath(href)
   if (!existsSync(file)) return whole
   const css = guard(readFileSync(file, 'utf8'), 'style')
-  inlined.push(file)
+  inlined.push({ file, url: href })
   console.log(`[inline] <style>   ${href}  ${sizeKb(file)} KB`)
   return `<style>\n${css}\n</style>`
 })
 
 writeFileSync(htmlPath, html)
 
-for (const file of inlined) {
+const otherPages = readdirSync(dist)
+  .filter((name) => name.endsWith('.html') && name !== 'index.html')
+  .map((name) => readFileSync(join(dist, name), 'utf8'))
+
+let removed = 0
+let kept = 0
+for (const { file, url } of inlined) {
+  const referenced = html.includes(url) || otherPages.some((page) => page.includes(url))
+  if (referenced) {
+    console.log(`[inline] 保留 ${url}（仍被其他页面引用）`)
+    kept += 1
+    continue
+  }
   try {
     unlinkSync(file)
+    removed += 1
   } catch {
     // 删不掉也不影响页面：HTML 已经不再引用它了
   }
 }
 
-console.log(`[inline] 完成：内联 ${inlined.length} 个文件，删掉对应的独立产物`)
+console.log(`[inline] 完成：内联 ${inlined.length} 个文件，删除 ${removed} 个${kept ? `，保留 ${kept} 个共享产物` : ''}`)
 console.log(`[inline] dist/index.html 现在 ${sizeKb(htmlPath)} KB`)
 console.log('[inline] assets/ 若是空的，可以手动删掉该目录（脚本不自动删，免得误伤）')

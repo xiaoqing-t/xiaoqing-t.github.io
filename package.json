@@ -5,10 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/resume-sync.mjs && tsc --noEmit && vite build && node scripts/note-meta.mjs && node scripts/inline-build.mjs",
+    "build": "tsc --noEmit && vite build && vite build --config vite.resume.config.ts && node scripts/note-meta.mjs && node scripts/inline-build.mjs",
     "preview": "vite preview",
     "sync:now": "node scripts/sync-now.mjs",
-    "sync:resume": "node scripts/resume-sync.mjs",
     "sync:og": "python scripts/make-og.py",
     "test:automata": "node --test scripts/automata.test.mjs",
     "test:pda": "node --test scripts/pda.test.mjs"

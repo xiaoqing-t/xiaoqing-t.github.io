@@ -14,11 +14,12 @@
 | `src/App.tsx` | 页面骨架（谁在谁里面），想知道主页有什么看它 |
 | `src/components/*.tsx` | 9 个组件：Nav / Hero / Section / Reveal / About / Projects / Notes / Contact / Footer |
 | `src/data/site.tsx` | 站点文案、项目、「关于我」三张卡 ← 改文字只改它 |
+| `resume.html` / `resume-en.html` | 中文 / 英文简历的 Vite 入口；React 渲染，URL 和静态 meta 都保留 |
+| `src/resume/` | 简历页组件与入口 |
+| `src/data/resume.ts` | 简历内容，每条同时写 `zh` / `en` |
 | `public/notes.json` | **笔记书目**（5 本书 / 21 篇，按阅读顺序）← 加笔记改它，首页和笔记页侧栏都读这一份 |
 | `src/styles/global.css` | 全站样式（设计变量在顶部 `:root`） |
-| `public/` | 原样保留的静态页：简历 3 页 + 21 篇笔记 + v1 主页冻结副本 + `robots.txt` / `sitemap.xml` / `404.html` / `notes.css`（笔记页配色覆盖）+ `book-shell.css/js`（笔记页侧栏）—— **URL 一个都没变** |
-| `public/resume.html` | **中文简历**（网页 + 单页 A4 打印），英文版的结构与内容都以它为源 |
-| `public/resume-en.html` | **英文简历**，由 `npm run sync:resume` 从中文页生成，**不要手改** |
+| `public/` | 原样保留的静态页：旧打印简历 + 21 篇笔记 + v1 主页冻结副本 + `robots.txt` / `sitemap.xml` / `404.html` / `notes.css`（笔记页配色覆盖）+ `book-shell.css/js`（笔记页侧栏）—— **URL 一个都没变** |
 | `public/now.html` | **现在**页：活跃线卡片 + 最近更新；数据由 `sync:now` 直接内嵌，本地双击也能看 |
 | `public/now.json` | `/now` 的数据快照，由 `npm run sync:now` 从笔记仓库的白名单线卡生成 |
 | `public/case-*.html` | 两个旗舰项目的独立案例页（Coding Agent / EEG 管线），从首页作品弹窗进入 |
@@ -38,7 +39,6 @@ npm run dev      # 开发服务器 → http://localhost:5173 （改完自动刷�
 npm run build    # 类型检查 + 打包到 dist/
 npm run preview  # 本地预览打包结果
 npm run sync:now # 从笔记仓库的活跃线白名单生成 public/now.json（每周六复盘后）
-npm run sync:resume # 从中文简历生成英文简历（改完中文简历跑）
 npm run sync:og # 从 notes.json 重新生成首页与笔记分享卡（需要 Pillow）
 npm run test:automata # 自动机核心的单元测试（node --test）
 npm run test:pda # PDA / DPDA 模拟核心的单元测试
@@ -50,21 +50,21 @@ npm run test:pda # PDA / DPDA 模拟核心的单元测试
 
 ## 两个用途（没变）
 
-1. **简历**（求职向）— `public/resume.html`（中文，内容源）+ `public/resume-en.html`（英文，脚本生成）+ `public/resume-print.html`（旧打印页，未接入）
+1. **简历**（求职向）— `resume.html`（中文）+ `resume-en.html`（英文），两页都由 React 渲染；旧打印页 `public/resume-print.html` 仍保留但未接入
 2. **学习笔记发布出口** — `public/note-*.html` 21 篇（公式多的页面用 `public/katex/` 里自托管的 KaTeX 0.19.1 渲染，不依赖 CDN）
 
 ## 简历怎么维护（2026-11）
 
-中文页是唯一需要改的地方。英文页不是手写的：`scripts/resume-sync.mjs` 会按中文页的区块结构逐块套英文译文，输出 `public/resume-en.html`。结构、顺序、排版改中文就自动跟着变；文字译文在 `scripts/resume-en.json` 里，一条中文对应一条英文。
+简历已经收进 React：两个入口 `resume.html` / `resume-en.html` 都只挂一个 `<div id="root">`，内容、结构和中英文都来自 `src/data/resume.ts`。`src/resume/ResumePage.tsx` 按段落渲染，`src/resume/main.tsx` 根据 `<html lang>` 选择中文或英文。
 
 | 想做的事 | 改哪 |
 |---|---|
-| 改一条中文内容 | `public/resume.html`，然后跑 `npm run sync:resume` |
-| 加/删一段经历、一条 bullet | 同上；新句子会出现在缺译列表里，补进 `scripts/resume-en.json` 后重跑 |
-| 只改英文措辞 | `scripts/resume-en.json` 里对应的值，重跑 |
-| 改版面、配色 | `public/resume.css`（两页共用） |
+| 改一条中文或英文内容 | `src/data/resume.ts` 里对应的 `{ zh, en }` |
+| 加/删一段经历、一条 bullet | 同上；结构只写一次，中文和英文在同一对象里，TypeScript 会要求两边都填 |
+| 改版面、配色 | `public/resume.css`（两页共用；打印样式也在里面） |
+| 改页面标题、SEO / OG | `resume.html` / `resume-en.html` 的 `<head>` |
 
-`npm run build` 会先跑同步：中文改过但英文没补译时直接失败，不会把半中半英的页面发上线。译文对照表按中文原文索引，所以中文句子一改就会被当成新句子要求翻译——这是有意的，避免英文悄悄引用旧信息。
+和之前「只改中文、脚本生成英文」不同：现在中英文在同一个数据文件里，改中文时同一条的 `en` 也要一起补。好处是不需要生成脚本、构建时不会出现半中半英的页面；代价是英文不再是自动派生的。
 
 ## 分享卡（OG 图）
 

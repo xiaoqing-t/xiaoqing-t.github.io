@@ -100,7 +100,7 @@ npm run preview  # 本地预览 dist/（≈ 将来线上的样子）
 | **改导航 / 页脚样式** | `src/styles/global.css` | 按注释分节找 `.nav` / `.footer` |
 | **改浏览器标签上的标题、SEO 描述** | `index.html` | 那是 Vite 的壳，`<title>` / `<meta name="description">` 在里面 |
 | **换 favicon** | `index.html` | 现在是一个内联 SVG 的 ⚡，改那行 `rel="icon"` |
-| **改简历 / 打印版** | `public/resume.html` / `public/resume-print.html` | 还是纯 HTML（没重构成 React）。改完直接在浏览器里打印 → 存 PDF |
+| **改简历 / 打印版** | `src/data/resume.ts` / `public/resume.css` | 简历已收进 React；改内容看 README「简历怎么维护」 |
 | **页脚那行字** | `src/components/Footer.tsx` | 年份 `new Date().getFullYear()` 自动算 |
 
 ### 加一块新区块（四步）
@@ -227,7 +227,7 @@ npm run preview  # 本地预览 dist/（≈ 将来线上的样子）
 | 组件名首字母大写 | 小写会被当成 HTML 标签，静默失效 |
 | 类型导入要写 `import type { X } from '…'` | tsconfig 开了 `verbatimModuleSyntax`。写成普通 `import` 会报 **TS1484**（它在打包时才能省掉这行，所以要你明说「这是类型」） |
 | 开发期组件会渲染两遍 | `StrictMode` 故意的，见 5.7 |
-| `public/` 和 `src/` 的区别 | **`public/`** ＝ 原样拷进 `dist/`，URL 就是文件名（简历页、笔记页、PDF 在这）→ 不会被处理、也不能被 `import`；**`src/`** ＝ 会被 Vite 处理、文件名带 hash（`index-CA8VisTt.js`）→ 改了自动刷新靠它 |
+| `public/` 和 `src/` 的区别 | **`public/`** ＝ 原样拷进 `dist/`，URL 就是文件名（笔记页、PDF、旧打印页在这）→ 不会被处理、也不能被 `import`；**`src/`** ＝ 会被 Vite 处理、文件名带 hash（`index-CA8VisTt.js`）→ 改了自动刷新靠它 |
 | 搜文案别搜 `index.html` | 那里面没有正文；正文在 `src/data/site.tsx` |
 | 怎么读报错 | `src/components/Nav.tsx(42,7): error TS2322: …` = 文件 + 第 42 行第 7 列 + 错误码。`npm run build` **先跑 tsc**，类型不过就不会打包 |
 | 新建文件后要 import | 忘了 import 组件 → `TS2304: Cannot find name` |
@@ -239,7 +239,7 @@ npm run preview  # 本地预览 dist/（≈ 将来线上的样子）
 1. ✅ **把线上切到 React 版**（2026-10-30 确认已完成）
    - 走的是 **GitHub Actions**：`main` 推送后由 `.github/workflows/deploy.yml` 构建并发布，产物是 `dist/`（单文件 `index.html` + `public/` 静态页），线上 https://xiaoqing-t.github.io/ 已跑 React 版
    - Pages 源已改为 **GitHub Actions**（不再是 `main` 分支根目录）
-2. **简历页也组件化 + 上路由**（`react-router`）：练「多页面应用」；注意 GitHub Pages 直接刷新子路径会 404，要配 404.html 兜底或改用 hash 路由
+2. ✅ **简历页也组件化**（2026-11）：用 Vite 多页面入口保留 `/resume.html`、`/resume-en.html`，没有引入路由；旧打印页仍未接入
 3. **笔记 Markdown 管线**：笔记从 `.md` 生成页面，不用再手写 HTML（7 篇已发，正好当样本）
 4. **练表单 + 受控组件**：加一个「创意/作品」区块或留言板（v1 删掉的那块设计还在 `public/legacy-v1.css` 里）
 
