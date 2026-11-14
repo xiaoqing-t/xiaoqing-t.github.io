@@ -1,0 +1,48 @@
+/* /uses：版式复用 cases.css，这里只补“标签 + 说明”的条目。 */
+
+.uses-list { margin: 0; }
+
+.uses-row {
+  display: grid;
+  grid-template-columns: 168px minmax(0, 1fr);
+  gap: 4px 28px;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--line);
+}
+.uses-row:first-child { padding-top: 2px; }
+.uses-row:last-child { border-bottom: 0; padding-bottom: 0; }
+
+.uses-row dt {
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  padding-top: 3px;
+}
+.uses-row dd {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.94rem;
+  line-height: 1.8;
+}
+.uses-row dd b { color: var(--ink); font-weight: 600; }
+.uses-row dd code {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  background: var(--bg-alt);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.uses-note {
+  margin-top: 14px;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  color: var(--ink-faint);
+}
+
+@media (max-width: 620px) {
+  .uses-row { grid-template-columns: 1fr; gap: 2px; }
+  .uses-row dt { padding-top: 0; }
+}

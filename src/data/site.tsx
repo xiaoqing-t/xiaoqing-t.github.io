@@ -272,6 +272,7 @@ export const contact = {
   links: [
     { label: 'GitHub', href: profile.github },
     { label: '查看简历', href: 'resume.html' },
+    { label: '在用什么', href: 'uses.html' },
   ],
 }
 

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>我在用什么 · Uses · Zhao Yunzhe</title>
+  <meta name="description" content="机器、Obsidian 工作流、网站技术栈、短视频流程，以及字体与配色。一份会过期的工具清单。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="canonical" href="https://xiaoqing-t.github.io/uses.html" />
+  <meta property="og:type" content="article" />
+  <meta property="og:locale" content="zh_CN" />
+  <meta property="og:site_name" content="Zhao Yunzhe" />
+  <meta property="og:title" content="我在用什么 · Uses" />
+  <meta property="og:description" content="机器、Obsidian 工作流、网站技术栈、短视频流程，以及字体与配色。" />
+  <meta property="og:url" content="https://xiaoqing-t.github.io/uses.html" />
+  <meta property="og:image" content="https://xiaoqing-t.github.io/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="我在用什么 · Uses" />
+  <meta name="twitter:description" content="机器、Obsidian 工作流、网站技术栈、短视频流程，以及字体与配色。" />
+  <meta name="twitter:image" content="https://xiaoqing-t.github.io/og-image.png" />
+  <link rel="alternate" type="application/rss+xml" title="Zhao Yunzhe · 学习笔记" href="/feed.xml" />
+  <link rel="stylesheet" href="legacy-v1.css" />
+  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="cases.css" />
+  <link rel="stylesheet" href="uses.css" />
+</head>
+<body>
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <button class="nav-toggle" id="navToggle" aria-label="菜单">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html#work">作品</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="now.html">现在</a></li>
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="en/">EN</a></li>
+        <li><a href="resume.html" class="nav-cta">简历</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container case">
+    <a class="back-link" href="index.html#contact">← 返回联系</a>
+
+    <p class="case-kicker">USES · 2026</p>
+    <h1 class="case-title">我在用什么</h1>
+    <p class="case-lead">
+      一份会过期的清单。只写经常用、并且确实改变了工作方式的东西；没提到的，多半是装了没用。
+    </p>
+
+    <section class="case-section" id="machine">
+      <p class="case-num">01</p>
+      <h2>机器</h2>
+      <dl class="uses-list">
+        <div class="uses-row">
+          <dt>笔记本</dt>
+          <dd><b>ASUS Vivobook Pro 15</b>（N6506MV）</dd>
+        </div>
+        <div class="uses-row">
+          <dt>处理器</dt>
+          <dd>Intel Core Ultra 9 185H</dd>
+        </div>
+        <div class="uses-row">
+          <dt>显卡</dt>
+          <dd>NVIDIA GeForce RTX 4060 Laptop · Intel Arc 核显</dd>
+        </div>
+        <div class="uses-row">
+          <dt>内存</dt>
+          <dd>16 GB</dd>
+        </div>
+        <div class="uses-row">
+          <dt>系统</dt>
+          <dd>Windows 11 · 日常终端用 Git Bash</dd>
+        </div>
+        <div class="uses-row">
+          <dt>运行时</dt>
+          <dd>Node 24 · Python 3.13</dd>
+        </div>
+      </dl>
+      <p class="uses-note">CUDA 的活走独显：深度学习作业、BIOT 复现和数据预处理都在这一台上跑。</p>
+    </section>
+
+    <section class="case-section" id="notes">
+      <p class="case-num">02</p>
+      <h2>写东西</h2>
+      <dl class="uses-list">
+        <div class="uses-row">
+          <dt>Obsidian</dt>
+          <dd>所有笔记放在同一个 vault，按活跃线、课内、项目和调研分区。</dd>
+        </div>
+        <div class="uses-row">
+          <dt>插件</dt>
+          <dd><b>PDF++</b> 读课件与论文，<b>Homepage</b> 固定首页，<b>Style Settings</b> 调排版；活跃线看板用核心插件 <b>Bases</b>。</dd>
+        </div>
+        <div class="uses-row">
+          <dt>节奏</dt>
+          <dd>每周六复盘一次：看板上按 <code>updated</code> 算停滞天数，超过两周标红；<code>自动提交.ps1</code> 定时把改动落盘。</dd>
+        </div>
+        <div class="uses-row">
+          <dt>去向</dt>
+          <dd>笔记不是终点。课内长文会被改写成网站笔记，再压成 60 秒竖屏短片。</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="case-section" id="code">
+      <p class="case-num">03</p>
+      <h2>写代码</h2>
+      <dl class="uses-list">
+        <div class="uses-row">
+          <dt>编辑器</dt>
+          <dd><b>Qoder</b>，VS Code 系；长任务和批量改动交给终端里的 agent。</dd>
+        </div>
+        <div class="uses-row">
+          <dt>网站</dt>
+          <dd><b>Vite 8 + React 19 + TypeScript 7</b>，样式全部手写，没有 UI 框架。</dd>
+        </div>
+        <div class="uses-row">
+          <dt>构建</dt>
+          <dd>首页在构建后内联成一个自包含 HTML；笔记是手写静态页，URL 不随框架变。</dd>
+        </div>
+        <div class="uses-row">
+          <dt>内容</dt>
+          <dd><code>notes.json</code> 是书目的唯一来源；公式用自托管的 KaTeX，不走 CDN。</dd>
+        </div>
+        <div class="uses-row">
+          <dt>部署</dt>
+          <dd>推 <code>main</code>，GitHub Actions 构建并发布到 GitHub Pages。</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="case-section" id="video">
+      <p class="case-num">04</p>
+      <h2>做视频</h2>
+      <dl class="uses-list">
+        <div class="uses-row">
+          <dt>动画</dt>
+          <dd><b>Manim Community</b>，固定 1080×1920、30 fps、9:16。</dd>
+        </div>
+        <div class="uses-row">
+          <dt>配音</dt>
+          <dd><b>edge-tts</b>，音色 <code>zh-CN-YunxiNeural</code>，语速 -2%；逐句合成并记录真实时长。</dd>
+        </div>
+        <div class="uses-row">
+          <dt>后期</dt>
+          <dd>Python 对齐音轨，<b>imageio-ffmpeg</b> 混流；字幕输出 WebVTT，封面单独生成。</dd>
+        </div>
+        <div class="uses-row">
+          <dt>为什么</dt>
+          <dd>每一幕的停留按配音真实时长补齐。改一句文案只需重跑，不用在剪辑软件里手动对轨。</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="case-section" id="type">
+      <p class="case-num">05</p>
+      <h2>字体与配色</h2>
+      <dl class="uses-list">
+        <div class="uses-row">
+          <dt>字体</dt>
+          <dd>标题用 <b>Source Han Serif SC / Noto Serif SC</b>，正文用系统无衬线，元信息用等宽。</dd>
+        </div>
+        <div class="uses-row">
+          <dt>颜色</dt>
+          <dd>纸白 <code>#faf7f1</code>、墨 <code>#211d19</code>、锈红 <code>#a84027</code>、分隔线 <code>#e5dccd</code>。</dd>
+        </div>
+        <div class="uses-row">
+          <dt>视频</dt>
+          <dd>沿用同一组颜色，字体换成正文字体 Microsoft YaHei，保证竖屏小字清楚。</dd>
+        </div>
+        <div class="uses-row">
+          <dt>理由</dt>
+          <dd>长文用纸白比纯白耐看；全站只留一个强调色，链接、序号和小标题都用它。</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="case-section" id="not">
+      <p class="case-num">06</p>
+      <h2>不做</h2>
+      <ul>
+        <li>不接访问统计，不装第三方脚本。</li>
+        <li>不引 UI 框架，也不把笔记正文搬进 React。</li>
+        <li>KaTeX 及其字体文件自托管，不依赖 CDN。</li>
+      </ul>
+      <p>少一层依赖，就少一个以后要修的东西。</p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe</p>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear()
+    document.getElementById('navToggle').addEventListener('click', () => {
+      document.getElementById('navLinks').classList.toggle('open')
+    })
+    window.addEventListener('scroll', () => {
+      document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 8)
+    }, { passive: true })
+  </script>
+</body>
+</html>
