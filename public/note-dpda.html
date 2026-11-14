@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>计算理论：确定下推自动机 · 学习笔记</title>
+  <meta name="description" content="把下推自动机的「猜」去掉：每步最多一个动作的确定下推自动机。从四种动作的确定性条件出发，讲清接收与三类拒绝、如何改造成一定读完输入、DCFL 对补封闭的正确证明、a 的 i 次方 b 的 j 次方 c 的 k 次方的非确定例子，以及结束标记的作用。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="legacy-v1.css" />
+  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="book-shell.css" />
+  <link rel="stylesheet" href="katex/katex.min.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article pre {
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      overflow-x: auto;
+      margin-bottom: 18px;
+    }
+    .article pre code {
+      background: none;
+      border: none;
+      padding: 0;
+    }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+
+    .article .katex { font-size: 1.03em; }
+    .article .katex-display {
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 4px 0 8px;
+      margin: 14px 0 18px;
+    }
+    .article .katex-display::-webkit-scrollbar { height: 6px; }
+    .article .katex-display::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+
+    .short-video { max-width: 340px; margin: 0 auto 32px; }
+    .short-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 9 / 16;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .short-video video::cue {
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.4;
+      color: #fffdf9;
+      background: rgba(33, 29, 25, 0.78);
+    }
+    .short-video figcaption {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">计算理论 · 第 7 集</p>
+    <h1>计算理论：确定下推自动机</h1>
+
+    <blockquote>
+      一句话主线：上一集的下推自动机允许同一个局面有多条转移；编译器不能猜，所以这一集只留一条路。确定下推自动机每步最多一个动作，接收要求读完整串并停在接受状态。把机器改造成一定读完输入之后，可以证明它的语言对补封闭；但有些上下文无关语言必须非确定，补语言不是 CFL 就是一个判据。
+    </blockquote>
+
+    <figure class="short-video">
+      <video controls playsinline preload="metadata" width="1080" height="1920"
+             poster="media/dpda-poster.jpg">
+        <source src="media/dpda-5min.mp4" type="video/mp4" />
+        <track kind="captions" src="media/dpda-zh.vtt" srclang="zh" label="中文" />
+        浏览器不支持内嵌视频，<a href="media/dpda-5min.mp4">点这里下载这段短片</a>。
+      </video>
+      <figcaption>配套短片 · 约 3 分 52 秒 · 有口播和字幕：两条转移变一条、四种动作、三类拒绝、补成一定读完、补封闭的正确证明、非 DCFL 的例子、结束标记，最后停在下一步的 DK 测试</figcaption>
+    </figure>
+
+    <p>上一集的下推自动机是<strong>非确定</strong>的：同一个状态、同一个输入字符、同一个栈顶，可以给出多个结果。只要存在一条路径接收，串就算被接收。这种「猜」在数学上很好用，但编译器不能用：同一个程序，它必须只有一种解析方式。</p>
+
+    <p>把非确定性去掉，就得到<strong>确定下推自动机</strong>（DPDA）。它仍然有有限控制和一条栈，只是每一步最多一个动作。这一集要看清三件事：确定性条件怎么写、拒绝有哪几种、以及在这个更强限制下，语言还剩下哪些封闭性质。</p>
+
+    <h2 id="task">0. 任务：编译器不能猜</h2>
+
+    <p>解析表达式时，解析器从左到右扫一遍，每到一个位置都要决定：现在该把一段符号归约成一个变元，还是继续读下一个符号。它不能回溯，也不能同时保留多条路。</p>
+
+    <p>非确定下推自动机可以「猜一条规则再试」，确定下推自动机不行。二者的差别不在状态数，而在转移函数：前者给出一组结果，后者最多给出一个。这个限制看起来只是删选项，却真的削弱了识别能力——后面会看到，不是所有上下文无关语言都能被确定机器识别。</p>
+
+    <h2 id="def">1. 确定性条件</h2>
+
+    <p>六元组和上一集完全一样：</p>
+
+    <p>$$M=(Q,\ \Sigma,\ \Gamma,\ \delta,\ q_0,\ F)$$</p>
+
+    <p>区别只在转移函数。确定下推自动机的转移是一个<strong>部分函数</strong>：</p>
+
+    <p>$$\delta:Q\times(\Sigma\cup\{\varepsilon\})\times(\Gamma\cup\{\varepsilon\})\rightharpoonup Q\times\Gamma^*$$</p>
+
+    <p>箭头写成 $\rightharpoonup$，表示「最多给一个结果，或者干脆没有」。给定状态、输入字符、栈顶，下一步要么唯一确定，要么这条路直接死掉。</p>
+
+    <p>更严格的写法是看四种可能的动作。对每个状态 $q$、每个输入字符 $a$、每个栈顶符号 $X$，下面四类转移：</p>
+
+    <ul>
+      <li>读字符且看栈顶：$\delta(q,a,X)$；</li>
+      <li>读字符不看栈顶：$\delta(q,a,\varepsilon)$；</li>
+      <li>不读字符看栈顶：$\delta(q,\varepsilon,X)$；</li>
+      <li>既不读也不看：$\delta(q,\varepsilon,\varepsilon)$。</li>
+    </ul>
+
+    <p>四类里<strong>恰好有一个不是空</strong>。这就是确定性条件。只要有一格多亮了一个，机器就可能在同一个局面下面临两条竞争的路。</p>
+
+    <p>工程上常见的写法只保留前两类：读字符时看栈顶，或者空转移时看栈顶。把「不看栈顶」也列进来，是为了让条件完整——否则 $\delta(q,a,\varepsilon)$ 和 $\delta(q,a,X)$ 可能同时有定义，仍然是不确定。</p>
+
+    <h2 id="accept">2. 接收与三类拒绝</h2>
+
+    <p>接收条件很严格：<strong>读完整串之后，正好停在接受状态</strong>。三个条件缺一不可。</p>
+
+    <p>其他情况都算拒绝，但拒绝的方式有三种：</p>
+
+    <ol>
+      <li><strong>读完，不在接受状态</strong>：输入读完了，机器停在非接受状态；</li>
+      <li><strong>想弹空栈，卡住</strong>：还需要弹栈，但栈已经空了，转移没有定义；</li>
+      <li><strong>空转移死循环</strong>：一直走 $\varepsilon$ 转移，不读输入，永远到不了结尾。</li>
+    </ol>
+
+    <p>后两种说明一个容易忽略的事实：<strong>确定不等于一定停机</strong>。确定只保证「下一步最多一个」，不保证「一定有下一步」，也不保证「一定会读完输入」。图灵机那一章还会再遇到这个区分。</p>
+
+    <h2 id="fix">3. 改造成一定读完输入</h2>
+
+    <p>为了让后面的证明干净，可以先做两步改造，把任意确定下推自动机变成<strong>一定读完整串</strong>的机器。</p>
+
+    <p><strong>第一步：栈底放美元符号。</strong>开始时压入 <code>$</code>。如果输入还没读完就露出了 <code>$</code>，说明栈已经见底，机器转入一条「读到结尾再拒绝」的通道，而不是当场卡住。</p>
+
+    <p><strong>第二步：处理空转移死循环。</strong>找出那些永远不再读输入的循环局面，把它们改成出口：读完剩余输入，然后拒绝。改造后的机器可能仍然拒绝，但不会半途停住。</p>
+
+    <p>这样后面的证明只需要讨论「读完之后的接受与否」，不用再处理「读到一半卡住」的分支。这是证明里常用的手法：先把对象整理成规范形状，再讨论性质。</p>
+
+    <h2 id="complement">4. 补封闭：不能直接翻转</h2>
+
+    <p>确定上下文无关语言（DCFL）对补封闭。这个结论和正则语言一样，但证明不能照抄。</p>
+
+    <p>错误的做法是：把接受状态和非接受状态直接对调。问题出在读完最后一个字符之后——机器可能还会走几步空转移，中途经过接受状态又离开。直接对调会把这类串判错：原机器接受了它，补机器也可能接受它。</p>
+
+    <p>正确的做法分三步：</p>
+
+    <ol>
+      <li>改造机器：每读一个输入符号，最多进入一次接受状态；</li>
+      <li>让接受动作发生在「准备读下一个符号」的读字符状态，而不是读完之后的空转移里；</li>
+      <li>只翻转这些读字符状态的接受标记，其他状态不动。</li>
+    </ol>
+
+    <p>这样翻转之后，每个串的判定只取决于「读最后一个符号时停在哪里」，不会再被后续的空转移干扰。补语言仍然是 DCFL，补机器的状态数与原机器同阶。</p>
+
+    <p>这也是为什么补封闭的证明，比正则语言麻烦得多：有限自动机读完就停，下推自动机读完还可能继续动。</p>
+
+    <h2 id="notdcfl">5. 非 DCFL 的例子</h2>
+
+    <p>补封闭给出一个判据：<strong>如果补语言不是上下文无关语言，原语言一定不是确定上下文无关语言。</strong></p>
+
+    <p>例子：</p>
+
+    <p>$$L=\{a^ib^jc^k\mid i\neq j\ \vee\ j\neq k\}$$</p>
+
+    <p>它是上下文无关语言：可以非确定地选择检查 $i\neq j$ 还是 $j\neq k$，各用一条分支完成。它却不是确定的。</p>
+
+    <p>它的补语言要求两个条件都不成立：</p>
+
+    <p>$$i=j\ \wedge\ j=k\ \Longrightarrow\ L^c=\{a^nb^nc^n\}$$</p>
+
+    <p>而 $a^nb^nc^n$ 已经被泵引理证明不是上下文无关语言。于是 $L$ 不可能是 DCFL。直观上，$L$ 要在两个条件里二选一，这需要「猜」；确定机器做不到。</p>
+
+    <p>这个例子说明：DCFL 严格弱于 CFL。并、连接、星号这些构造仍然保得住确定性，但「二选一」的并会把它破坏掉。</p>
+
+    <h2 id="endmark">6. 结束标记</h2>
+
+    <p>最后一个工具是<strong>结束符</strong>。给语言 $A$ 的每个串末尾加一个符号 $\dashv$，得到带结束符的语言：</p>
+
+    <p>$$A\dashv=\{\,w\dashv\mid w\in A\,\}$$</p>
+
+    <p>结论是：$A$ 是 DCFL，当且仅当 $A\dashv$ 是 DCFL。两个方向都要构造。</p>
+
+    <ul>
+      <li><strong>从 $A$ 到 $A\dashv$</strong>：模拟原机器，读到 $\dashv$ 时，看前一个符号处理完有没有进入接受状态；</li>
+      <li><strong>从 $A\dashv$ 到 $A$</strong>：把机器改成一步只做一件事——读字符、压栈、弹栈三者只做一件；用栈里额外存的状态集合，消掉空转移。</li>
+    </ul>
+
+    <p>结束符的作用是把「串到这里结束」变成一个可以读到的符号。没有它，机器在读完最后一个字符后还可以继续走空转移，边界就说不清楚。下一集的 DK 测试也依赖这个约定。</p>
+
+    <h2 id="relation">7. 和 CFL 的关系</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>性质</th><th>CFL</th><th>DCFL</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>并、连接、星号</td><td>封闭</td><td>不一定封闭（并会引入选择）</td></tr>
+          <tr><td>与正则语言求交</td><td>封闭</td><td>封闭</td></tr>
+          <tr><td>补</td><td>不封闭</td><td>封闭</td></tr>
+          <tr><td>交</td><td>不封闭</td><td>不封闭</td></tr>
+          <tr><td>包含关系</td><td colspan="2">$\mathrm{DCFL}\subsetneq\mathrm{CFL}$</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>注意「补」这一行：CFL 对补不封闭，DCFL 反而封闭。这不是矛盾——DCFL 是 CFL 的真子集，子集可以比全集有更好的封闭性。</p>
+
+    <h2 id="why">8. 为什么工程上关心确定</h2>
+
+    <p>编译器、JSON 解析器、配置文件读取器，都需要「一遍扫描、不回溯」。它们对应的模型就是确定下推自动机：状态栈记录解析上下文，看一个前瞻符号，表里唯一决定移进还是归约。</p>
+
+    <p>非确定下推自动机更适合做「存在性」证明：只要有一条路接收就行。确定下推自动机适合做「实现」：每一步都要能落地。两种视角各有各的用处，不能互相替代。</p>
+
+    <h2 id="pitfalls">9. 常见错误</h2>
+
+    <ol>
+      <li><strong>把「确定」理解成「一定停机」。</strong>确定只限制每步最多一个动作；空栈卡住和空转移死循环都可能发生。</li>
+      <li><strong>以为四种动作可以随意组合。</strong>确定性要求四类里恰好一个非空，多一个就冲突。</li>
+      <li><strong>直接对调接受状态来取补。</strong>读完最后字符后的空转移会让判定错位，必须先改造机器。</li>
+      <li><strong>把 DCFL 和 CFL 混为一谈。</strong>$a^ib^jc^k$（$i\neq j\vee j\neq k$）是 CFL 但不是 DCFL。</li>
+      <li><strong>用「补不是 CFL」去证明「不是 CFL」。</strong>这个判据只对 DCFL 有效；CFL 对补不封闭。</li>
+      <li><strong>忘记结束符。</strong>讨论 DCFG 与 DPDA 等价时，必须带上 $\dashv$；不带时结论会变。</li>
+    </ol>
+
+    <h2 id="quiz">10. 自测 8 题</h2>
+
+    <ol>
+      <li>确定下推自动机与普通下推自动机的六元组，哪一项不同？怎么不同？</li>
+      <li>确定性条件里的「四种动作」分别是什么？为什么要求恰好一个非空？</li>
+      <li>接收的三个条件是什么？三类拒绝分别是什么？</li>
+      <li>为什么「确定」不等于「一定停机」？举出两种卡住的方式。</li>
+      <li>怎样把任意 DPDA 改造成一定读完整串的机器？两步各做什么？</li>
+      <li>为什么不能直接把接受状态和非接受状态对调来取补？正确做法是什么？</li>
+      <li>证明 $L=\{a^ib^jc^k\mid i\neq j\vee j\neq k\}$ 不是 DCFL，思路是什么？</li>
+      <li>结束符 $\dashv$ 的作用是什么？$A$ 与 $A\dashv$ 的 DCFL 性质为什么等价？</li>
+    </ol>
+
+    <details>
+      <summary>答案</summary>
+      <ol>
+        <li>转移函数不同：普通 PDA 给出结果集合，DPDA 最多给一个结果，或者没有定义。</li>
+        <li>读字符且看栈顶、读字符不看栈顶、不读字符看栈顶、既不读也不看；恰好一个非空才能保证下一步唯一。</li>
+        <li>读完整串、停在接受状态；三类拒绝是读完不接受、弹空栈卡住、空转移死循环。</li>
+        <li>确定只保证每步最多一个动作；想弹空栈时可能没有转移，走空转移时可能永远不读输入。</li>
+        <li>栈底压 <code>$</code>，没读完就露出时转入读完再拒绝的通道；找出不再读输入的循环局面，改成读完剩余并拒绝的出口。</li>
+        <li>读完最后字符后还可能走空转移，中途经过接受态又离开；正确做法是把接受动作挪到读字符状态，再只翻转这些状态。</li>
+        <li>它的补是 $a^nb^nc^n$，不是 CFL；由「补不是 CFL ⇒ 原语言不是 DCFL」得证。</li>
+        <li>把串的结束变成一个可读符号，固定判定边界；两个方向分别用「模拟原机器」和「一步只做一件事 + 栈里存状态集合」构造。</li>
+      </ol>
+    </details>
+
+    <h2 id="takeaway">11. 收尾</h2>
+
+    <p>四句话记住这一集：</p>
+
+    <ol>
+      <li><strong>确定 = 每步最多一个动作</strong>：四种动作里恰好一个非空。</li>
+      <li><strong>确定不等于停机</strong>：空栈卡住、空转移死循环都是合法结局。</li>
+      <li><strong>DCFL 对补封闭</strong>：但不能直接翻转接受态，要先改造机器。</li>
+      <li><strong>DCFL 严格弱于 CFL</strong>：需要「二选一」猜一下的语言，确定机器识别不了。</li>
+    </ol>
+
+    <p>如果只用一句话记住它：<strong>确定是把选项删掉，不是给机器加能力。</strong>下一集把文法也确定化：句柄、强制句柄，以及用 DK 测试判断一个文法能不能一遍扫描就解析。</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+  <script defer src="book-shell.js?v=2"></script>
+  <script defer src="katex/katex.min.js"></script>
+  <script defer src="katex/auto-render.min.js"></script>
+  <script defer src="katex/render-math.js"></script>
+</body>
+</html>
