@@ -132,7 +132,7 @@ export const hero = {
   actions: [
     { label: '看看作品', href: '#work', primary: true },
     { label: '了解更多', href: '#about' },
-  ] as Action[],
+  ] satisfies Action[],
 }
 
 /** 首屏右栏：关注 / 现在 / 荣誉（全部真实，不编造背书） */
