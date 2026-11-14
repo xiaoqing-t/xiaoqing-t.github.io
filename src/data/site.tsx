@@ -14,6 +14,7 @@
 import type { ReactNode } from 'react'
 
 import notesData from '../../public/notes.json'
+import { identity, jobSearch, metrics } from './facts'
 
 /** 一个链接：按钮、导航项、项目底部的外链都用它 */
 export interface Link {
@@ -99,10 +100,10 @@ export interface Capability {
 
 /** 站点级信息 */
 export const profile = {
-  name: 'Zhao Yunzhe',
+  name: identity.name,
   shortName: 'ZY',
-  email: 'zyz.sjtu@sjtu.edu.cn',
-  github: 'https://github.com/xiaoqing-t',
+  email: identity.email,
+  github: identity.github,
   /** 导航里姓名后面那行小字 */
   tagline: 'CS × BCI · 上海交大',
 }
@@ -190,7 +191,7 @@ export const projects: Project[] = [
   {
     tag: 'AI AGENT',
     title: '终端 Coding Agent',
-    metric: 'C · 2.3k 行',
+    metric: `${metrics.codingAgent.lang} · ${metrics.codingAgent.lines} 行`,
     preview: 'agent',
     desc: '用 C 从零写的终端 coding agent：ReAct 主循环、工具注册表、并行工具调度，以及两套可切换的上下文管理策略。',
     background:
@@ -202,7 +203,7 @@ export const projects: Project[] = [
       'CUnit 单元测试 + 端到端评测，覆盖卸载 / 摘要 / 执行器三个模块',
     ],
     outcomes: [
-      '自研核心约 2.3k 行，支持单轮返回多个工具调用并并发调度',
+      `自研核心约 ${metrics.codingAgent.lines} 行，支持单轮返回多个工具调用并并发调度`,
       '执行底座来自课设的 shell / HTTP 客户端 / 线程池，用 ThreadSanitizer 验证并发正确性',
     ],
     links: [
@@ -214,7 +215,7 @@ export const projects: Project[] = [
   {
     tag: 'ARCHITECTURE',
     title: 'MIPS 单周期 CPU',
-    metric: '610 行 RTL',
+    metric: `${metrics.mips.rtlLines} 行 RTL`,
     preview: 'cpu',
     desc: '用 Verilog 写一个能跑的 MIPS 单周期 CPU：ALU、控制单元、寄存器堆、数据通路到顶层集成，综合后下载到 FPGA 跑通。',
     background: '计算机系统结构课，想把“一条指令怎么在硬件里跑完”从头搭一遍，而不是停在框图上。',
@@ -223,13 +224,13 @@ export const projects: Project[] = [
       '顶层集成各模块，连成完整的单周期数据通路',
       '写 7 个 testbench，覆盖各模块与整机',
     ],
-    outcomes: ['610 行 RTL，完成仿真并综合出比特流，下载到 FPGA 上跑通'],
+    outcomes: [`${metrics.mips.rtlLines} 行 RTL，完成仿真并综合出比特流，下载到 FPGA 上跑通`],
     links: [{ label: '查看仓库', href: 'https://github.com/xiaoqing-t/CPU-by-vivado' }],
   },
   {
     tag: 'BCI · EEG',
     title: '多模态信号预处理 Pipeline',
-    metric: '380+ 小时',
+    metric: `${metrics.eeg.hours} 小时`,
     preview: 'eeg',
     desc: 'EEG / ECG / EOG 的批量预处理管线：先 QC 再预处理，配置文件驱动，结果写 HDF5。已经打包成一个可复用的 skill。',
     background: 'BCMI 实验室里重复的预处理步骤太多，把它们沉淀成可复用、可复现的工具，避免无效预处理浪费算力。',
@@ -239,7 +240,7 @@ export const projects: Project[] = [
       '沉淀单位换算、参考电极取舍、多通道数分文件合并等工程方案',
     ],
     outcomes: [
-      '已应用 10+ 公开数据集、累计 380+ 小时多模态数据（ds004118 / ds005087 / ds005114 等）',
+      `已应用 ${metrics.eeg.datasets} 公开数据集、累计 ${metrics.eeg.hours} 小时多模态数据（ds004118 / ds005087 / ds005114 等）`,
       '打包成可复用 skill 并开源',
     ],
     links: [{ label: '查看仓库', href: 'https://github.com/xiaoqing-t/EEG-preprocess-pipeline-skill' }],
@@ -268,7 +269,7 @@ export const books: Book[] = notesData.books
 export const contact = {
   lead: '想聊技术、科研，或者别的什么，都可以找我。',
   /** 状态徽章（求职意向：深度学习 / AI 工程实习生） */
-  status: '开放实习 · 2026',
+  status: `开放实习 · ${jobSearch.year}`,
   links: [
     { label: 'GitHub', href: profile.github },
     { label: '查看简历', href: 'resume.html' },

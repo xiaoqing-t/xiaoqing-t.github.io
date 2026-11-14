@@ -1,3 +1,5 @@
+import { identity, jobSearch, metrics } from './facts'
+
 export type Lang = 'zh' | 'en'
 
 export interface Localized {
@@ -52,20 +54,20 @@ export interface ResumeContent {
 const l = (zh: string, en: string): Localized => ({ zh, en })
 
 export const resume: ResumeContent = {
-  name: 'Zhao Yunzhe',
+  name: identity.name,
   role: l(
     `计算机科学与技术 · 本科三年级 · 上海交通大学`,
     `Computer Science and Technology · Third-year undergraduate · Shanghai Jiao Tong University`,
   ),
   intro: l(
-    `求职意向:深度学习 / AI 工程方向实习生`,
+    `求职意向:${jobSearch.field}方向实习生`,
     `Seeking an internship in deep learning / AI engineering`,
   ),
   contact: {
     phone: '180-8004-9755',
-    email: 'zyz.sjtu@sjtu.edu.cn',
+    email: identity.email,
     githubLabel: 'github.com/xiaoqing-t',
-    githubHref: 'https://github.com/xiaoqing-t',
+    githubHref: identity.github,
   },
   nav: {
     back: l(`返回主页`, `Back to home`),
@@ -118,15 +120,15 @@ export const resume: ResumeContent = {
           `Designed and implemented a configuration-driven preprocessing pipeline: <b>QC before preprocessing</b> (reproducible random-segment QC plots + cross-subject summary reports) → filtering / notch / downsampling / z-scoring → HDF5, avoiding wasted compute on invalid preprocessing.`,
         ),
         l(
-          `已应用于 <b>10+ 公开数据集、累计 380+ 小时</b>多模态数据(ds004118 / ds005087 / ds005114 等),沉淀单位换算、参考电极取舍、多通道数分文件合并等工程方案并<b>开源</b>。`,
-          `Applied to <b>10+ public datasets and 380+ hours</b> of multimodal data (ds004118 / ds005087 / ds005114, etc.); packaged engineering solutions for unit conversion, reference-electrode selection, and merging multi-channel split files, and <b>released them as open source</b>.`,
+          `已应用于 <b>${metrics.eeg.datasets} 公开数据集、累计 ${metrics.eeg.hours} 小时</b>多模态数据(ds004118 / ds005087 / ds005114 等),沉淀单位换算、参考电极取舍、多通道数分文件合并等工程方案并<b>开源</b>。`,
+          `Applied to <b>${metrics.eeg.datasets} public datasets and ${metrics.eeg.hours} hours</b> of multimodal data (ds004118 / ds005087 / ds005114, etc.); packaged engineering solutions for unit conversion, reference-electrode selection, and merging multi-channel split files, and <b>released them as open source</b>.`,
         ),
       ],
     },
     {
       title: l(
-        `从零实现的终端 Coding Agent(C,自研核心约 2.3k 行)`,
-        `Terminal Coding Agent Built from Scratch (C, ~2.3k lines of core code)`,
+        `从零实现的终端 Coding Agent(${metrics.codingAgent.lang},自研核心约 ${metrics.codingAgent.lines} 行)`,
+        `Terminal Coding Agent Built from Scratch (${metrics.codingAgent.lang}, ~${metrics.codingAgent.lines} lines of core code)`,
       ),
       href: 'https://github.com/xiaoqing-t/Project2-of-OS-2026-Fall',
       bullets: [
@@ -166,8 +168,8 @@ export const resume: ResumeContent = {
       href: 'https://github.com/xiaoqing-t/CPU-by-vivado',
       bullets: [
         l(
-          `用 Verilog 从零实现可运行的单周期处理器:ALU、控制单元、寄存器堆、数据通路与顶层集成(<b>610 行 RTL</b>);7 个 testbench 覆盖各模块与整机,完成仿真并综合出比特流。`,
-          `Built a working single-cycle processor from scratch in Verilog—ALU, control unit, register file, datapath, and top-level integration (<b>610 lines of RTL</b>); wrote 7 testbenches covering individual modules and the full chip, completed simulation, and synthesized a bitstream.`,
+          `用 Verilog 从零实现可运行的单周期处理器:ALU、控制单元、寄存器堆、数据通路与顶层集成(<b>${metrics.mips.rtlLines} 行 RTL</b>);7 个 testbench 覆盖各模块与整机,完成仿真并综合出比特流。`,
+          `Built a working single-cycle processor from scratch in Verilog—ALU, control unit, register file, datapath, and top-level integration (<b>${metrics.mips.rtlLines} lines of RTL</b>); wrote 7 testbenches covering individual modules and the full chip, completed simulation, and synthesized a bitstream.`,
         ),
       ],
     },
