@@ -1,5 +1,5 @@
 // 通用章节壳：每个区块都是 section > container > 标题 + 内容，
-// 抽出来给 About / Projects / Notes / Contact 四个组件复用。
+// 抽出来给 Work / Notes / About 三个组件复用。
 
 import type { ReactNode } from 'react'
 
