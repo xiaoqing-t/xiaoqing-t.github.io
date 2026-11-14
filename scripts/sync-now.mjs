@@ -14,6 +14,7 @@
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { parseNoteDate } from './lib/note-date.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const vault = resolve(root, '../..')
@@ -111,15 +112,12 @@ if (existsSync(nowHtmlPath)) {
   const noteData = JSON.parse(readFileSync(join(root, 'public/notes.json'), 'utf8'))
   const recent = noteData.books
     .flatMap((book) => book.notes)
-    .map((note) => {
-      const m = /^(\d{4})-(\d{2})(?:-(\d{2}))?/.exec(note.meta ?? '')
-      return {
-        title: note.title,
-        href: note.href,
-        meta: note.meta,
-        date: m ? Date.UTC(Number(m[1]), Number(m[2]) - 1, m[3] ? Number(m[3]) : 1) : 0,
-      }
-    })
+    .map((note) => ({
+      title: note.title,
+      href: note.href,
+      meta: note.meta,
+      date: parseNoteDate(note.meta)?.getTime() ?? 0,
+    }))
     .filter((note) => note.date)
     .sort((a, b) => b.date - a.date)
     .slice(0, 3)

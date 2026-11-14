@@ -13,6 +13,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { parseNoteDate } from './lib/note-date.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const dist = join(root, 'dist')
@@ -24,16 +25,10 @@ const OG_FALLBACK = `${SITE}/og-image.png`
 const data = JSON.parse(readFileSync(join(root, 'public/notes.json'), 'utf8'))
 
 const notes = data.books.flatMap((book) =>
-  book.notes.map((note) => ({ ...note, book: book.title, date: parseDate(note.meta) })),
+  book.notes.map((note) => ({ ...note, book: book.title, date: parseNoteDate(note.meta) })),
 )
 
 notes.sort((a, b) => (b.date?.getTime() ?? 0) - (a.date?.getTime() ?? 0))
-
-function parseDate(meta) {
-  const m = /^(\d{4})-(\d{2})(?:-(\d{2}))?/.exec(meta ?? '')
-  if (!m) return null
-  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, m[3] ? Number(m[3]) : 1))
-}
 
 const xml = (s) =>
   String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
