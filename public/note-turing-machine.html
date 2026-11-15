@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>计算理论：图灵机模型 · 学习笔记</title>
+  <meta name="description" content="w#w 不是上下文无关语言，因为栈只能匹配倒序。图灵机多了一条可读可写、能左右移动的无限带子，可以反复扫描、做标记、回头查。从与有限自动机的四点区别、七元组和格局讲起，最后落到识别与判定的差别：识别允许不停机，判定要求每个输入都停。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="legacy-v1.css" />
+  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="book-shell.css" />
+  <link rel="stylesheet" href="katex/katex.min.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article pre {
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      overflow-x: auto;
+      margin-bottom: 18px;
+    }
+    .article pre code {
+      background: none;
+      border: none;
+      padding: 0;
+    }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+
+    .article .katex { font-size: 1.03em; }
+    .article .katex-display {
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 4px 0 8px;
+      margin: 14px 0 18px;
+    }
+    .article .katex-display::-webkit-scrollbar { height: 6px; }
+    .article .katex-display::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+
+    .short-video { max-width: 340px; margin: 0 auto 32px; }
+    .short-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 9 / 16;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .short-video video::cue {
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.4;
+      color: #fffdf9;
+      background: rgba(33, 29, 25, 0.78);
+    }
+    .short-video figcaption {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">计算理论 · 第 9 集</p>
+    <h1>计算理论：图灵机模型</h1>
+
+    <blockquote>
+      一句话主线：上一章的下推自动机只有栈，只能匹配倒序；图灵机多了一条可读可写、能左右移动的无限带子，于是能反复扫描、做标记、回头查。<strong>w#w</strong> 不是上下文无关语言，却能由图灵机判定。这一集从四点区别、七元组和格局讲起，最后落到识别与判定的差别：识别允许不停机，判定要求每个输入都停。
+    </blockquote>
+
+    <figure class="short-video">
+      <video controls playsinline preload="metadata" width="1080" height="1920"
+             poster="media/turing-poster.jpg">
+        <source src="media/turing-5min.mp4" type="video/mp4" />
+        <track kind="captions" src="media/turing-zh.vtt" srclang="zh" label="中文" />
+        浏览器不支持内嵌视频，<a href="media/turing-5min.mp4">点这里下载这段短片</a>。
+      </video>
+      <figcaption>配套短片 · 约 5 分 13 秒 · 有口播和字幕：w#w 为什么不是 CFL、图灵机的四点区别、七元组、格局与一步转移、反复扫描做标记、识别与判定、0 的 2 的 n 次方判定器，最后停在不停机</figcaption>
+    </figure>
+
+    <p>上一章的下推自动机有了栈，能记住嵌套；但栈是后进先出，只能倒着取。遇到「两份相同的拷贝」这种语言，机器读完第一份再读第二份时，栈里的内容已经反了，没法按原顺序逐位对照。</p>
+
+    <p>这一集把内存放开：给机器一条无限长、可读可写的带子，读写头可以左右移动，还能在带子上留下标记。先看它和有限自动机差在哪，再把「当前状态 + 带子内容 + 头的位置」压成一张快照，最后分清三种结局：接收、拒绝、不停机。</p>
+
+    <h2 id="why">0. 为什么需要图灵机</h2>
+
+    <p>考虑语言</p>
+
+    <p>$$B=\{w\#w\mid w\in\{0,1\}^{*}\}$$</p>
+
+    <p>井号两边必须是两个完全相同的串。用下推自动机做：读左边时把符号压栈，读到井号后，右边每读一个符号就弹一个栈顶。问题是栈顶是最后压进去的符号，也就是左边最后一个字符；它只能先和右边第一个字符比，顺序正好反了。栈只能匹配倒序，做不了两份相同的拷贝。</p>
+
+    <p>图灵机的带子不一样：读完左边后，读写头可以回到最左端，再从左往右扫右边；比较过的位置可以划掉，作为「已经处理过」的标记。它不需要把整段输入倒着存，只要能在带子上来回走。</p>
+
+    <h2 id="diff">1. 和有限自动机的四点区别</h2>
+
+    <table>
+      <thead><tr><th>能力</th><th>有限自动机</th><th>图灵机</th></tr></thead>
+      <tbody>
+        <tr><td>读写</td><td>只读</td><td>能读，也能往带子上写</td></tr>
+        <tr><td>移动</td><td>读写头只向右</td><td>可以向左，也可以向右</td></tr>
+        <tr><td>存储</td><td>只有有限个状态</td><td>带子无限长，右边永远有空白</td></tr>
+        <tr><td>停机</td><td>读完输入才结束</td><td>进入接受或拒绝状态立即停机，不管输入是否读完</td></tr>
+      </tbody>
+    </table>
+
+    <p>前三点是「能做什么」的变化，第四点是「什么时候结束」的变化。图灵机不需要把输入读完才给答案；接受和拒绝状态一旦进入，后面的带子内容就不再重要。</p>
+
+    <h2 id="tuple">2. 七元组</h2>
+
+    <p>一台图灵机写成七元组：</p>
+
+    <p>$$M=(Q,\Sigma,\Gamma,\delta,q_0,q_{accept},q_{reject})$$</p>
+
+    <table>
+      <thead><tr><th>符号</th><th>含义</th></tr></thead>
+      <tbody>
+        <tr><td>$Q$</td><td>有限状态集</td></tr>
+        <tr><td>$\Sigma$</td><td>输入字母表，不含空格</td></tr>
+        <tr><td>$\Gamma$</td><td>带字母表，包含空格，并且 $\Sigma\subseteq\Gamma$</td></tr>
+        <tr><td>$\delta$</td><td>转移函数：$Q\times\Gamma\to Q\times\Gamma\times\{L,R\}$</td></tr>
+        <tr><td>$q_0$</td><td>初始状态</td></tr>
+        <tr><td>$q_{accept}$</td><td>接受状态</td></tr>
+        <tr><td>$q_{reject}$</td><td>拒绝状态，且与 $q_{accept}$ 不同</td></tr>
+      </tbody>
+    </table>
+
+    <p>转移函数读当前状态和读写头下的带符号，给出三样东西：新状态、要写入的符号、头往左还是往右。输入放在带子最左边，其余全是空白；读写头从最左格开始。如果机器试图把头移出最左端，这一步停在原地，不报错。</p>
+
+    <p>注意 $\Sigma$ 和 $\Gamma$ 的区别：输入字母表里没有空格，因为空格不是输入的一部分；但带字母表里有空格，因为带子上没写过的位置就是空白。带字母表里还可以放辅助符号，比如用来划掉已经比较过的字符。</p>
+
+    <h2 id="config">3. 格局：一张快照</h2>
+
+    <p>格局把三样东西合在一起：当前状态、带子内容、头的位置。写法是把状态插在带子内容中间：</p>
+
+    <p>$$u\,q\,x\,v$$</p>
+
+    <p>其中 $u$ 是已读部分，$q$ 是当前状态，$x$ 是头下的符号，$v$ 是右边剩余部分。状态右边第一个符号，就是读写头指的位置；它后面可以全是空白。如果头已经走到最右边未使用的位置，状态后面不跟符号，表示头正指着一片空白。</p>
+
+    <p>一步转移可以直接在格局上移动状态：头左移，状态就放到左边符号的前面；头右移，状态就放到右边符号的后面。初始格局是</p>
+
+    <p>$$q_0 w$$</p>
+
+    <p>也就是初始状态后面跟着整个输入串。接收格局和拒绝格局都写成 $u q_{accept} v$ 和 $u q_{reject} v$，它们是停机格局，进入后不再继续转移。</p>
+
+    <h2 id="ww">4. w#w 的判定过程</h2>
+
+    <p>用带子判定 $w\#w$，步骤是：</p>
+
+    <ol>
+      <li>从左端开始向右扫，找到井号；找不到井号，拒绝。</li>
+      <li>回到左边第一个还没划掉的符号，把它划掉；再走到右边，找到右边对应位置还没划掉的符号。</li>
+      <li>比较两个符号：不同就拒绝；相同就把右边的也划掉，表示这一对已经处理过。</li>
+      <li>重复上面的来回跳，直到左边所有符号都被划掉。</li>
+      <li>最后扫一遍右边：如果还有没划掉的符号，说明两边长度不同，拒绝；如果没有剩余，接受。</li>
+    </ol>
+
+    <p>井号本身也要检查，不能有两个以上。这个判定器一定会停：每一轮至少划掉左边一个符号，左边长度有限。</p>
+
+    <p>这里能看出带子的用法：不是只读一遍，而是反复扫描、做标记、回头查。有限自动机没有地方记「哪些位置已经比较过」，下推自动机又只能按倒序取，图灵机把这两件事都补上了。</p>
+
+    <h2 id="recognize">5. 三种结局：接收、拒绝、不停机</h2>
+
+    <p>一台图灵机对输入可能有三种结局：</p>
+
+    <ul>
+      <li><strong>接收</strong>：进入接受状态，停机；</li>
+      <li><strong>拒绝</strong>：进入拒绝状态，停机；</li>
+      <li><strong>不停机</strong>：既不接受也不拒绝，一直跑下去。</li>
+    </ul>
+
+    <p>接收的定义是：存在一条格局序列，从初始格局出发，每一步合法转移，最后进入接受格局。机器接收的所有串，就是它识别的语言。能被某台图灵机识别的语言，叫<strong>图灵可识别语言</strong>。</p>
+
+    <p>注意识别只要求「该接收的会接收」；不该接收的串，机器可以拒绝，也可以永远跑下去。把不接受拆成「拒绝」和「不停机」两种情况，是图灵机和前面几种自动机最大的不同之一。</p>
+
+    <h2 id="decide">6. 判定器与可判定语言</h2>
+
+    <p>如果一台机器对所有输入都停机，它叫<strong>判定器</strong>。判定器识别的语言，叫<strong>可判定语言</strong>，也叫图灵可判定语言。</p>
+
+    <p>可判定一定可识别：把判定器原样拿来当识别器就行。反过来不一定：识别器允许在「不该接收」的串上永远跑下去。所以</p>
+
+    <p>$$\text{可判定}\subseteq\text{可识别}$$</p>
+
+    <p>而且一般是真包含，后面的不可判定性会给出不在可识别一侧的例子。程序可以理解成图灵机；正常写出来的程序，一般都希望是判定器：每个输入都有明确结果，不会卡死。</p>
+
+    <h2 id="pow">7. 例：0 的 2 的 n 次方</h2>
+
+    <p>看一个判定器的例子：</p>
+
+    <p>$$L=\{0^{2^n}\mid n\ge 0\}$$</p>
+
+    <p>机器每轮从左到右扫一遍，划掉每隔一个的零。如果这一轮开始时只剩一个零，接受；如果零的个数是奇数，而且不止一个，拒绝；否则把头移回最左端，进入下一轮。</p>
+
+    <p>长度 8 的输入：第一轮划掉第 2、4、6、8 个，剩 4 个；第二轮再划掉一半，剩 2 个；第三轮剩 1 个，接受。长度 6 的输入：第一轮剩 3 个，第二轮开始时是奇数且不止一个，拒绝。</p>
+
+    <p>每一轮长度至少减半，所以这个机器一定会停。它不是「碰巧能给出答案」，而是对每个输入都在有限步内给出接受或拒绝——这才叫判定器。</p>
+
+    <h2 id="halt">8. 不停机与下一步</h2>
+
+    <p>图灵机不进入接受或拒绝，就一直跑下去，这就是不停机。不停机不是错误，也不是「拒绝」；它是第三种结局。这一点为后面的不可判定性埋下伏笔：有些问题，机器可能永远给不出答案。</p>
+
+    <p>下一集先看几种看起来更强、其实等价的图灵机变体：多带、非确定、枚举器。它们看起来增加了能力，但识别的语言完全一样。</p>
+
+    <h2 id="pitfalls">9. 常见错误</h2>
+
+    <ol>
+      <li><strong>把图灵机当成只读机器。</strong>它既能读带子，也能往带子上写；辅助符号就是写出来的。</li>
+      <li><strong>把「带子无限长」理解成「输入无限长」。</strong>输入串是有限的；无限的是右边的空白。</li>
+      <li><strong>把 $\Sigma$ 和 $\Gamma$ 混为一谈。</strong>$\Sigma$ 不含空格，$\Gamma$ 含空格，并且包含 $\Sigma$。</li>
+      <li><strong>以为接受或拒绝要等输入读完。</strong>进入接受或拒绝状态就立即停机，后面还有没有符号都不影响。</li>
+      <li><strong>把识别和判定当成一回事。</strong>识别允许不停机，判定要求每个输入都停。</li>
+      <li><strong>把不停机当成拒绝。</strong>不接收可能是拒绝，也可能是永远跑下去；两者要分开。</li>
+    </ol>
+
+    <h2 id="quiz">10. 自测 7 题</h2>
+
+    <ol>
+      <li>为什么 $w\#w$ 不是上下文无关语言？栈在哪一步不够用？</li>
+      <li>图灵机和有限自动机有哪四点关键区别？</li>
+      <li>七元组里的 $\Sigma$ 和 $\Gamma$ 分别是什么？空格属于哪一个？</li>
+      <li>格局 $u q x v$ 的四个部分分别表示什么？初始格局、接受格局怎么写？</li>
+      <li>「图灵可识别」和「可判定」的定义差在哪？包含关系是什么方向？</li>
+      <li>判定 $0^{2^n}$ 的机器为什么一定停？奇数个零时哪一步拒绝？</li>
+      <li>为什么说「不停机」不是错误？它为后面哪一类问题做铺垫？</li>
+    </ol>
+
+    <details>
+      <summary>答案</summary>
+      <ol>
+        <li>栈只能后进先出，读完左边后只能按倒序和右边比较；要按原顺序逐位对照，栈做不到。</li>
+        <li>能读也能写；头能左右走；带子无限长；进入接受或拒绝立即停机。</li>
+        <li>$\Sigma$ 是输入字母表，不含空格；$\Gamma$ 是带字母表，含空格和辅助符号，且包含 $\Sigma$。</li>
+        <li>$u$ 是左边内容，$q$ 是当前状态，$x$ 是头下符号，$v$ 是右边内容；初始格局是 $q_0w$，接受格局是 $u q_{accept}v$。</li>
+        <li>识别只要求该接收的串最终接收，其他串可以拒绝或不停机；判定要求每个输入都停机。可判定包含于可识别。</li>
+        <li>每轮划掉一半的零，长度至少减半；奇数个且不止一个时，在该轮开始时拒绝。</li>
+        <li>不停机是第三种结局，不是拒绝；它对应有些问题机器永远给不出答案，也就是后面的不可判定性。</li>
+      </ol>
+    </details>
+
+    <h2 id="takeaway">11. 收尾</h2>
+
+    <p>四句话记住这一集：</p>
+
+    <ol>
+      <li><strong>带子带来的是「回头」的能力</strong>：可读写、可左右走，能反复扫描和做标记。</li>
+      <li><strong>七元组 + 格局</strong>：格局是一张快照，状态插在带子内容中间。</li>
+      <li><strong>识别允许不停机</strong>：不该接收的串可以拒绝，也可以一直跑。</li>
+      <li><strong>判定要求每个输入都停</strong>：可判定比可识别更严格。</li>
+    </ol>
+
+    <p>如果只用一句话记住它：<strong>图灵机的带子不增加输入，只增加了来回走和写标记的自由。</strong>下一集看多带、非确定和枚举器——它们看起来更强，但识别的语言完全一样。</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+  <script defer src="book-shell.js?v=2"></script>
+  <script defer src="katex/katex.min.js"></script>
+  <script defer src="katex/auto-render.min.js"></script>
+  <script defer src="katex/render-math.js"></script>
+</body>
+</html>
