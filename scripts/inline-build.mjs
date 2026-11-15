@@ -67,9 +67,20 @@ html = html.replace(/<link\b[^>]*\brel="stylesheet"[^>]*\bhref="([^"]+)"[^>]*>/g
 
 writeFileSync(htmlPath, html)
 
-const otherPages = readdirSync(dist)
-  .filter((name) => name.endsWith('.html') && name !== 'index.html')
-  .map((name) => readFileSync(join(dist, name), 'utf8'))
+function collectOtherPages(dir) {
+  const pages = []
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name)
+    if (entry.isDirectory()) {
+      pages.push(...collectOtherPages(full))
+    } else if (entry.name.endsWith('.html') && full !== htmlPath) {
+      pages.push(readFileSync(full, 'utf8'))
+    }
+  }
+  return pages
+}
+
+const otherPages = collectOtherPages(dist)
 
 let removed = 0
 let kept = 0
