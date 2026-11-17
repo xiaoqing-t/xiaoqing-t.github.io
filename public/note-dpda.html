@@ -9,8 +9,8 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <link rel="stylesheet" href="legacy-v1.css" />
-  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="legacy-v1.css?v=3" />
+  <link rel="stylesheet" href="notes.css?v=3" />
   <link rel="stylesheet" href="book-shell.css" />
   <link rel="stylesheet" href="katex/katex.min.css" />
   <style>
@@ -114,12 +114,16 @@
   </style>
 </head>
 <body>
-  <nav class="nav">
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <nav class="nav" id="nav">
     <div class="nav-inner">
       <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
-      <ul class="nav-links">
+      <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
         <li><a href="index.html#about">关于</a></li>
-        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#work">项目</a></li>
         <li><a href="index.html#notes">笔记</a></li>
         <li><a href="resume.html">简历</a></li>
         <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
@@ -127,7 +131,7 @@
     </div>
   </nav>
 
-  <main class="container article">
+  <main class="container article" id="main" tabindex="-1">
     <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
     <p class="article-meta">计算理论 · 第 7 集</p>
     <h1>计算理论：确定下推自动机</h1>
@@ -137,13 +141,20 @@
     </blockquote>
 
     <figure class="short-video">
-      <video controls playsinline preload="metadata" width="1080" height="1920"
+      <video controls playsinline loading="lazy" aria-labelledby="video-caption" preload="metadata" width="1080" height="1920"
              poster="media/dpda-poster.jpg">
         <source src="media/dpda-5min.mp4" type="video/mp4" />
         <track kind="captions" src="media/dpda-zh.vtt" srclang="zh" label="中文" />
         浏览器不支持内嵌视频，<a href="media/dpda-5min.mp4">点这里下载这段短片</a>。
       </video>
-      <figcaption>配套短片 · 约 3 分 52 秒 · 有口播和字幕：两条转移变一条、四种动作、三类拒绝、补成一定读完、补封闭的正确证明、非 DCFL 的例子、结束标记，最后停在下一步的 DK 测试</figcaption>
+      <figcaption id="video-caption">配套短片 · 约 3 分 52 秒 · 有口播和字幕：两条转移变一条、四种动作、三类拒绝、补成一定读完、补封闭的正确证明、非 DCFL 的例子、结束标记，最后停在下一步的 DK 测试</figcaption>
+      <details class="video-transcript">
+        <summary>文字稿</summary>
+        <p>上一集的下推自动机是猜的：同一个局面可以有多条转移。 编译器不能猜。同一个输入，它必须只有一条路可走。 把非确定性去掉，就得到确定下推自动机。 六元组和上一集一样，区别在转移函数：从状态、输入字符、栈顶出发，最多给一个结果，或者干脆没有。 确定性条件：对每个状态、每个输入字符、每个栈顶，四种可能的动作，恰好有一个不是空。 四种动作是：读字符且看栈顶、读字符不看栈顶、不读字符看栈顶、既不读也不看。 这样任何时刻，下一步最多一个，不会出现两条竞争的路。 接收条件很严格：读完整串之后，正好停在接受状态。</p>
+        <p>其他都算拒绝：读完了不在接受状态；或者根本没读完——想弹空栈，卡住；或者一直走空转移，不读输入，死循环。 后两种情况说明：确定不等于一定停机。 但可以改造：任何确定下推自动机，都能改成一定读完整串的机器。 先在栈底放美元符号；如果没读完就露出来，就一路读到结尾再拒绝。 空转移死循环，就先找出那些永远不再读输入的循环局面，把它们改成读完剩余输入并拒绝。 这样后面的证明，就不用处理半途卡住的情况。 确定上下文无关语言对补封闭，但不能直接把接受状态和非接受状态对调。 因为一台机器读完最后一个字符后，可能还会走几步空转移，中途经过接受状态又离开；直接对调会把这类串判错。</p>
+        <p>先把机器改成：每读一个输入符号，最多进入一次接受状态，而且是在准备读下一个符号的时候。 然后只对调这些读字符状态的接受标记，就得到补语言。 这也是为什么补封闭的证明，比正则语言麻烦得多。 所以，如果补语言不是上下文无关语言，原语言一定不是确定上下文无关语言。 例子：a 的 i 次方 b 的 j 次方 c 的 k 次方，i 不等于 j 或者 j 不等于 k。 它是上下文无关语言，但不是确定的；它的补是 i 等于 j 且 j 等于 k，也就是 a 的 n 次方 b 的 n 次方 c 的 n 次方，不是上下文无关语言。 直观上，它要在两个条件里二选一，需要猜；确定机器做不到。 最后引入结束标记：给语言 A 的每个串末尾加一个结束符，得到带结束符的语言。</p>
+        <p>A 是确定上下文无关语言，当且仅当带结束符的语言也是。 一个方向：模拟原机器，读到结束符时，看前一个符号处理完有没有进入接受状态。 另一个方向要把机器改成一步只做一件事：读字符、压栈、弹栈三者只做一件；用栈里额外存的状态集合，消掉空转移。 这一集记住：确定下推自动机每步最多一个动作；确定不等于停机；确定上下文无关语言对补封闭，但不是所有上下文无关语言都确定。 下一集，把文法也确定化，用 DK 测试判断一个文法能不能一遍扫描就解析。</p>
+      </details>
     </figure>
 
     <p><strong>动手试：</strong><a href="demo/pda.html?m=paren&amp;w=%28%28%29%29">在浏览器里逐步运行括号匹配（DPDA）→</a></p>
@@ -340,7 +351,7 @@
       <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
     </div>
   </footer>
-  <script src="script.js"></script>
+  <script src="script.js?v=3"></script>
   <script defer src="book-shell.js?v=2"></script>
   <script defer src="katex/katex.min.js"></script>
   <script defer src="katex/auto-render.min.js"></script>

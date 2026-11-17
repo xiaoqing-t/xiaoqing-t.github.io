@@ -22,8 +22,8 @@
   <meta name="twitter:description" content="赵蕴哲现在在做什么：活跃线、课程与研究的最近推进，每周六复盘后更新。" />
   <meta name="twitter:image" content="https://xiaoqing-t.github.io/og-image.png" />
   <link rel="alternate" type="application/rss+xml" title="Zhao Yunzhe · 学习笔记" href="/feed.xml" />
-  <link rel="stylesheet" href="legacy-v1.css" />
-  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="legacy-v1.css?v=3" />
+  <link rel="stylesheet" href="notes.css?v=3" />
   <style>
     .nav-links a.active { color: var(--accent); }
     .now-page { max-width: 940px; margin-inline: auto; padding: 56px 0 80px; }
@@ -112,10 +112,14 @@
   </style>
 </head>
 <body>
-  <nav class="nav">
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <nav class="nav" id="nav">
     <div class="nav-inner">
       <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
-      <ul class="nav-links">
+      <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
         <li><a href="index.html#about">关于</a></li>
         <li><a href="index.html#work">作品</a></li>
         <li><a href="index.html#notes">笔记</a></li>
@@ -126,7 +130,7 @@
     </div>
   </nav>
 
-  <main class="container now-page">
+  <main class="container now-page" id="main" tabindex="-1">
     <p class="now-kicker" id="now-kicker">NOW</p>
     <h1 class="now-title">现在</h1>
     <p class="now-lead" id="now-focus">正在读取最近的状态……</p>
@@ -156,7 +160,7 @@
     </div>
   </footer>
 
-  <script src="script.js"></script>
+  <script src="script.js?v=3"></script>
   <script type="application/json" id="now-data">{"generatedAt":"2026-11-14","review":{"last":"2026-11-14","next":"2026-11-21"},"focus":"把个人网站继续做成课内内容的发布端；同时推进 BIOT 复现的数据处理。","lines":[{"title":"个人网站","status":"active","updated":"2026-11-11","summary":"首页改版为编辑式作品集，笔记与短片持续发布。接下来做构建期预渲染和笔记 Markdown 管线。"},{"title":"大三上课程","status":"active","updated":"2026-11-13","summary":"六门课同步推进：计算理论、机器学习、计算经济学、密码学、NLP、计算机伦理学。"},{"title":"侵入式BCI调研","status":"active","updated":"2026-10-14","summary":"BIOT 复现进行中：CHB-MIT 数据预处理推进，TUH 数据申请已发出。"},{"title":"睡眠EEG研究线","status":"paused","updated":"2026-09-14","summary":"挂起，等上游研究决策；暂不排任务。"}]}</script>
   <script type="application/json" id="recent-data">[{"title":"词性标注与 HMM：三张表、两次动态规划","href":"note-pos-hmm.html","meta":"2026-11 · 推导 · 附短片"},{"title":"中文分词与 CRF：从查词典到整句打分","href":"note-seg-crf.html","meta":"2026-11 · 推导 · 附短片"},{"title":"BPE：模型眼里的词，是长出来的零件","href":"note-bpe.html","meta":"2026-11 · 推导 · 附短片"}]</script>
   <script>

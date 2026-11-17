@@ -9,8 +9,8 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <link rel="stylesheet" href="legacy-v1.css" />
-  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="legacy-v1.css?v=3" />
+  <link rel="stylesheet" href="notes.css?v=3" />
   <link rel="stylesheet" href="book-shell.css" />
   <link rel="stylesheet" href="katex/katex.min.css" />
   <style>
@@ -114,12 +114,16 @@
   </style>
 </head>
 <body>
-  <nav class="nav">
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <nav class="nav" id="nav">
     <div class="nav-inner">
       <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
-      <ul class="nav-links">
+      <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
         <li><a href="index.html#about">关于</a></li>
-        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#work">项目</a></li>
         <li><a href="index.html#notes">笔记</a></li>
         <li><a href="resume.html">简历</a></li>
         <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
@@ -127,7 +131,7 @@
     </div>
   </nav>
 
-  <main class="container article">
+  <main class="container article" id="main" tabindex="-1">
     <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
     <p class="article-meta">计算理论 · 第 8 集</p>
     <h1>计算理论：确定文法与 DK 测试</h1>
@@ -137,13 +141,21 @@
     </blockquote>
 
     <figure class="short-video">
-      <video controls playsinline preload="metadata" width="1080" height="1920"
+      <video controls playsinline loading="lazy" aria-labelledby="video-caption" preload="metadata" width="1080" height="1920"
              poster="media/dcfg-poster.jpg">
         <source src="media/dcfg-5min.mp4" type="video/mp4" />
         <track kind="captions" src="media/dcfg-zh.vtt" srclang="zh" label="中文" />
         浏览器不支持内嵌视频，<a href="media/dcfg-5min.mp4">点这里下载这段短片</a>。
       </video>
-      <figcaption>配套短片 · 约 4 分 45 秒 · 有口播和字幕：归约与句柄、强制句柄、带点规则、两台自动机、DK 测试的两种冲突、与 DPDA 的等价、LR 与 JSON 流、约束生成，最后停在四件语法之外的事</figcaption>
+      <figcaption id="video-caption">配套短片 · 约 4 分 45 秒 · 有口播和字幕：归约与句柄、强制句柄、带点规则、两台自动机、DK 测试的两种冲突、与 DPDA 的等价、LR 与 JSON 流、约束生成，最后停在四件语法之外的事</figcaption>
+      <details class="video-transcript">
+        <summary>文字稿</summary>
+        <p>编译器解析表达式，不能回溯。它从左到右扫一遍，每到一个位置就要知道：现在该不该把一段符号归约成一个变元。 这个决定点，就是句柄。 推导是从开始变元往下展开；归约反过来，从终结符串往上收。 每一步，把规则右边的一段串，替换成左边的变元；被替换的那段叫归约串。 最左归约：先处理最左边的可归约串。 句柄：在某一步里，被归约的那段串，连同它使用的规则，就是句柄。 无歧义的文法，每个有效串的句柄唯一；有歧义时可能多个。 但光唯一还不够：解析器看到前缀时，必须能确定这个句柄以后不会被别的选择推翻。</p>
+        <p>这就是下一个概念。 如果一个句柄，在所有可能的后缀下都还是唯一句柄，就叫强制句柄。 每个有效串都有强制句柄的文法，叫确定上下文无关文法。 直观上，看到这个前缀就能放心归约。 但定义本身没给判断方法，所以要构造一台机器来测试。 办法是带点规则：在规则的某个位置放一个点，点左边是已经匹配的部分。 先构造第一台非确定自动机：它猜一条规则，猜输入从哪里开始匹配，用点记录进度；输入结束时正好匹配完，就接收。 再构造第二台：状态是所有带点规则；读一个符号，点往右移；遇到变元，可以空转移到这个变元的规则开头。</p>
+        <p>读到某个前缀能进入带点状态，就说明它可能以某条规则的一段结尾。 把第二台确定化，得到 DK。 DK 的接受状态里，如果恰好只有一条完成规则，而且没有任何规则的点后面紧跟终结符，就通过 DK 测试；通过，当且仅当文法是确定的。 为什么？如果接受状态里有两条完成规则，同一个前缀可以按两条规则归约，解析器不知道选哪条。 如果某条规则的点后面紧跟终结符，说明读完这个前缀后还可能继续读字符、先做移进，归约和移进冲突。 这两种情况，都破坏了唯一动作。 确定文法和确定下推自动机，在带结束符的语言上等价：带结束符的语言由确定文法生成，当且仅当它是确定的上下文无关语言。 一个方向，确定文法可以用确定下推自动机做最左归约。</p>
+        <p>另一个方向，把机器改写成文法，再用 DK 测试证明这个文法确定。 注意，不带结束符时不一定等价：确定文法生成的语言是前缀无关的，而确定的上下文无关语言不一定。 工程上，确定下推自动机就是 LR 解析器的模型。 状态栈记录解析上下文，看一个前瞻符号，表里唯一决定移进还是归约。 JSON 流式解析也是：栈记住未闭合的对象和数组，结束符表示完整消息。 约束 AI 生成时，用同一套识别器跟踪前缀，屏蔽不能补成合法输出的候选词元。 最后分清四件事。 表达力：确定上下文无关语言严格弱于上下文无关语言，有些语言必须非确定。</p>
+        <p>运行时间：固定文法的无冲突 LR 解析是线性；但任意确定下推自动机可能卡在空转移循环里，确定不保证停机。 内存：栈深度等于嵌套深度，工程上要设上限。 语义：名字、类型、跨字段关系，语法解析管不了。 这一集记住：句柄、强制句柄、DK 测试；确定下推自动机和确定文法在带结束符时等价；确定解析的关键，是每一步只有一个动作。 下一章，把栈换成无限带子，进入图灵机。</p>
+      </details>
     </figure>
 
     <p>确定下推自动机解决了「机器不能猜」，但文法还停在一套重写规则上。编译器真正需要的是一句话：<strong>给我一个文法，我能不能从左到右扫一遍，每一步都唯一确定该做什么？</strong></p>
@@ -322,7 +334,7 @@
       <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
     </div>
   </footer>
-  <script src="script.js"></script>
+  <script src="script.js?v=3"></script>
   <script defer src="book-shell.js?v=2"></script>
   <script defer src="katex/katex.min.js"></script>
   <script defer src="katex/auto-render.min.js"></script>

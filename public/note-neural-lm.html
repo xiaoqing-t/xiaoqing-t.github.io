@@ -9,8 +9,8 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <link rel="stylesheet" href="legacy-v1.css" />
-  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="legacy-v1.css?v=3" />
+  <link rel="stylesheet" href="notes.css?v=3" />
   <link rel="stylesheet" href="book-shell.css" />
   <link rel="stylesheet" href="katex/katex.min.css" />
   <style>
@@ -105,12 +105,16 @@
   </style>
 </head>
 <body>
-  <nav class="nav">
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <nav class="nav" id="nav">
     <div class="nav-inner">
       <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
-      <ul class="nav-links">
+      <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
         <li><a href="index.html#about">关于</a></li>
-        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#work">项目</a></li>
         <li><a href="index.html#notes">笔记</a></li>
         <li><a href="resume.html">简历</a></li>
         <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
@@ -118,7 +122,7 @@
     </div>
   </nav>
 
-  <main class="container article">
+  <main class="container article" id="main" tabindex="-1">
     <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
     <p class="article-meta">自然语言处理 · 神经网络语言模型</p>
     <h1>神经网络语言模型：从数频次到循环网络</h1>
@@ -128,13 +132,23 @@
     </blockquote>
 
     <figure class="short-video">
-      <video controls playsinline preload="metadata" width="1080" height="1920"
+      <video controls playsinline loading="lazy" aria-labelledby="video-caption" preload="metadata" width="1080" height="1920"
              poster="media/neural-lm-poster.jpg">
         <source src="media/neural-lm-5min.mp4" type="video/mp4" />
         <track kind="captions" src="media/neural-lm-zh.vtt" srclang="zh" label="中文" />
         浏览器不支持内嵌视频，<a href="media/neural-lm-5min.mp4">点这里下载这段短片</a>。
       </video>
-      <figcaption>配套短片 · 约 6 分钟 · 有口播和字幕：从 n 元模型的计数表，到前馈网络的拼接，再到 RNN、BPTT、梯度裁剪与 LSTM/GRU 的门控</figcaption>
+      <figcaption id="video-caption">配套短片 · 约 6 分钟 · 有口播和字幕：从 n 元模型的计数表，到前馈网络的拼接，再到 RNN、BPTT、梯度裁剪与 LSTM/GRU 的门控</figcaption>
+      <details class="video-transcript">
+        <summary>文字稿</summary>
+        <p>手机输入法里，你打两个字，它就猜出后面想说什么。 这种猜下一个词的能力，背后是语言模型。 这一集看它怎么从统计频次，一步步走到循环神经网络。 语言模型的任务只有一句话：给定前面的词，预测下一个词出现的概率。 把每个位置的条件概率连乘起来，就得到整句话的概率。 所以它既能补全，也能给整句话打分。 比如「我要上宁波大学」和「我腰上拧个大穴」，读音一样，模型该给前者更高概率。 最早的统计做法是 n 元模型。</p>
+        <p>它假设一个词只和前面几个词有关，再用语料里统计的频次估计条件概率。 做法简单，但还有三个绕不开的毛病。 第一是存储：词表有 V 个词，n 元组合就有 V 的 n 次方那么多，n 一大就存不下。 第二是远距依赖：他在法国长大，所以法语流利；二元模型只看「说」前面那个词，前面是法国还是中国，概率都一样。 第三是稀疏：没见过的组合概率直接是零，低频组合也估不准，只能靠平滑和回退去补。 所以得换一种表示。 神经网络的做法，先解决表示问题。 把前几个词查成词向量，首尾拼在一起，送进一个前馈网络。</p>
+        <p>输出是和词表一样长的概率分布，哪个词概率高，就猜哪个。 比如「我喜欢这部」，后面可能是电影，也可能是书。 这样做的好处很直接。 词向量是稠密的，相似的词共享信息，没见过的组合也能估个大概，稀疏问题缓解不少。 存的是矩阵，不是一张巨大的组合表，空间小得多；不同位置还能同时算。 但前馈网络有两个硬伤。 第一，它只接受固定长度的历史：想看前 n 个词，这 n 个位置就各要一套权重，n 一大，参数跟着涨。 第二，它仍然只看窗口，窗口之外的信息进不来。</p>
+        <p>所以还得改结构。 改法从权重矩阵下手。 原来每个历史位置乘的是不同的一块权重；现在拆成两块：一块把当前词变成输入，一块把上一步的信息往下传。 这样，不同位置共用同一套参数，参数量不再随 n 增长。 这就是循环神经网络的引子。 循环网络按时间一步步走。 每一步读一个词向量，同时接收上一步的隐藏状态，两者一起算出新的隐藏状态。 同一套权重在每个时刻反复使用，句子多长都不增加参数。</p>
+        <p>隐藏状态像一条不断更新的记忆，把前面的信息带到后面。 训练还是最小化交叉熵：每个位置都预测下一个词，把各位置的损失加起来。 梯度要沿着时间往回传，一步套一步，用链式法则。 问题就出在这个连乘上。 每往回传一步，就要乘一次权重矩阵。 数值普遍小于一，乘的次数一多，梯度就趋近于零，这是消失；数值大于一，就会爆炸。 消失的后果是记不住远处：一句话里，动词该跟哪个词一致，关键信息在好几步之前，梯度已经传不回来了。 爆炸可以用裁剪压住：超过阈值就截断，方向不变。可消失，压不住。</p>
+        <p>长短期记忆网络把记忆分成两份：单元状态长期保存，隐藏状态短期使用。 修改和读取都由门控制。门是一个同维向量，每个位置取零到一，零是关，一是开。 遗忘门决定旧记忆留多少，输入门决定新内容写多少，输出门决定读出多少；它们都看当前输入和上一步的隐藏状态，每一步现算。 这样改，梯度不用再一连乘很多次，远距信息容易留下来；但这是缓解，不是彻底解决。 普通循环网络要完全保留历史，权重得正好是单位矩阵；长短期记忆网络只要遗忘门全开就行，学起来容易得多。 门控循环单元是它的简化版：去掉单元状态，只留更新门和重置门，参数更少，效果通常接近。 先看一组对比。 困惑度可以理解成：模型每预测一个词，平均在多少个候选里犹豫，越低越好。</p>
+        <p>三元 206，四元 161，五元反而回到 173，因为组合更稀疏；普通循环网络 148，长短期记忆网络 78.6，门控循环单元 78.8。 从统计到循环，困惑度几乎砍了一半。 主线是：n 元模型受限于存储、远距和稀疏；前馈网络用词向量缓解稀疏，但窗口固定；循环网络共享参数，把历史带下来；门控结构再留住远距信息。 循环网络不只用来算概率，文本分类、序列标注、序列到序列生成，都能用上它。 下一集，看它怎么用在机器翻译上。</p>
+      </details>
     </figure>
 
     <p>手机输入法里打两个字，候选栏就往下跳「真不错」「怎么样」「有点冷」。这件事看着小，背后却是一个概率问题：在已经出现的前文条件下，下一个词是什么。语言模型就是专门回答这个问题的模型。这一页按「统计做法 → 前馈网络 → 循环网络 → 门控结构」的顺序，把每一步为什么发生、公式长什么样、又留下什么麻烦讲清楚。</p>
@@ -503,7 +517,7 @@
       <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
     </div>
   </footer>
-  <script src="script.js"></script>
+  <script src="script.js?v=3"></script>
   <script defer src="book-shell.js?v=2"></script>
   <script defer src="katex/katex.min.js"></script>
   <script defer src="katex/auto-render.min.js"></script>

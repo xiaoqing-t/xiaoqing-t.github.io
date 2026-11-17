@@ -9,8 +9,8 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <link rel="stylesheet" href="legacy-v1.css" />
-  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="legacy-v1.css?v=3" />
+  <link rel="stylesheet" href="notes.css?v=3" />
   <link rel="stylesheet" href="book-shell.css" />
   <link rel="stylesheet" href="katex/katex.min.css" />
   <style>
@@ -114,12 +114,16 @@
   </style>
 </head>
 <body>
-  <nav class="nav">
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <nav class="nav" id="nav">
     <div class="nav-inner">
       <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
-      <ul class="nav-links">
+      <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
         <li><a href="index.html#about">关于</a></li>
-        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#work">项目</a></li>
         <li><a href="index.html#notes">笔记</a></li>
         <li><a href="resume.html">简历</a></li>
         <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
@@ -127,7 +131,7 @@
     </div>
   </nav>
 
-  <main class="container article">
+  <main class="container article" id="main" tabindex="-1">
     <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
     <p class="article-meta">计算理论 · 第 5 集</p>
     <h1>计算理论：上下文无关文法</h1>
@@ -137,13 +141,21 @@
     </blockquote>
 
     <figure class="short-video">
-      <video controls playsinline preload="metadata" width="1080" height="1920"
+      <video controls playsinline loading="lazy" aria-labelledby="video-caption" preload="metadata" width="1080" height="1920"
              poster="media/cfg-poster.jpg">
         <source src="media/cfg-5min.mp4" type="video/mp4" />
         <track kind="captions" src="media/cfg-zh.vtt" srclang="zh" label="中文" />
         浏览器不支持内嵌视频，<a href="media/cfg-5min.mp4">点这里下载这段短片</a>。
       </video>
-      <figcaption>配套短片 · 约 4 分半 · 有口播和字幕：重写链、四元组、推导树、三个计数例子、两棵语法树、固有歧义、乔姆斯基范式与四步转换，最后数推导步数</figcaption>
+      <figcaption id="video-caption">配套短片 · 约 4 分半 · 有口播和字幕：重写链、四元组、推导树、三个计数例子、两棵语法树、固有歧义、乔姆斯基范式与四步转换，最后数推导步数</figcaption>
+      <details class="video-transcript">
+        <summary>文字稿</summary>
+        <p>先看一条重写链：A 推出 0A1，再推出 00A11，一直推到 000A111，最后把 A 换成井号，得到 000 井号 111。 每一步只改一个变元，旁边的字符不动。 这种描述方式就是上下文无关文法。 形式化成一个四元组：变元集、终结符集、规则集、开始变元。 变元和终结符不相交；规则左边必须是一个变元，右边是变元和终结符组成的串。 为什么叫上下文无关？因为不管 A 旁边有什么，它都能独立地重写成右边。 这就是它比正则强的地方：重写可以保留左右两边的结构。 如果一条规则是 A 推出 w，那么在任何上下文里，把 A 换成 w 就是一步推导。</p>
+        <p>零步或多步推导，记作带星号的箭头。 文法生成的语言，就是所有能从开始变元推到纯终结符串的串。 能被某个上下文无关文法生成的语言，就叫上下文无关语言。 看三个例子。 零的 n 次方一的 n 次方：S 推出 0S1，或者推出空串；每包一层，两边各加一个符号。 一的 n 次方零的 n 次方：把两个符号换个位置。 两个语言并起来：新开一个开始变元，二选一指向两套规则。 这三个都是上下文无关语言，但前两个都不是正则语言；文法能记住两边数量相等。</p>
+        <p>一个串可能有两棵不同的语法树。 算术表达式：E 推出 E 加 E、E 乘 E、括号 E，或者 a。 串 a 加 a 乘 a 有两种最左推导：先展开乘，得到先加后乘；先展开加，得到先乘后加。 最左推导，就是每一步都替换最左边的变元。 一个串有两种最左推导，就叫歧义；只要文法生成某个有歧义的串，这个文法就是歧义的。 歧义首先是文法的问题：换一套规则，可能就无歧义了。 但有些语言，任何文法都歧义，叫固有歧义。 比如 a 的 i 次方 b 的 j 次方 c 的 k 次方，i 等于 j 或者 j 等于 k；两个条件重叠的地方，同一串必然有两种生成方式。</p>
+        <p>而且不存在算法，能判断任给的一个文法是否歧义，更不用说自动消除歧义。 为了后面的证明和算法，需要一个标准形式：乔姆斯基范式。 每条规则只有两种：一个变元推出两个变元，或者一个变元推出一个终结符。 右边的两个变元都不能是开始变元；另外允许开始变元直接推出空串。 定理是：任何上下文无关语言，都有乔姆斯基范式的文法。 转换分四步。 第一，加一个新的开始变元，指向原来的开始变元。 第二，删掉所有非开始变元的空串规则；每删一条，就要在所有出现它的地方补一条删掉它的规则，保证不少串。</p>
+        <p>第三，删掉一个变元直接推出另一个变元的规则；如果后者能推出某个串，就给前者加一条同样的规则。 第四，把右边长度大于等于三的规则拆成二叉：引入新变元，一层层挂；终结符先包一层新变元。 这个过程可能指数膨胀，但一定终止。 乔姆斯基范式还有一个直接结果：长度 n 的非空串，从开始变元出发，恰好 2n 减 1 步。 因为二叉树有 n 个叶子、n 减 1 次二分，再加上 n 次终结符规则。 这个界后面证明泵引理时会用到。 这一集：文法是一个四元组；推导是重写；歧义看最左推导；乔姆斯基范式把规则压成两种。 下一集给文法配一台机器：下推自动机。</p>
+      </details>
     </figure>
 
     <p>有限自动机的语言是「边上的字符拼起来」。文法换了一个视角：语言由规则<strong>生成</strong>，而不是由机器<strong>识别</strong>。这个视角能描述带嵌套的结构，代价是判断一个串属不属于语言，需要做搜索或者动态规划。</p>
@@ -343,7 +355,7 @@
       <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
     </div>
   </footer>
-  <script src="script.js"></script>
+  <script src="script.js?v=3"></script>
   <script defer src="book-shell.js?v=2"></script>
   <script defer src="katex/katex.min.js"></script>
   <script defer src="katex/auto-render.min.js"></script>

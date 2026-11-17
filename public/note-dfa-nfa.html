@@ -9,8 +9,8 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <link rel="stylesheet" href="legacy-v1.css" />
-  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="legacy-v1.css?v=3" />
+  <link rel="stylesheet" href="notes.css?v=3" />
   <link rel="stylesheet" href="book-shell.css" />
   <link rel="stylesheet" href="katex/katex.min.css" />
   <style>
@@ -120,12 +120,16 @@
   </style>
 </head>
 <body>
-  <nav class="nav">
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <nav class="nav" id="nav">
     <div class="nav-inner">
       <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
-      <ul class="nav-links">
+      <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
         <li><a href="index.html#about">关于</a></li>
-        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#work">项目</a></li>
         <li><a href="index.html#notes">笔记</a></li>
         <li><a href="resume.html">简历</a></li>
         <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
@@ -133,7 +137,7 @@
     </div>
   </nav>
 
-  <main class="container article">
+  <main class="container article" id="main" tabindex="-1">
     <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
     <p class="article-meta">计算理论 · 第 3 集</p>
     <h1>计算理论：DFA 与 NFA</h1>
@@ -143,13 +147,21 @@
     </blockquote>
 
     <figure class="short-video">
-      <video controls playsinline preload="metadata" width="1080" height="1920"
+      <video controls playsinline loading="lazy" aria-labelledby="video-caption" preload="metadata" width="1080" height="1920"
              poster="media/dfa-nfa-poster.jpg">
         <source src="media/dfa-nfa-5min.mp4" type="video/mp4" />
         <track kind="captions" src="media/dfa-nfa-zh.vtt" srclang="zh" label="中文" />
         浏览器不支持内嵌视频，<a href="media/dfa-nfa-5min.mp4">点这里下载这段短片</a>。
       </video>
-      <figcaption>配套短片 · 约 4 分半 · 有口播和字幕：三个状态、五元组、接收与语言、NFA 与 ε 转移、子集构造、三种闭包、乘积与反例，最后停在有限状态的边界</figcaption>
+      <figcaption id="video-caption">配套短片 · 约 4 分半 · 有口播和字幕：三个状态、五元组、接收与语言、NFA 与 ε 转移、子集构造、三种闭包、乘积与反例，最后停在有限状态的边界</figcaption>
+      <details class="video-transcript">
+        <summary>文字稿</summary>
+        <p>一个会话监控器只记三件事：未登录、已登录、已经违规。 事件只有登录、登出、读资源。未登录时读，立刻进入违规，而且再也回不来。 三个状态，一张转移表，就能分类所有有限长的操作记录。这就是有限自动机。 形式化成一个五元组：状态集、字母表、转移函数、初始状态、接受状态集。 状态集和字母表都必须有限；转移函数把每个状态和每个字符，映射到唯一的下一个状态。 少一条边、或者一个输入对两个状态，都不是确定自动机。 画出来就是一张有向图，节点是状态，边是字符。 给一个字符串，从初始状态出发，一个字符走一条边，走完整串，停在接受状态就接收。</p>
+        <p>一个机器接收的所有字符串，就是它的语言。 被某个有限自动机接收的语言，叫正则语言。 有些问题，用确定机器写起来很别扭。 比如找包含零一零的串：与其记住所有前缀，不如在每个位置都猜一次，这里是起点。 非确定自动机的转移，从一个状态和一个字符，走向一组状态；还允许 ε 转移，不读字符就跳过去。 注意，非确定不是随机：没有概率分布，只是存在一条成功路径就算接收。 非确定性能不能换来更强的能力？不能。 任给一个非确定自动机，都能造出一个等价的确定自动机。</p>
+        <p>关键是把此刻可能所在的所有状态，打包成一个集合。 先算每个状态的 ε 可达类：不读字符，只走 ε 转移能到的所有状态。 确定自动机的状态就是这些集合；读一个字符，把集合里每个状态的目标并起来，再取 ε 可达类。 新的初始状态，就是原来初始状态的 ε 可达类；只要集合里碰上一个接受状态，这个集合就是接受状态。 因为新状态是原状态的幂集，最坏要 2 的 m 次方个，这就是去掉非确定性的代价。 有了非确定自动机，正则运算的封闭性就好证了。 并集：新开一个起点，用两条 ε 边分别指向两台机器。 连接：把第一台的接受状态，用 ε 边接到第二台的起点。</p>
+        <p>星号：新起点既能直接接受空串，也能 ε 进入原机器；原机器的接受状态再 ε 回到起点。 补集：把确定机器补全，接受状态和非接受状态对调。 交集：两台确定机器同时跑，状态取笛卡尔积，两个都接受才接受。 把监控器写成确定自动机后，还能问一个更强的问题：这个系统有没有可能产生违规记录？ 把安全机器求补，再和系统机器做乘积，找有没有可达的接受状态。 找到一条路径，就是一条反例；找不到，说明模型内所有有限记录都安全。 注意，结论只关于模型；两台 m 和 n 个状态的机器，乘积最多 m 乘 n 个状态。 有限状态不是万能的。</p>
+        <p>它能记固定格式、有限命令、有限次重试； 但记不住任意深度的括号，也记不住零和一数量相等。 下一集用泵引理，把这条边界证明出来。 这一集记住三件事：确定自动机是总函数，非确定自动机是一组可能状态，子集构造把猜测变成集合。 下一集讲正则表达式，以及正则语言为什么长不了。</p>
+      </details>
     </figure>
 
     <p><strong>动手试：</strong><a href="demo/automata.html?re=%28a%7Cb%29%2Aabb&amp;w=aababb">在浏览器里逐步运行 (a|b)*abb →</a></p>
@@ -391,7 +403,7 @@
       <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
     </div>
   </footer>
-  <script src="script.js"></script>
+  <script src="script.js?v=3"></script>
   <script defer src="book-shell.js?v=2"></script>
   <script defer src="katex/katex.min.js"></script>
   <script defer src="katex/auto-render.min.js"></script>

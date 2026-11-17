@@ -9,8 +9,8 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <link rel="stylesheet" href="legacy-v1.css" />
-  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="legacy-v1.css?v=3" />
+  <link rel="stylesheet" href="notes.css?v=3" />
   <link rel="stylesheet" href="book-shell.css" />
   <link rel="stylesheet" href="katex/katex.min.css" />
   <style>
@@ -105,12 +105,16 @@
   </style>
 </head>
 <body>
-  <nav class="nav">
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <nav class="nav" id="nav">
     <div class="nav-inner">
       <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
-      <ul class="nav-links">
+      <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
         <li><a href="index.html#about">关于</a></li>
-        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#work">项目</a></li>
         <li><a href="index.html#notes">笔记</a></li>
         <li><a href="resume.html">简历</a></li>
         <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
@@ -118,7 +122,7 @@
     </div>
   </nav>
 
-  <main class="container article">
+  <main class="container article" id="main" tabindex="-1">
     <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
     <p class="article-meta">自然语言处理 · 句法分析</p>
     <h1>句法分析：给句子画一棵树</h1>
@@ -128,13 +132,23 @@
     </blockquote>
 
     <figure class="short-video">
-      <video controls playsinline preload="metadata" width="1080" height="1920"
+      <video controls playsinline loading="lazy" aria-labelledby="video-caption" preload="metadata" width="1080" height="1920"
              poster="media/syntax-poster.jpg">
         <source src="media/syntax-5min.mp4" type="video/mp4" />
         <track kind="captions" src="media/syntax-zh.vtt" srclang="zh" label="中文" />
         浏览器不支持内嵌视频，<a href="media/syntax-5min.mp4">点这里下载这段短片</a>。
       </video>
-      <figcaption>配套短片 · 约 6 分钟 · 有口播和字幕：从一行词长成树，到 CKY 填表、PCFG 选树、成分 F1</figcaption>
+      <figcaption id="video-caption">配套短片 · 约 6 分钟 · 有口播和字幕：从一行词长成树，到 CKY 填表、PCFG 选树、成分 F1</figcaption>
+      <details class="video-transcript">
+        <summary>文字稿</summary>
+        <p>先看一句话：I prefer a morning flight。 把词一个个排开，看不出谁和谁是一伙的；画成树，结构立刻就清楚了：我喜欢的是早班机。 句法分析要做的，就是给每句话找出这棵树。 这样一棵树，只由三样东西搭起来：语法成分、语法规则、词典。 语法成分是句子里的一个整体单位，比如名词短语、动词短语。 语法规则写明一个成分能由什么组成，词典写明一个成分能由哪个词充当。 树的最上面是句子，这是根；往下每一层都是成分；最底下的叶子，才是具体的词。 中间节点只能放成分，叶子只能放词，这两类东西不能混。</p>
+        <p>所以从根走到叶，经过的就是成分、规则、词典这三层。 规则有个关键约束：箭头左边，只能是一个成分。 只写一个成分的，叫上下文无关语法；允许左边写两个成分的，叫上下文相关语法。 上下文相关更贴近语言，但很难算；句法分析几乎都停在上下文无关这一档。 规则从哪来？不是人一条条想出来的，是从标注好的树库里抄出来的。 最著名的树库由宾夕法尼亚大学整理，大约一百万词，每句话都有人工画好的树。 沿每条父子边抄一条规则，整个树库能抄出一万七千多条，光名词短语就上千条。 规则一多，就要先统一格式，这就是乔姆斯基范式。</p>
+        <p>它只允许两种形状：一个成分拆成两个成分，或者一个成分改写成一个词。 拆成三个的、一个成分直接换成另一个的，都要先改写掉。 改完以后，句子集合不变，但树会变，这种关系叫弱等价。 有了规则，怎么把树拼出来？用一张三角形的表。 表里每一格代表一段连续的字，格子里放这段字能构成的成分。 先从对角线开始，一个词一格；再拼两个词、三个词，一层层往上，直到最上面一格覆盖整句。 每一格都由左边一格和右边一格拼出来，看哪条规则能把这两个成分合成一个。 最右上角如果装着句子，就说明整句分析成功。</p>
+        <p>可同一句话，往往不止一棵树。 the man saw the dog with a telescope：望远镜是修饰那条狗，还是修饰看见这个动作？ 两种理解都合法，两棵树都成立。光是规则，没法替我们选。 于是给每条规则加一个概率：给定左边的成分，它按这条规则展开的可能性有多大。 同一个成分的所有规则，概率加起来等于一。 概率不是人拍的，是从树库里统计出来的：这条规则出现几次，除以同一个左边出现的总次数。 语法就从「能或不能」，变成了「有多可能」。 一棵树的概率，是它用到的所有规则概率的连乘。</p>
+        <p>同一句话的两棵树，一个约二点二乘十的负六次方，另一个约六点一乘十的负七次方，相差三点五倍。 概率大的那棵，就是模型给出的答案。 算法几乎不用改：表格照旧，只是每格多记一个概率。 拼左右两半时，把两个概率相乘，再乘上这条规则自己的概率，取最大的那种拼法。 这样扫一遍，最右上角留下的，就是概率最大的那棵树。 怎么评价分析得对不对？不看整棵树，看成分。 如果模型给出的某个成分，和标准树里的某个成分覆盖同一段词、标签也一样，就算匹配。 只看覆盖范围，叫无标签 F1；连标签一起看，叫有标签 F1。</p>
+        <p>F1 把准确率和召回率合在一起看，两个都高才算好。 工程上早就有现成工具：伯克利的神经句法分析器、斯坦福的分析工具，输入一句话，直接给出树。 工具还会告诉你每个成分覆盖哪几个词，后面的任务可以直接用。 在这些标准数据上，现在最好的模型，有标签 F1 已经到九十六以上。 不过这条路有三个绕不开的问题。 一是规则永远抄不全，没见过的搭配就分析不出来；二是歧义靠概率，概率错了就选错树；三是树库标注成本极高。 所以后来，特征和概率都交给了神经网络。 句法分析这条线，是从规则到树库，从树库到概率，最后交给神经网络。</p>
+        <p>它和分词、词性标注一起，构成了传统自然语言处理的完整流水线。 下一站进入深度学习，先看词怎么变成向量。</p>
+      </details>
     </figure>
 
     <p>记号约定：非终结符用大写，比如 <code>S</code>、<code>NP</code>、<code>VP</code>；终结符就是具体的词，比如 <code>the</code>、<code>flight</code>。规则写成 <code>A → B C</code>，箭头右边是展开后的样子。中文里对应的是「句子」「名词短语」「动词短语」「冠词」，本文第一次出现时写全称，之后用符号。</p>
@@ -470,7 +484,7 @@
       <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
     </div>
   </footer>
-  <script src="script.js"></script>
+  <script src="script.js?v=3"></script>
   <script defer src="book-shell.js?v=2"></script>
   <script defer src="katex/katex.min.js"></script>
   <script defer src="katex/auto-render.min.js"></script>

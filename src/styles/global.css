@@ -442,32 +442,30 @@ a:hover { text-decoration: underline; }
 .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
 
 /* ===== 作品详情弹窗 ===== */
-.modal-scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  background: rgba(26, 22, 16, 0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 5vh 20px;
-  overflow-y: auto;
-  animation: scrimIn 0.2s ease;
-}
-.modal {
-  position: relative;
-  width: min(640px, 100%);
+.project-dialog {
+  width: min(640px, calc(100vw - 40px));
   max-height: 90vh;
-  display: flex;
-  flex-direction: column;
+  margin: auto;
+  padding: 0;
+  color: var(--ink);
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
+}
+.project-dialog[open] {
+  display: flex;
+  flex-direction: column;
   animation: modalIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
+.project-dialog::backdrop {
+  background: rgba(26, 22, 16, 0.5);
+  backdrop-filter: blur(4px);
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+.project-dialog:modal { overscroll-behavior: contain; }
 .modal-close {
   position: absolute;
   top: 14px; right: 14px;
@@ -523,6 +521,7 @@ a:hover { text-decoration: underline; }
 }
 .notes-search input::placeholder { color: var(--ink-faint); }
 .notes-search input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.notes-search input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .notes-search .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--ink-faint); pointer-events: none; }
 
 .notes-chips { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -642,7 +641,6 @@ a:hover { text-decoration: underline; }
 .pv-scan { animation: pvScan 4.2s ease-in-out infinite; }
 @keyframes statusPulse { 0% { box-shadow: 0 0 0 0 rgba(91, 122, 82, 0.5); } 70% { box-shadow: 0 0 0 6px rgba(91, 122, 82, 0); } 100% { box-shadow: 0 0 0 0 rgba(91, 122, 82, 0); } }
 .status-dot { animation: statusPulse 2.4s ease-out infinite; }
-@keyframes scrimIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes modalIn { from { opacity: 0; transform: translateY(16px) scale(0.98); } to { opacity: 1; transform: none; } }
 
 /* ===== 响应式 ===== */
@@ -696,8 +694,15 @@ a:hover { text-decoration: underline; }
   .section-head { margin-bottom: 28px; }
   .hero { padding: 48px 0 40px; }
   .modal-body { padding: 22px 20px 26px; }
-  .modal-scrim { padding: 0; align-items: stretch; }
-  .modal { width: 100%; min-height: 100%; max-height: 100%; border-radius: 0; border: 0; }
+  .project-dialog {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+  }
   .footer-inner { flex-direction: column; align-items: flex-start; gap: 16px; }
 }
 
@@ -706,10 +711,17 @@ a:hover { text-decoration: underline; }
   .hero-actions .btn { flex: 1 1 auto; text-align: center; }
 }
 
+@media (pointer: coarse) {
+  .copy-btn, .chip, .modal-close, .nav-toggle, .notes-search input {
+    min-height: 44px;
+  }
+  .copy-btn, .modal-close, .nav-toggle { min-width: 44px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .reveal { opacity: 1; transform: none; transition: none; }
   .hero-eyebrow, .hero-title, .hero-sub, .hero-actions, .hero-aside,
-  .pv-cursor, .pv-scan, .status-dot, .modal, .modal-scrim { animation: none; }
+  .pv-cursor, .pv-scan, .status-dot, .project-dialog[open] { animation: none; }
   .work-card, .work-preview svg, .btn, .modal-close { transition: none; }
 }

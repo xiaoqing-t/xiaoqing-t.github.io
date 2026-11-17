@@ -9,8 +9,8 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <link rel="stylesheet" href="legacy-v1.css" />
-  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="legacy-v1.css?v=3" />
+  <link rel="stylesheet" href="notes.css?v=3" />
   <link rel="stylesheet" href="book-shell.css" />
   <link rel="stylesheet" href="katex/katex.min.css" />
   <style>
@@ -105,12 +105,16 @@
   </style>
 </head>
 <body>
-  <nav class="nav">
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <nav class="nav" id="nav">
     <div class="nav-inner">
       <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
-      <ul class="nav-links">
+      <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
         <li><a href="index.html#about">关于</a></li>
-        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#work">项目</a></li>
         <li><a href="index.html#notes">笔记</a></li>
         <li><a href="resume.html">简历</a></li>
         <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
@@ -118,7 +122,7 @@
     </div>
   </nav>
 
-  <main class="container article">
+  <main class="container article" id="main" tabindex="-1">
     <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
     <p class="article-meta">自然语言处理 · 机器翻译</p>
     <h1>机器翻译：从查词典到学分布</h1>
@@ -128,13 +132,24 @@
     </blockquote>
 
     <figure class="short-video">
-      <video controls playsinline preload="metadata" width="1080" height="1920"
+      <video controls playsinline loading="lazy" aria-labelledby="video-caption" preload="metadata" width="1080" height="1920"
              poster="media/machine-translation-poster.jpg">
         <source src="media/machine-translation-5min.mp4" type="video/mp4" />
         <track kind="captions" src="media/machine-translation-zh.vtt" srclang="zh" label="中文" />
         浏览器不支持内嵌视频，<a href="media/machine-translation-5min.mp4">点这里下载这段短片</a>。
       </video>
-      <figcaption>配套短片 · 约 6 分钟 · 有口播和字幕：从逐词替换的四个难点，到噪声信道、IBM 模型一、EM、短语与解码，再到编码器-解码器和注意力</figcaption>
+      <figcaption id="video-caption">配套短片 · 约 6 分钟 · 有口播和字幕：从逐词替换的四个难点，到噪声信道、IBM 模型一、EM、短语与解码，再到编码器-解码器和注意力</figcaption>
+      <details class="video-transcript">
+        <summary>文字稿</summary>
+        <p>《创世记》里的巴别塔，传说让人类说起了不同的语言。 传说归传说，语言不通的麻烦是真的。 机器翻译要做的，就是让计算机把一种语言自动变成另一种。 这件事比查词典难得多。 同一个词在不同句子里意思不同，语序也可能整个反过来。 有的词要拆成两个，有的干脆不译，还要补出原文没有的词。 所以翻译不是逐词替换，而是再组织。 历史上试过三条路。</p>
+        <p>直接翻译逐词替换，再改语序；句法转换先分析结构，按结构生成。 最高一层是中间语言：先把意思抽成中立表示，再生成目标语言。 层次越高，规则越少；但中间语言最难定义，实际系统大多停在中间那层。 1949 年，韦弗把翻译看成解码：好像俄语只是英语换了套密码。 1954 年第一次公开演示，只有 250 个俄语词、6 条语法规则。 1966 年一份报告说机器翻译撞上语义障碍，研究进入低谷。 转折在 1990 年：IBM 从双语语料里学，统计翻译登场。 怎么判断译得好不好？严复提过信、达、雅：准确、通顺、得体。</p>
+        <p>人工评价太慢，也看不出小幅进步，于是有了自动评价指标。 它看译文和参考译文有多少词串对得上，对得越多分越高。 它不完美，但便宜、稳定，能快速比较系统。 统计翻译借了一个通信模型：噪声信道。 目标语言 T 经过噪声信道变成源语言 S，翻译就是根据 S 反推最可能的 T。 贝叶斯展开后，翻译模型管翻得像不像，语言模型管自己顺不顺。 语言模型就这样接了进来。 给词找译文，是第一步。</p>
+        <p>一个词往往有好几个译法：德语 Haus 可以是 house、building，甚至蜗牛壳。 统计方法靠双语语料：Haus 出现多少次，译成 house 多少次，相除就是翻译概率。 这些概率合起来，就是一张词对词的表。 但句子不是词对词排好的。 有的词要换位置，有的一词译成两个，有的直接省略，比如德语冠词 das；英语的 just 在德语里没有对应，只能挂到空标记上。 所以要先做词对齐：给每个目标词标一个源语言位置。 对齐是统计翻译的基础。 IBM 的第一个模型简化到了极致。</p>
+        <p>它假设每个词都独立地由另一边的某个词翻译过来；不看位置，所有对齐等可能。 一句话的翻译概率，就是每个词对概率的连乘。 模型只学一张表：目标词在源词条件下的概率。 简单，但效果不错。 可表是空的，对齐也未知，先有鸡还是先有蛋？ EM 先假设所有对齐等可能，给每种对齐打分，这是 E 步。 再按分数统计词对，再估计翻译概率，这是 M 步。 拿新表再分配对齐，再统计，一轮轮迭代。</p>
+        <p>比如法语 la 和英语 the，几轮后概率就集中到正确的一对。 最后，隐藏的对齐结构自己显现出来。 词对齐之后，往上走一层：短语。 把源句切成一段段短语，不一定按语法，只要连续；每段整体查短语表，再决定怎么排。 短语表也从词对齐里抽：两边互相包含、边界对齐的片段，才算一个短语对。 固定搭配和局部语序交给短语，模型不用逐词硬拼。 翻译时，系统要从左到右把源句盖满。 每盖一段，就扩展一个假设：选短语、选译文、记分数。</p>
+        <p>如果两条路盖住同一批词、位置也一样，只留分数高的，这叫假设合并。 盖满后从最优终点往回退，读出整条译文。 2014 年，机器翻译换了一条路：神经机器翻译。 一个编码器把源句读成一串状态，一个解码器一个词一个词生成译文，端到端训练。 不需要短语表，也不需要显式对齐，参数自己学。 上一集的循环网络，正好能当编码器和解码器。 但编码器要把整句话压进最后一个状态，句子稍微复杂就装不下。 注意力让解码器每一步都回头看一眼编码器的所有状态，按相关程度加权求和。</p>
+        <p>每个状态的系数由两边状态共同算出，再归一化。 这样，隔得再远的词也能直接看到；顺带得到一张软对齐图。 机器翻译从逐词替换，到句法转换，再到中间语言；统计时代靠词对齐、EM 和短语；神经时代端到端地学。 再往前，是自注意力、多头注意力和 Transformer，然后是预训练模型。 翻译这件事，从查词典，变成了学分布。</p>
+      </details>
     </figure>
 
     <p>巴别塔只是传说，语言不通却是每天都会遇到的事。机器翻译要做的，是让计算机自动把一种语言变成另一种。这一页不按年代罗列系统，而是按「问题怎么被一步步拆开」来讲：先看逐词替换为什么会失败，再看规则路线卡在哪，然后进入统计翻译的四个零件——词表、对齐、模型、解码，最后看神经方法怎么把这些零件换成一个端到端模型。</p>
@@ -441,7 +456,7 @@
       <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
     </div>
   </footer>
-  <script src="script.js"></script>
+  <script src="script.js?v=3"></script>
   <script defer src="book-shell.js?v=2"></script>
   <script defer src="katex/katex.min.js"></script>
   <script defer src="katex/auto-render.min.js"></script>

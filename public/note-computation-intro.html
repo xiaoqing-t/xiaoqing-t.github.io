@@ -9,8 +9,8 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <link rel="stylesheet" href="legacy-v1.css" />
-  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="legacy-v1.css?v=3" />
+  <link rel="stylesheet" href="notes.css?v=3" />
   <link rel="stylesheet" href="book-shell.css" />
   <link rel="stylesheet" href="katex/katex.min.css" />
   <style>
@@ -105,12 +105,16 @@
   </style>
 </head>
 <body>
-  <nav class="nav">
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <nav class="nav" id="nav">
     <div class="nav-inner">
       <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
-      <ul class="nav-links">
+      <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
         <li><a href="index.html#about">关于</a></li>
-        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#work">项目</a></li>
         <li><a href="index.html#notes">笔记</a></li>
         <li><a href="resume.html">简历</a></li>
         <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
@@ -118,7 +122,7 @@
     </div>
   </nav>
 
-  <main class="container article">
+  <main class="container article" id="main" tabindex="-1">
     <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
     <p class="article-meta">计算理论 · 绪论</p>
     <h1>计算理论：从业务到语言</h1>
@@ -128,13 +132,22 @@
     </blockquote>
 
     <figure class="short-video">
-      <video controls playsinline preload="metadata" width="1080" height="1920"
+      <video controls playsinline loading="lazy" aria-labelledby="video-caption" preload="metadata" width="1080" height="1920"
              poster="media/computation-poster.jpg">
         <source src="media/computation-5min.mp4" type="video/mp4" />
         <track kind="captions" src="media/computation-zh.vtt" srclang="zh" label="中文" />
         浏览器不支持内嵌视频，<a href="media/computation-5min.mp4">点这里下载这段短片</a>。
       </video>
-      <figcaption>配套短片 · 约 5 分钟 · 有口播和字幕：从一条命令的合法边界，到三个基本问题、判定问题与语言、三档记忆模型，再到约束解码与课程路线</figcaption>
+      <figcaption id="video-caption">配套短片 · 约 5 分钟 · 有口播和字幕：从一条命令的合法边界，到三个基本问题、判定问题与语言、三档记忆模型，再到约束解码与课程路线</figcaption>
+      <details class="video-transcript">
+        <summary>文字稿</summary>
+        <p>先看一条命令：ON 冒号 零七，合法；ON 冒号 七，不合法，少了一位。 模型怎么保证每次都吐对？这不只是模型能力问题，首先是语言问题。 今天的软件在大规模上做决定：助手要生成程序能解析的调用，云平台要执行访问策略，外卖要在一段时间内规划路线，消息系统要挡住现实可行的攻击。 理论只问：能保证什么，在什么假设下，代价是多少。 整门课围着三个问题转。 第一，哪种计算模型能识别这种模式、描述这个过程？ 第二，存不存在一个算法，对每个输入都答对，而且一定停机？ 第三，解决问题要花多少时间、多少内存？</p>
+        <p>同一个系统，从表示、可解性、资源成本三个角度各看一遍。 用一个外卖规划服务贯穿。 它接收请求，跑规划器，返回路线。 请求格式对不对、括号嵌套能不能识别，这是解析。 能不能写一个通用检查器，判断任何上传的规划程序都会停机，这是终止性分析。 有限个站点里找最优路线要花多少工作量，这是优化。 一个应用，三个不同的问题。 为了证明，先把问题写成精确的形式。</p>
+        <p>把实例编码成有限字符串；判定问题只问是或否。 它对应的语言，就是所有答案为是的字符串。 算法是一步步有效的操作；判定器对每个输入都停机，并且答对。 比如给一张道路网、两个地点和一个预算，问有没有总长不超过预算的路线。 找路、找最优路是搜索和优化；判定问题给了我们一套共同语言。 模型按记忆能力排。 有限自动机只有有限个状态，适合词法识别、协议状态。 下推自动机多一个栈，适合嵌套语法和解析。</p>
+        <p>图灵机有一条无界读写带，适合一般算法和可计算性。 记忆越多，表达能力越强；无界内存只是研究任意输入长度时的抽象。 先看有限状态能做什么。 一个登录会话，三个状态：未登录、已登录、锁定。 事件是登录成功、登出、连续失败；策略规定每个状态允许哪些动作。 它也能识别词法单元和经典正则表达式。 但任意深度的括号嵌套，有限状态记不住，需要栈。 工程里的正则引擎加了反向引用、前后瞻，已经超出经典正则语言。</p>
+        <p>回到开头那条命令。 把命令语言编译成自动机，随着字符生成，跟踪当前状态。 只允许那些还能补成合法输出的下一个词元，并且只有接受状态才允许结束。 这样能保证语法合规。 但语法对，不代表事实对、权限对；这些还要另外验证。 这三件事要分开：模型够不够表达；问题有没有通用算法；算起来贵不贵。 语法正确、行为正确、计算可行，是三套不同的论证。 课程路线也按这三层走。</p>
+        <p>先建模型：有限自动机、文法、下推自动机、图灵机。 再证能力和边界：构造、闭包、泵引理、不可判定性归约。 最后分析难度：时间空间、多项式归约、NP 完全。 每一步都要说清楚假设、输入类别，以及结论到底说明了什么。 带走三句话：选什么模型？能不能解？代价多少？ 一个形式化的问题，比一句产品需求精确得多。 下一集讲边界和代价；再下一站，从最简单的有限记忆开始。</p>
+      </details>
     </figure>
 
     <p>计算理论常被当成一门「证明课」，但它起点很工程：你写了一条命令，为什么它合法；你上传一个规划程序，为什么不能保证它一定停；你在有限站点里找最优路线，为什么算得这么慢。这一页把这三个看似无关的麻烦收束成一套共同语言，后面几集都在上面加工具。</p>
@@ -390,7 +403,7 @@
       <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
     </div>
   </footer>
-  <script src="script.js"></script>
+  <script src="script.js?v=3"></script>
   <script defer src="book-shell.js?v=2"></script>
   <script defer src="katex/katex.min.js"></script>
   <script defer src="katex/auto-render.min.js"></script>

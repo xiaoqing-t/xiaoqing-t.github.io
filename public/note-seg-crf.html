@@ -9,8 +9,8 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <link rel="stylesheet" href="legacy-v1.css" />
-  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="legacy-v1.css?v=3" />
+  <link rel="stylesheet" href="notes.css?v=3" />
   <link rel="stylesheet" href="book-shell.css" />
   <link rel="stylesheet" href="katex/katex.min.css" />
   <style>
@@ -107,12 +107,16 @@
   </style>
 </head>
 <body>
-  <nav class="nav">
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <nav class="nav" id="nav">
     <div class="nav-inner">
       <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
-      <ul class="nav-links">
+      <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
         <li><a href="index.html#about">关于</a></li>
-        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#work">项目</a></li>
         <li><a href="index.html#notes">笔记</a></li>
         <li><a href="resume.html">简历</a></li>
         <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
@@ -120,7 +124,7 @@
     </div>
   </nav>
 
-  <main class="container article">
+  <main class="container article" id="main" tabindex="-1">
     <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
     <p class="article-meta">自然语言处理 · 序列标注</p>
     <h1>中文分词与 CRF：从查词典到整句打分</h1>
@@ -130,13 +134,23 @@
     </blockquote>
 
     <figure class="short-video">
-      <video controls playsinline preload="metadata" width="1080" height="1920"
+      <video controls playsinline loading="lazy" aria-labelledby="video-caption" preload="metadata" width="1080" height="1920"
              poster="media/seg-crf-poster.jpg">
         <source src="media/seg-crf-5min.mp4" type="video/mp4" />
         <track kind="captions" src="media/seg-crf-zh.vtt" srclang="zh" label="中文" />
         浏览器不支持内嵌视频，<a href="media/seg-crf-5min.mp4">点这里下载这段短片</a>。
       </video>
-      <figcaption>配套短片 · 约 5 分半 · 有口播和字幕：从最大匹配一路走到线性链 CRF</figcaption>
+      <figcaption id="video-caption">配套短片 · 约 5 分半 · 有口播和字幕：从最大匹配一路走到线性链 CRF</figcaption>
+      <details class="video-transcript">
+        <summary>文字稿</summary>
+        <p>「南京市长江大桥」，有几种切法？ 可以切成「南京市、长江大桥」，也可以切成「南京、市长、江大桥」。 中文没有空格，在哪里断开，得由机器自己判断。 分词难在两件事：切分歧义，和没见过的词。 「自然语言处理」，可以切成「自然、语言、处理」，也可以切成「自然语言、处理」。 两种都说得通，可下游任务只认一种。 最早的办法是查词典：从左往右，每次取能匹配上的最长词。 看这句：他是研究生物化学的。</p>
+        <p>最大匹配会切出研究生、物化、学，因为它只顾着往长里切。 正确答案是研究、生物、化学。这就是规则方法的死穴。 反过来从右往左切，叫逆向最大匹配，两者结果还常常不一样。 换统计的思路：把所有可能的切法画成一张图，每条边是一个词。 然后选一条边数最少的路径，也就是切出来的词最少。 词少通常说明切得合理，但两条路词数一样时，它又没主意了。 再进一步，让语言模型给每种切法打分，选概率最大的。 句子确定了，词序列的概率就是句子的概率，所以只要最大化词序列的概率。</p>
+        <p>候选太多时，用束搜索只保留前几名，但它不保证全局最优。 这三种方法都要词典，词典里没有的新词就麻烦了。 于是换个角度：不切词，改成给每个字贴标签。 B 是词首，M 是词中，E 是词尾，S 是单独成词；也有更简单的 BI 标记。 标签贴完，词边界自然就出来了。 但标签不能乱贴。B 后面如果直接跟 S，中间的词就断了。 所以要在整条序列上一起判断。 上一集的 HMM 是生成式；这一集的条件随机场是判别式。</p>
+        <p>它直接建模：给定这句话，哪种标签序列最可能。 条件随机场是无向图模型。 图里两两相连的一组节点叫团，不能再扩大的叫最大团。 有一个定理说：满足图上的条件独立，联合概率就能按最大团分解。 序列排成一条链，最大团就是相邻的两个标签，这叫线性链条件随机场。 每个最大团配一个势函数：把特征加权求和，再取指数。 所有势函数乘起来，除以配分函数 Z，就得到条件概率。 Z 是对所有标签序列求和，保证概率加起来等于一。</p>
+        <p>特征是条件随机场最关键的地方。 它不只看当前字，还能看前一个字、后一个字、这个字在不在词典里、在句子的哪个位置。 实用系统有百万到千万量级的特征，靠特征模板批量生成。 对比隐马尔可夫模型：发射概率只看当前字，这就是它更强的原因。 算法上，它和隐马尔可夫模型几乎是同一套。 前向算法求配分函数，把所有路径加起来。 维特比求最优标签序列，分母和标签无关，可以直接扔掉。 复杂度还是 N 乘 S 的平方。</p>
+        <p>甚至可以说，隐马尔可夫模型就是条件随机场的一个特例。 把特征取成对数概率，权重固定为一，势函数就退化成转移乘发射。 所以原来的三张表，换成了这里的一组特征权重，算法结构没变。 分词怎么评价？就看切出来的词对不对。 准确率是，我切出来的词里有多少是对的；召回率是，标准答案里的词我找回了多少。 两个一高一低都不行，所以取调和平均，就是 F1。 拿一组实际数据来说，准确率百分之 78.3，召回率百分之 91.4，F1 是百分之 84.3。 那条件随机场到底强多少？</p>
+        <p>在 SIGHAN 2005 的评测上，语言模型法的准确率是百分之 89.8，条件随机场是百分之 94.3。 从查词典找最长，到最短路径，到语言模型，最后到给字贴标签。 分词这条线，是从规则走向统计，从生成式走向判别式。 而这一套打分和动态规划，也是后面序列标注任务的通用框架。</p>
+      </details>
     </figure>
 
     <p>记号约定：一句话写成 $X=(x_1,\dots,x_N)$，$N$ 是字数；标签序列写成 $Y=(y_1,\dots,y_N)$，$S$ 是标签集大小。切分结果用斜杠分隔，视频里统一叫「标签」，公式里用 $Y$。</p>
@@ -385,7 +399,7 @@
       <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
     </div>
   </footer>
-  <script src="script.js"></script>
+  <script src="script.js?v=3"></script>
   <script defer src="book-shell.js?v=2"></script>
   <script defer src="katex/katex.min.js"></script>
   <script defer src="katex/auto-render.min.js"></script>

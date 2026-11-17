@@ -9,8 +9,8 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <link rel="stylesheet" href="legacy-v1.css" />
-  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="legacy-v1.css?v=3" />
+  <link rel="stylesheet" href="notes.css?v=3" />
   <link rel="stylesheet" href="book-shell.css" />
   <link rel="stylesheet" href="katex/katex.min.css" />
   <style>
@@ -108,12 +108,16 @@
   </style>
 </head>
 <body>
-  <nav class="nav">
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <nav class="nav" id="nav">
     <div class="nav-inner">
       <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
-      <ul class="nav-links">
+      <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
         <li><a href="index.html#about">关于</a></li>
-        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#work">项目</a></li>
         <li><a href="index.html#notes">笔记</a></li>
         <li><a href="resume.html">简历</a></li>
         <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
@@ -121,7 +125,7 @@
     </div>
   </nav>
 
-  <main class="container article">
+  <main class="container article" id="main" tabindex="-1">
     <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
     <p class="article-meta">自然语言处理 · 推导</p>
     <h1>从「惊讶」到困惑度：信息论如何给语言模型打分</h1>
@@ -131,13 +135,23 @@
     </blockquote>
 
     <figure class="short-video">
-      <video controls playsinline preload="metadata" width="1080" height="1920"
+      <video controls playsinline loading="lazy" aria-labelledby="video-caption" preload="metadata" width="1080" height="1920"
              poster="media/perplexity-poster.jpg">
         <source src="media/perplexity-5min.mp4" type="video/mp4" />
         <track kind="captions" src="media/perplexity-zh.vtt" srclang="zh" label="中文" />
         浏览器不支持内嵌视频，<a href="media/perplexity-5min.mp4">点这里下载这段短片</a>。
       </video>
-      <figcaption>配套短片 · 5 分钟 · 有口播和字幕：从信息量推到熵、交叉熵，最后落到困惑度</figcaption>
+      <figcaption id="video-caption">配套短片 · 5 分钟 · 有口播和字幕：从信息量推到熵、交叉熵，最后落到困惑度</figcaption>
+      <details class="video-transcript">
+        <summary>文字稿</summary>
+        <p>困惑度到底在说什么？ 把概率翻译成惊讶，这条链就清楚了。 今天从信息量，一路推到困惑度。 先问一个更小的问题：一个事件发生，到底能告诉我们多少信息？ 语言模型做的，是给一句话打分。 整句概率是每个词的概率相乘，越乘越小，既不直观也不方便比较。 信息论把这把尺子换成比特。 这就像用乘法记长度，永远对不齐；换成加法，才有共同单位。</p>
+        <p>先定义单个事件的惊讶程度。 必然事件没有信息；越不可能，信息越大；两个独立事件同时发生，信息应该相加；再加上连续性。 这四条里没有一条提到对数，但最后的答案一定是对数。 概率相乘，信息相加，同时满足这两条的只有对数。 让概率等于 e 的负 x 次方，函数就变成线性的，代回去，信息量等于负的 log 概率。 这就是为什么所有信息量公式里都有 log，而不是别的函数。 公平硬币一次是一比特；八选一是三比特；概率 0.9 的常见事件只有 0.15 比特；概率 0.1 的少见事件是 3.32 比特。 所以信息量衡量的是意外，不是事件本身重不重要。</p>
+        <p>对信息量按概率取加权平均，就是熵。 公平硬币一比特，偏硬币 0.9 和 0.1 只有 0.47 比特。 越确定，熵越小。 换句话说，熵不是某一个结果的惊讶，而是整个分布的平均惊讶。 固定状态数，均匀分布的熵最大，等于 log n。 证明只有一句话：log 是凹函数，用 Jensen 不等式。 直觉上，越没把握，分布越接近均匀；越有把握，分布越尖。 两个变量一起看，是联合熵。</p>
+        <p>知道天气之后，带不带伞还剩多少不确定，那是条件熵。 链式法则把它们加起来，这个例子是 1.6 比特。 注意，联合熵一般不等于两个熵相加，除非它们独立。 两个变量共享的信息叫互信息，等于知道一个之后，另一个少掉的惊讶。 它对称、非负，独立时为零，也可以写成联合分布和边缘分布乘积之间的 KL。 所以知道天气，确实能让你对带不带伞少一点犹豫。 现在换一个分布来编码。 真实分布 P，模型分布 Q，多付的平均代价就是 KL 散度。</p>
+        <p>它恒非负，但不是距离，因为换个方向，结果就不一样。 这就是为什么论文里说 KL 不对称，而不是说它算错了。 交叉熵等于真实分布的熵，加上 KL 惩罚。 公平硬币被当成 0.9 的偏模型，平均要 1.74 比特，多出来的 0.74，就是模型错了的代价。 换句话说，交叉熵永远不会比真实熵更低。 语言模型的交叉熵，就是给真实文本每个词算负对数概率，再取平均。 单位是比特每词。 最小化它，就是最大似然训练。</p>
+        <p>所以训练日志里的 loss 曲线，本质上就是交叉熵曲线。 取指数，就是困惑度，它也等于概率倒数的几何平均。 PPL 等于 20，意思是每一步的不确定，相当于在 20 个等概率词里猜。 记住它衡量的是犹豫程度，不是答对了多少。 电话这个例子很说明问题。 只学数字频率，困惑度还在十左右；学到开头规律，降到七。 可训练数据太少时，测试集会冒出没见过的二元组，概率为零，困惑度直接变成无穷。 这也是为什么实际训练里，平滑和回退几乎都是默认操作。</p>
+        <p>所以，交叉熵是模型平均有多意外，困惑度是这份意外相当于多少个等概率选项。 比较时记住：同数据、同分词、同词表。 选模型时先确认这三件事一致，再比数字。</p>
+      </details>
     </figure>
 
     <p>符号约定：$P$ 是真实分布，$Q$ 是模型分布；语言模型里写成 $P_{\text{data}}$ 和 $P_\theta$。公式默认以 2 为底，单位是 bit；换成自然对数时把 2 换成 $e$ 即可。约定 $0\log 0=0$，以下默认离散变量。</p>
@@ -481,7 +495,7 @@
       <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
     </div>
   </footer>
-  <script src="script.js"></script>
+  <script src="script.js?v=3"></script>
   <script defer src="book-shell.js?v=2"></script>
   <script defer src="katex/katex.min.js"></script>
   <script defer src="katex/auto-render.min.js"></script>

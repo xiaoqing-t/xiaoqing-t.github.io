@@ -9,8 +9,8 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <link rel="stylesheet" href="legacy-v1.css" />
-  <link rel="stylesheet" href="notes.css" />
+  <link rel="stylesheet" href="legacy-v1.css?v=3" />
+  <link rel="stylesheet" href="notes.css?v=3" />
   <link rel="stylesheet" href="book-shell.css" />
   <link rel="stylesheet" href="katex/katex.min.css" />
   <style>
@@ -120,12 +120,16 @@
   </style>
 </head>
 <body>
-  <nav class="nav">
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <nav class="nav" id="nav">
     <div class="nav-inner">
       <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
-      <ul class="nav-links">
+      <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
         <li><a href="index.html#about">关于</a></li>
-        <li><a href="index.html#projects">项目</a></li>
+        <li><a href="index.html#work">项目</a></li>
         <li><a href="index.html#notes">笔记</a></li>
         <li><a href="resume.html">简历</a></li>
         <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
@@ -133,7 +137,7 @@
     </div>
   </nav>
 
-  <main class="container article">
+  <main class="container article" id="main" tabindex="-1">
     <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
     <p class="article-meta">计算理论 · 第 4 集</p>
     <h1>计算理论：正则表达式与泵引理</h1>
@@ -143,13 +147,22 @@
     </blockquote>
 
     <figure class="short-video">
-      <video controls playsinline preload="metadata" width="1080" height="1920"
+      <video controls playsinline loading="lazy" aria-labelledby="video-caption" preload="metadata" width="1080" height="1920"
              poster="media/regex-pump-poster.jpg">
         <source src="media/regex-pump-5min.mp4" type="video/mp4" />
         <track kind="captions" src="media/regex-pump-zh.vtt" srclang="zh" label="中文" />
         浏览器不支持内嵌视频，<a href="media/regex-pump-5min.mp4">点这里下载这段短片</a>。
       </video>
-      <figcaption>配套短片 · 约 4 分 45 秒 · 有口播和字幕：日志正则、三个原子与三种运算、按结构拼 NFA、R(i,j,k) 动态规划、两个计数语言、泵引理与鸽笼证明、三个判定问题、RE2 的取舍</figcaption>
+      <figcaption id="video-caption">配套短片 · 约 4 分 45 秒 · 有口播和字幕：日志正则、三个原子与三种运算、按结构拼 NFA、R(i,j,k) 动态规划、两个计数语言、泵引理与鸽笼证明、三个判定问题、RE2 的取舍</figcaption>
+      <details class="video-transcript">
+        <summary>文字稿</summary>
+        <p>日志里要抓一类错误：ON 或 OFF，冒号，两位数字。 一条正则就能写：括号里二选一，冒号，两个数字类。 正则不是字符串模板，它描述一个语言；写出来的语言，一定是正则语言。 正则表达式只有三个原子：一个字符、空串、空集。 三种运算：并、连接、星号。 并是二选一；连接是前后接起来；星号是重复零次或多次。 每个表达式按规则翻译成一个语言；空集没有串，空串语言只含一个长度为 零 的串，这两个不要混。 正则和有限自动机等价。</p>
+        <p>原子字符是一条边；空串和空集是两种极简机器；并、连接、星号，用上一集的三种 ε 构造拼起来。 另一个方向难一些：任给一个自动机，怎么写出它的正则表达式？ 方法是动态规划，把状态编号。 定义一个三元函数：从状态 i 到状态 j，中间只允许经过编号不超过 k 的状态，能走出的所有串。 要么不用第 k 个状态，就是 k 减一；要么用，就从 i 到 k，在 k 上绕圈，再到 j。 第三个数每次减一，最后落到只走一条边的基础情况，可以逐层填表。 第一个：零和一数量相等的所有串。 第二个：子串 零一 和 子串 一零 出现次数相等的所有串。</p>
+        <p>第二个是正则的；第一个不是。 为什么第二个正则？因为两个次数的差只由首尾决定：零开头一结尾差一，一开头零结尾差负一，其余差零。 所以它等价于首尾相同，或者长度不超过一。有限状态足够记住首尾。 而第一个要求两个计数器同步增长，有限状态做不到。 泵引理给出必要条件。 如果 A 是正则语言，存在一个泵长度 p。 任何 A 里长度至少为 p 的串，都能切成三段 x、y、z，满足三件事： 中段 y 非空；前两段 xy 的长度不超过 p；把 y 重复任意多次，包括零次，得到的串仍在 A 里。</p>
+        <p>注意，引理不保证你能随便选切分；证明不是正则时，要覆盖所有满足条件的切分。 证明只用鸽笼原理。 设识别 A 的确定自动机有 p 个状态。 读长度为 n 的串，会经过 n 加一个状态。前 p 加一个状态里，必有两个相同。 把这两个相同状态之间读到的字符取作 y；这段是一个环，可以绕任意多次，也可以一次都不绕。 用零的 p 次方一的 p 次方：因为 xy 不超过 p，y 只能是若干个零；泵一次，零比一多，泵零次，零比一少，都不在语言里。 所以它不正则。 最后看三个判定问题。</p>
+        <p>接收：给机器和串，模拟一遍，串读完看是否在接受状态；一定停机。 空性：从初始状态做可达性搜索，看能不能到接受状态；到不了就是空。 等价：先确定化，再检查对称差是否为空；对称差为空，两个语言相等。 三个都可判定。 工程上用正则时记住两个边界。 固定表达式的确定自动机，读 n 个字符是线性时间；但把 m 个状态的非确定机器确定化，最坏要 2 的 m 次方个状态。 所以 RE2 这类引擎放弃反向引用和前后瞻，换来线性时间和可控内存。 这一集记住：正则表达式和有限自动机等价；泵引理证明不正则；三个判定问题都可解。</p>
+        <p>但有限状态记不住栈。下一集，给机器加一个栈。</p>
+      </details>
     </figure>
 
     <p><strong>动手试：</strong><a href="demo/automata.html?re=%28ON%7COFF%29&amp;w=OFF">在浏览器里逐步运行 (ON|OFF) →</a></p>
@@ -431,7 +444,7 @@
       <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
     </div>
   </footer>
-  <script src="script.js"></script>
+  <script src="script.js?v=3"></script>
   <script defer src="book-shell.js?v=2"></script>
   <script defer src="katex/katex.min.js"></script>
   <script defer src="katex/auto-render.min.js"></script>

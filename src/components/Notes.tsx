@@ -4,7 +4,7 @@
 // 所以加一篇笔记只改那个 JSON，不用同时改这里。
 // 章节本身还是 public/ 里的独立静态 HTML（写完就冻结，不用 React 重排）。
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import Section from './Section'
 import Reveal from './Reveal'
@@ -45,6 +45,18 @@ export default function Notes() {
 
   const shown = visible.reduce((sum, group) => sum + group.notes.length, 0)
   const filtering = q !== '' || bookId !== 'all'
+
+  // 折叠章节留在 DOM 里，浏览器「在页面中查找」命中时自动展开对应书本
+  useEffect(() => {
+    const onBeforeMatch = (event: Event) => {
+      if (!(event.target instanceof HTMLElement)) return
+      const id = event.target.closest<HTMLElement>('li[data-book-id]')?.dataset.bookId
+      if (!id) return
+      setOpenBooks((prev) => (prev.includes(id) ? prev : [...prev, id]))
+    }
+    document.addEventListener('beforematch', onBeforeMatch)
+    return () => document.removeEventListener('beforematch', onBeforeMatch)
+  }, [])
 
   function clear() {
     setQuery('')
@@ -110,7 +122,6 @@ export default function Notes() {
         {visible.map(({ book, notes }) => {
           // 搜索或按书筛选时全展开，别把命中的章节藏在折叠下面
           const expanded = filtering || openBooks.includes(book.id)
-          const listed = expanded ? notes : notes.slice(0, COLLAPSED)
 
           return (
             <article className="book-card card" key={book.id}>
@@ -126,20 +137,33 @@ export default function Notes() {
               </header>
 
               <ol className="book-chapters" id={`chapters-${book.id}`}>
-                {listed.map((note) => (
-                  <li key={note.href}>
-                    <a href={note.href}>
-                      <span className="chapter-num">
-                        {String(book.notes.indexOf(note) + 1).padStart(2, '0')}
-                      </span>
-                      <span className="chapter-main">
-                        <span className="chapter-title">{note.title}</span>
-                        <span className="chapter-desc">{note.desc}</span>
-                      </span>
-                      <span className="chapter-meta">{note.meta}</span>
-                    </a>
-                  </li>
-                ))}
+                {notes.map((note) => {
+                  const chapterIndex = book.notes.indexOf(note)
+                  const hidden = !expanded && chapterIndex >= COLLAPSED
+                  return (
+                    <li
+                      key={note.href}
+                      data-book-id={book.id}
+                      ref={(el) => {
+                        if (!el) return
+                        // React 不认 hidden="until-found"，这里直接写原生属性
+                        if (hidden) el.setAttribute('hidden', 'until-found')
+                        else el.removeAttribute('hidden')
+                      }}
+                    >
+                      <a href={note.href}>
+                        <span className="chapter-num">
+                          {String(chapterIndex + 1).padStart(2, '0')}
+                        </span>
+                        <span className="chapter-main">
+                          <span className="chapter-title">{note.title}</span>
+                          <span className="chapter-desc">{note.desc}</span>
+                        </span>
+                        <span className="chapter-meta">{note.meta}</span>
+                      </a>
+                    </li>
+                  )
+                })}
               </ol>
 
               {!filtering && notes.length > COLLAPSED && (
