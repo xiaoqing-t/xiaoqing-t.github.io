@@ -12,7 +12,7 @@
   const fileName = decodeURIComponent(location.pathname.split('/').pop() || '')
   if (!fileName) return
 
-  fetch('notes.json')
+  fetch('notes.json', { cache: 'no-store' })
     .then((res) => (res.ok ? res.json() : null))
     .then((data) => {
       if (data && Array.isArray(data.books)) build(data.books)

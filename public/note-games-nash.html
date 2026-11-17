@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>计算经济学：博弈与纳什均衡 · 学习笔记</title>
+  <meta name="description" content="从两人小组作业出发，把规则写成收益矩阵，比较出力与摸鱼，得到占优策略；再用囚徒困境、平摊晚餐、性别战和胆小鬼看纳什均衡。最后停在投硬币与石头剪刀布：没有纯策略均衡时，出路是混合策略。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="legacy-v1.css?v=3" />
+  <link rel="stylesheet" href="notes.css?v=3" />
+  <link rel="stylesheet" href="book-shell.css" />
+  <link rel="stylesheet" href="katex/katex.min.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+
+    .article .katex { font-size: 1.03em; }
+    .article .katex-display {
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 4px 0 8px;
+      margin: 14px 0 18px;
+    }
+    .article .katex-display::-webkit-scrollbar { height: 6px; }
+    .article .katex-display::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+
+    .short-video { max-width: 340px; margin: 0 auto 32px; }
+    .short-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 9 / 16;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .short-video video::cue {
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.4;
+      color: #fffdf9;
+      background: rgba(33, 29, 25, 0.78);
+    }
+    .short-video figcaption {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#work">项目</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article" id="main" tabindex="-1">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">计算经济学 · 第 1 集</p>
+    <h1>博弈与纳什均衡：理性人为什么一起吃亏</h1>
+
+    <blockquote>
+      一句话主线：当每个人的收益都取决于别人怎么选，先要把选择写成一张<strong>收益矩阵</strong>；不管别人怎么选都最优的行动叫<strong>占优策略</strong>；固定别人、我单方面改不会更好，叫<strong>纳什均衡</strong>。这一集从小组作业讲到囚徒困境、平摊晚餐、性别战、胆小鬼、投硬币和石头剪刀布，最后留下三个提醒：均衡未必存在、未必唯一，也未必最好。
+    </blockquote>
+
+    <figure class="short-video">
+      <video controls playsinline loading="lazy" aria-labelledby="video-caption" preload="metadata" width="1080" height="1920"
+             poster="media/games-poster.jpg">
+        <source src="media/games-5min.mp4" type="video/mp4" />
+        <track kind="captions" src="media/games-zh.vtt" srclang="zh" label="中文" />
+        浏览器不支持内嵌视频，<a href="media/games-5min.mp4">点这里下载这段短片</a>。
+      </video>
+      <figcaption id="video-caption">配套短片 · 约 5 分 56 秒 · 有口播和字幕：收益矩阵、理性推理、博弈三要素、囚徒困境、占优与严格占优、平摊晚餐、社会福利、性别战、纳什均衡、胆小鬼、投硬币、石头剪刀布，最后停在混合策略</figcaption>
+      <details class="video-transcript">
+        <summary>文字稿</summary>
+        <p>小组作业，两个人一组，只要一个人出力就能完成。你会出力，还是摸鱼？这一集讲博弈论：当每个人的收益都取决于别人怎么选，理性人会怎么选。先把规则写成数字：项目成功，每人加五；出力本身，减二；自己出力对方摸鱼，再减八。把四种组合填进一张表：都出力，各得三；我出力他摸鱼，我负五他正五；反过来对称；都摸鱼，各得零。这张表叫收益矩阵：玩家一选横排，玩家二选竖列，格子里第一个数归玩家一，第二个数归玩家二。</p>
+        <p>现在推理：对方出力，我摸鱼得五，出力得三，摸鱼好；对方摸鱼，我摸鱼得零，出力负五，还是摸鱼好。不管对方怎么选，摸鱼都更好。两个人都这么想，结果都摸鱼，各得零。可都出力本来各得三。理性把两个人带进了一个更差的格子。把这件事抽象出来，一个博弈有三样东西：玩家集合；每个玩家的行动集合；每个玩家的收益函数。收益函数的输入，是所有人各选一个行动拼成的组合，叫行动组合；输出是这个玩家拿到的数。前面那张表，就是两个玩家、各两个行动时的收益函数。</p>
+        <p>换个故事，结构一模一样：囚徒困境。两个嫌疑人分开审讯：都抵赖，各判一年；都坦白，各判三年；一个坦白一个抵赖，坦白的释放，抵赖的判四年。把刑期取负号当收益，填出来的表和小组作业是同一个形状：坦白对应摸鱼，抵赖对应出力。于是推理也一模一样：不管对方怎么选，坦白都更好，结果各判三年。这种不管别人怎么选、我都最优的行动，叫占优策略。小组作业里的摸鱼、囚徒困境里的坦白，都是占优策略。定义里用的是大于等于，所以占优策略可能不止一个；把等号去掉，叫严格占优，严格占优至多一个。</p>
+        <p>占优策略不一定只在坏故事里出现。两个人吃饭，饭钱平摊：便宜的菜十块，值十二；贵的菜二十块，值十八。点贵的：对方点便宜，我赚三；对方也点贵，我亏二。点便宜：对应是赚二和亏三。不管对方点什么，点贵都更好：点贵是占优策略。结果各亏二，而都点便宜本来各赚二。把所有玩家的收益加起来，叫社会福利。这三个例子有个共同点：占优策略组成的结果，社会福利反而更小。个人理性加起来，不等于集体最优。这是博弈论最核心的张力。</p>
+        <p>但不是每个博弈都有占优策略。两个人约着出门，一个想看话剧，一个想看球赛，分开行动收益都是零。都看话剧，想看的得二，陪的得一；都看球赛反过来。这时没有任何行动是不管对方怎么选都最优：对方去剧院我就该去剧院，对方去球场我就该去球场。换一个更弱的要求：固定别人的选择，我单方面改，不会更好。满足这个条件的行动组合，叫纳什均衡。在矩阵里看：玩家一的数，在同列各格里最大；玩家二的数，在同排各格里最大。都看话剧、都看球赛，都是纳什均衡。占优策略组成的组合一定是均衡，但均衡不一定来自占优。</p>
+        <p>再看胆小鬼博弈：两辆车对着开，谁打方向谁让路。都不让，撞车，各扣一百；一个让一个冲，就有均衡，而且不止一个。均衡不唯一，还分好坏：这正是麻烦所在，两个人可能各自认准不同的均衡。更麻烦的是，有的博弈连一个均衡都没有。投硬币：两面相同玩家一赢，不同玩家二赢，赢的拿走两枚。你出正面，对方就想出反面；对方出反面，你又想改出反面。四个格子转成一圈，谁停下谁吃亏。固定任何一方，另一方总想改：没有稳定的格子。石头剪刀布也一样：任何固定的出法，都会被另一种出法克制。没有占优策略，也没有纳什均衡，至少在这种选定一个行动的玩法里没有。出路是别再固定出法：按概率随机出。这就是下一集的混合策略。这一集的主线：收益矩阵把博弈写成一张表；占优策略是不管别人怎么选都最优；纳什均衡是单方面改不划算。记住三件事：均衡未必存在，未必唯一，也未必最好。</p>
+      </details>
+    </figure>
+
+    <p>先看一个小到不能再小的场景：两个人一组做项目，只要一个人出力就能完成。出力的人要花时间，摸鱼的人省下时间；项目成了两个人都有收益，项目黄了两个人一起承担。于是「我该出力还是摸鱼」不再是一个人的决定，而是两个人选择的交叉结果。</p>
+
+    <p>这就是博弈论的起点：<strong>你的收益不只取决于你选什么，还取决于别人选什么。</strong>这一篇先把选择写成表，再用「占优」和「均衡」两个词，解释为什么理性人有时会一起掉进更差的格子。</p>
+
+    <h2 id="matrix">0. 从规则到收益矩阵</h2>
+
+    <p>把小组作业的规则写成数字：项目成功，每人加 5；出力本身，减 2；自己出力而对方摸鱼，再减 8。两个人各有两种行动：出力、摸鱼。四种组合的收益是：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>玩家一 \ 玩家二</th><th>出力</th><th>摸鱼</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>出力</td><td>(3, 3)</td><td>(-5, 5)</td></tr>
+          <tr><td>摸鱼</td><td>(5, -5)</td><td>(0, 0)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>这张表叫<strong>收益矩阵</strong>：玩家一选横排，玩家二选竖列；每个格子里有两个数，第一个归玩家一，第二个归玩家二。矩阵不是「把故事画出来」，而是把每个人的偏好压成可以比较的数字。后面的推理都只用到这些数字。</p>
+
+    <h2 id="rational">1. 不管对方怎么选，摸鱼都更好</h2>
+
+    <p>先站在玩家一的角度，逐列比较。</p>
+
+    <ul>
+      <li>如果玩家二出力：玩家一出力得 3，摸鱼得 5；摸鱼更好。</li>
+      <li>如果玩家二摸鱼：玩家一出力得 -5，摸鱼得 0；还是摸鱼更好。</li>
+    </ul>
+
+    <p>两列都比完，结论是：不管对方怎么选，摸鱼都更好。玩家二的结构完全对称，也会这样想。于是两个人都摸鱼，各得 0。</p>
+
+    <p>可是都出力本来各得 3。理性没有把两个人带到最好的格子，而是带到了一个更差的格子。这个落差是本集的核心：<strong>个人理性加起来，不一定等于集体最优。</strong></p>
+
+    <h2 id="game">2. 博弈的三要素</h2>
+
+    <p>把具体故事抽掉，一个博弈只需要三样东西：</p>
+
+    <ol>
+      <li><strong>玩家集合</strong> $N$：谁在参与；</li>
+      <li><strong>行动集合</strong> $A_i$：每个玩家能选什么；</li>
+      <li><strong>收益函数</strong> $u_i$：给定所有人的选择，每个玩家拿到多少。</li>
+    </ol>
+
+    <p>收益函数的输入不是某一个人的行动，而是所有人各选一个行动拼成的<strong>行动组合</strong>（action profile）。两个玩家、各两个行动时，这个函数正好可以写成一张 $2\times2$ 的表；玩家更多、行动更多时，表会变大，但定义不变。</p>
+
+    <h2 id="pd">3. 囚徒困境：换故事，不换结构</h2>
+
+    <p>两个嫌疑人分开审讯，不能串供：都抵赖，各判 1 年；都坦白，各判 3 年；一个坦白一个抵赖，坦白的释放，抵赖的判 4 年。把刑期写成表：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>玩家一 \ 玩家二</th><th>抵赖</th><th>坦白</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>抵赖</td><td>(1, 1)</td><td>(4, 0)</td></tr>
+          <tr><td>坦白</td><td>(0, 4)</td><td>(3, 3)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>把刑期取负号当收益，数字变成：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>玩家一 \ 玩家二</th><th>抵赖</th><th>坦白</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>抵赖</td><td>(-1, -1)</td><td>(-4, 0)</td></tr>
+          <tr><td>坦白</td><td>(0, -4)</td><td>(-3, -3)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>形状和小组作业完全一样：坦白对应摸鱼，抵赖对应出力。于是推理也一样：不管对方怎么选，坦白都更好；两个人都坦白，各判 3 年。这就是<strong>囚徒困境</strong>：每个人都在做对自己更有利的选择，结果却比合作更差。</p>
+
+    <h2 id="dominant">4. 占优策略与严格占优</h2>
+
+    <p>如果某个行动不管其他人怎么选都最优，它叫<strong>占优策略</strong>（dominant strategy）。形式化地写，对玩家 $i$ 的行动 $a$，以及任意其他行动 $a'$，都有</p>
+
+    <p>$$u_i(a,a_{-i})\ge u_i(a',a_{-i})\quad\text{对任意 }a_{-i}\text{ 成立}$$</p>
+
+    <p>这里的 $a_{-i}$ 表示「除了玩家 $i$ 以外，其他人的行动组合」。小组作业里的摸鱼、囚徒困境里的坦白，都是占优策略。</p>
+
+    <p>定义用的是大于等于，所以占优策略可能不止一个；如果两个行动在所有情况下收益都一样，它们可以同时是占优策略。把等号去掉，要求严格更大，得到<strong>严格占优策略</strong>。严格占优至多有一个：如果两个行动互相严格优于对方，就会出现 $u(a)>u(b)$ 且 $u(b)>u(a)$ 的矛盾。</p>
+
+    <h2 id="dinner">5. 平摊晚餐：占优也会把人带进坏结果</h2>
+
+    <p>两个人吃饭，饭钱平摊。便宜菜 10 元，值 12；贵菜 20 元，值 18。每个人选便宜或贵，收益是「菜的价值减去自己摊到的钱」：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>玩家一 \ 玩家二</th><th>便宜</th><th>贵</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>便宜</td><td>(2, 2)</td><td>(-3, 3)</td></tr>
+          <tr><td>贵</td><td>(3, -3)</td><td>(-2, -2)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>对方点便宜：我点贵赚 3，点便宜赚 2；对方点贵：我点贵亏 2，点便宜亏 3。不管对方点什么，点贵都更好，所以点贵是占优策略。结果两个人都点贵，各亏 2；而都点便宜本来各赚 2。</p>
+
+    <p>把三个例子里所有人的收益加起来，得到<strong>社会福利</strong>：小组作业里，都出力是 6，都摸鱼是 0；囚徒困境里，都抵赖是 -2，都坦白是 -6；晚餐里，都点便宜是 4，都点贵是 -4。三个故事的共同点是：<strong>占优策略组成的结果，社会福利反而更小。</strong></p>
+
+    <h2 id="welfare">6. 性别战：没有占优，也有稳定格</h2>
+
+    <p>不是每个博弈都有占优策略。两个人约着出门，一个想看话剧，一个想看球赛；分开行动收益都是 0。都看话剧，想看的得 2，陪的得 1；都看球赛反过来：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>玩家一 \ 玩家二</th><th>话剧</th><th>球赛</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>话剧</td><td>(2, 1)</td><td>(0, 0)</td></tr>
+          <tr><td>球赛</td><td>(0, 0)</td><td>(1, 2)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>先看玩家一：对方去话剧，我去话剧得 2，去球赛得 0；对方去球赛，我去话剧得 0，去球赛得 1。最优行动会跟着对方换列而改变，所以没有占优策略。玩家二同理。</p>
+
+    <p>但有两格很稳定：都看话剧，谁单方面改成球赛都会从 1 或 2 掉到 0；都看球赛也一样。这种「固定别人，我单方面改不会更好」的组合，就是<strong>纳什均衡</strong>。</p>
+
+    <h2 id="ne">7. 纳什均衡：单方面改不划算</h2>
+
+    <p>正式定义：行动组合 $a^*=(a_1^*,\ldots,a_n^*)$ 是纳什均衡，如果对每个玩家 $i$ 和任意其他行动 $a_i$，都有</p>
+
+    <p>$$u_i(a_i^*,a_{-i}^*)\ge u_i(a_i,a_{-i}^*)$$</p>
+
+    <p>换句话说，固定其他 $n-1$ 个人的选择，当前这个人的行动已经是最优回应；他单方面改，不会更好。</p>
+
+    <p>在收益矩阵里看：玩家一的数，要在同列各格里最大；玩家二的数，要在同排各格里最大。两个方向都满足的格子，才是纳什均衡。</p>
+
+    <p>占优策略和纳什均衡的关系是单向的：</p>
+
+    <ul>
+      <li>占优策略组成的组合，一定是纳什均衡；</li>
+      <li>纳什均衡不一定来自占优策略。性别战的两个均衡就没有任何一方使用占优策略。</li>
+    </ul>
+
+    <h2 id="chicken">8. 胆小鬼：均衡不止一个</h2>
+
+    <p>两辆车对着开，谁打方向谁让路。都不让，撞车，各扣 100；一个让一个冲，冲的得 1，让的得 0；都让，各得 0：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>玩家一 \ 玩家二</th><th>冲</th><th>让</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>冲</td><td>(-100, -100)</td><td>(1, 0)</td></tr>
+          <tr><td>让</td><td>(0, 1)</td><td>(0, 0)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>「一冲一让」的两格都是纳什均衡：冲的人不想改成让，让的人也不想改成冲。均衡不唯一，而且好坏不同：让的人得到的收益更低，但总比撞车好。</p>
+
+    <p>这就是多重均衡的麻烦：两个人可能各自认准不同的均衡，事先没有协调，就不知道最后会停在哪一格。</p>
+
+    <h2 id="pennies">9. 投硬币与石头剪刀布：纯策略没有均衡</h2>
+
+    <p>投硬币：两面相同玩家一赢，两面不同玩家二赢。收益矩阵是：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>玩家一 \ 玩家二</th><th>正</th><th>反</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>正</td><td>(1, -1)</td><td>(-1, 1)</td></tr>
+          <tr><td>反</td><td>(-1, 1)</td><td>(1, -1)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>从任意一格出发，总有一方想改：你出正面，对方就想出反面；对方出反面，你又想改出反面。四个格子连成一个闭环，没有稳定的格子，所以没有纯策略纳什均衡。</p>
+
+    <p>石头剪刀布也一样：石头赢剪刀，剪刀赢布，布赢石头；任何固定的出法都会被另一种出法克制。三种手势的收益可以写成一张 $3\times3$ 的表，每一行都有正有负，所以没有占优策略，也没有纯策略纳什均衡。</p>
+
+    <p>出路是别再固定出法：按概率随机出。投硬币各出 $1/2$，石头剪刀布各出 $1/3$。这就是下一集的<strong>混合策略</strong>。允许玩家掷骰子之后，有限博弈的均衡存在性会变得不一样。</p>
+
+    <h2 id="takeaway">10. 三个提醒</h2>
+
+    <ol>
+      <li><strong>均衡未必存在。</strong>投硬币和石头剪刀布在纯策略里没有均衡；要允许混合策略。</li>
+      <li><strong>均衡未必唯一。</strong>性别战和胆小鬼都有两个纳什均衡，协调到哪一个需要额外信息。</li>
+      <li><strong>均衡未必最好。</strong>囚徒困境和晚餐的均衡都不是社会福利最大的结果。</li>
+    </ol>
+
+    <p>所以「理性人会选纳什均衡」只是一句开始，不是一句结论。接下来还要问：均衡存不存在、有几个、怎么选、选出来的结果好不好，以及算出均衡要花多少时间。</p>
+
+    <h2 id="pitfalls">11. 常见错误</h2>
+
+    <ol>
+      <li><strong>把收益矩阵的格子当成人均收益。</strong>每格两个数，第一个归玩家一，第二个归玩家二。</li>
+      <li><strong>把「占优」理解成「收益高」。</strong>占优是「不管别人怎么选，我都比另一个行动好」，不是「这个格子本身收益高」。</li>
+      <li><strong>以为占优策略一定带来好结果。</strong>囚徒困境和晚餐都是反例。</li>
+      <li><strong>把纳什均衡和占优策略当成一回事。</strong>占优组合一定是均衡；均衡不一定来自占优。</li>
+      <li><strong>在矩阵里只沿一个方向比较。</strong>纳什均衡要求玩家一沿竖列最大、玩家二沿横排最大，两个方向都要满足。</li>
+      <li><strong>把「没有纯策略均衡」理解成「没有均衡」。</strong>投硬币和石头剪刀布在允许混合策略后都有均衡。</li>
+    </ol>
+
+    <h2 id="quiz">12. 自测 6 题</h2>
+
+    <ol>
+      <li>小组作业的收益矩阵里，为什么「都摸鱼」是占优策略组成的结果，却不是社会福利最大的格子？</li>
+      <li>博弈的三要素分别是什么？行动组合和单个行动有什么区别？</li>
+      <li>囚徒困境的刑期表怎样变成收益表？为什么它和小组作业「同一个形状」？</li>
+      <li>写出占优策略的定义。为什么严格占优至多有一个？</li>
+      <li>性别战有没有占优策略？它的两个纳什均衡分别是什么？</li>
+      <li>投硬币为什么没有纯策略纳什均衡？混合策略的出路是什么？</li>
+    </ol>
+
+    <details>
+      <summary>答案</summary>
+      <ol>
+        <li>不管对方怎么选，摸鱼都比出力多 2；两个人都摸鱼各得 0，而都出力各得 3，社会福利从 6 掉到 0。</li>
+        <li>玩家集合、每个玩家的行动集合、每个玩家的收益函数；行动组合是所有人各选一个行动拼成的向量，收益函数的输入是行动组合。</li>
+        <li>把刑期取负号，抵赖对应出力、坦白对应摸鱼；数字形状和小组作业完全一致，所以理性推理也一致。</li>
+        <li>$u_i(a,a_{-i})\ge u_i(a',a_{-i})$ 对任意对手选择都成立；两个行动不可能同时严格优于对方，所以严格占优至多一个。</li>
+        <li>没有占优；两个均衡是都看话剧和都看球赛，对应收益 $(2,1)$ 和 $(1,2)$。</li>
+        <li>任何固定出法都会被对方改出另一种而反制，四个格子形成循环；出路是按概率混合，例如各 $1/2$。</li>
+      </ol>
+    </details>
+
+    <h2 id="end">13. 收尾</h2>
+
+    <p>这一集只需要记住一条链：<strong>收益矩阵 → 占优策略 → 纳什均衡</strong>。收益矩阵把博弈写成一张表；占优策略是不管别人怎么选都最优；纳什均衡是单方面改不划算。再记住三个提醒：均衡未必存在、未必唯一、也未必最好。</p>
+
+    <p>下一集允许玩家掷骰子：不再固定选一个行动，而是按概率分布选。投硬币和石头剪刀布会因此重新获得均衡，均衡存在性也会有一个更一般的答案。</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js?v=3"></script>
+  <script defer src="book-shell.js?v=3"></script>
+  <script defer src="katex/katex.min.js"></script>
+  <script defer src="katex/auto-render.min.js"></script>
+  <script defer src="katex/render-math.js"></script>
+</body>
+</html>

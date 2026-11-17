@@ -69,6 +69,7 @@ BOOK_LABELS = {
     "ml": "MACHINE LEARNING",
     "nlp": "NATURAL LANGUAGE PROCESSING",
     "theory": "COMPUTING THEORY",
+    "economics": "COMPUTATIONAL ECONOMICS",
 }
 
 CLOSING = set("，。：、；！？）」』】%")
