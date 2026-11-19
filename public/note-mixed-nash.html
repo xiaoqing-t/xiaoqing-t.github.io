@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>混合策略：掷骰子之后，均衡一定存在 · 学习笔记</title>
+  <meta name="description" content="纯策略总被反制时，把行动改成概率分布；用期望收益、无差异原理和不动点解释混合均衡为什么存在；再看公地悲剧的福利代价、严格被支配与迭代删除，最后用猜平均数把区间收到零。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="legacy-v1.css?v=3" />
+  <link rel="stylesheet" href="notes.css?v=3" />
+  <link rel="stylesheet" href="book-shell.css" />
+  <link rel="stylesheet" href="katex/katex.min.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+    .table-wrap table { margin-bottom: 0; }
+    .table-wrap td:first-child, .table-wrap th:first-child { white-space: nowrap; }
+    .short-video { max-width: 340px; margin: 0 auto 32px; }
+    .short-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 9 / 16;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .short-video video::cue {
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.4;
+      color: #fffdf9;
+      background: rgba(33, 29, 25, 0.78);
+    }
+    .short-video figcaption {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+    .back-link { display: inline-block; margin-bottom: 28px; font-size: 0.92rem; }
+
+    .article .katex { font-size: 1.03em; }
+    .article .katex-display {
+      margin: 20px 0;
+      padding: 2px 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+    .article .katex-display::-webkit-scrollbar { height: 6px; }
+    .article .katex-display::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#work">项目</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article" id="main" tabindex="-1">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">计算经济学 · 第 2 集</p>
+    <h1>混合策略：掷骰子之后，均衡一定存在</h1>
+
+    <blockquote>
+      一句话主线：纯策略要求每次只选一个行动；当固定出法总被反制，就把行动变成<strong>概率分布</strong>，收益改算<strong>期望</strong>。混合均衡的钥匙是<strong>无差异原理</strong>：凡是以正概率使用的行动，期望收益必须相等。有限玩家、有限行动的博弈因此一定有混合均衡；但存在不等于好，公地悲剧里均衡的社会福利会随人数趋近于零。最后用<strong>严格被支配</strong>与迭代删除，把猜平均数游戏收到零。
+    </blockquote>
+
+    <figure class="short-video">
+      <video controls playsinline loading="lazy" aria-labelledby="video-caption" preload="metadata" width="1080" height="1920"
+             poster="media/mixed-poster.jpg">
+        <source src="media/mixed-5min.mp4" type="video/mp4" />
+        <track kind="captions" src="media/mixed-zh.vtt" srclang="zh" label="中文" />
+        浏览器不支持内嵌视频，<a href="media/mixed-5min.mp4">点这里下载这段短片</a>。
+      </video>
+      <figcaption id="video-caption">配套短片 · 约 5 分 21 秒 · 有口播和字幕：从石头剪刀布到概率分布、投硬币、无差异原理、性别战、纳什存在性、不动点、公地悲剧与迭代删除，最后停在猜平均数与下一集</figcaption>
+      <details class="video-transcript">
+        <summary>文字稿</summary>
+        <p>上一集停在石头剪刀布：固定出法必被克制，没有纯策略均衡。出路是掷骰子：每个行动按概率出。这一集讲混合策略，以及一个好消息：均衡这次一定存在。混合策略就是行动上的一个概率分布：概率非负，加起来等于一。把概率全押在一个行动上，就是上一集的纯策略，它是混合策略的特例。收益也改成期望：每个格子的收益，乘上双方落到这个格子的概率，再全部加起来。</p>
+        <p>回到投硬币。假设对方正面反面各二分之一。我出正面：一半概率赢一，一半概率输一；出反面也一样。不管我怎么出，赢面都是二分之一，期望收益零。对方的均匀混合，把我所有选择拉平了。但反过来，如果我固定出正面，对方就改出反面，全赢；我出反面的概率偏低，对方就盯着反面打。只要我的分布不均匀，对方就有办法把赢面抬到二分之一以上。所以我也必须各二分之一。双方均匀混合，是投硬币唯一的均衡。</p>
+        <p>这里藏着求解混合均衡的钥匙：均衡里，凡是被以正概率使用的行动，期望收益必须相等。道理是反证：如果某个行动更好，就把押在差行动上的概率全挪过去，期望立刻上升，均衡就不成立。既然真的在混合，说明每个被用到的行动，对我来说都一样好。用这把钥匙解性别战。我去剧院的期望，是二乘对方去剧院的概率；去球场的期望，是一减这个概率。令两者相等，解出对方去剧院的概率是三分之一；反过来同理，我去剧院的概率是三分之二。于是性别战有第三个均衡：双方混合。但算一下期望，每人只有三分之二，比任何一个纯均衡都差。</p>
+        <p>那均衡到底一定存在吗？纳什一九五一年的定理：玩家有限、行动有限，就至少有一个混合策略均衡。上一集说未必存在，指的是纯策略；允许混合之后，存在性有了保证。证明的思路是造一个调整函数：哪个行动的期望比当前混合好，就给它加概率，再归一化。如果调整之后分布不变，说明没有任何行动比现状更好，这正是均衡。而策略空间是凸的紧集，调整函数连续；布劳威尔不动点定理说，这样的函数必有不动点。存在性就此落地。</p>
+        <p>均衡存在，不代表均衡好。看公地悲剧：一条带宽为一的信道，很多人各发一段消息。总量超过一，信道挤爆，所有人收益零；总量不超过一，每人收益是自己的发送量，乘上一减总量。固定别人的总量，自己的最优发送量，是一减总量再除以二。对称地解：每个人都发人数加一分之一。此时每人收益是这个数的平方，所有人加起来约等于人数分之一。人越多，总收益越接近零：信道被挤到几乎不剩余地。可如果大家约定每人只发人数两倍分之一，总量一半，总收益是四分之一，不随人数消失。均衡与最优的差距，用两个比值刻画：最优福利除以最差均衡福利，叫无政府代价；除以最好均衡福利，叫稳定代价。</p>
+        <p>求解之前先化简。一个行动如果不管别人怎么选都不如另一个行动，叫被支配；严格不如，叫严格被支配。删掉严格被支配的行动，不会丢掉任何均衡；删完再删，迭代下去，表越缩越小。经典练习：猜平均数的三分之二。每人报零到一百，最接近平均数三分之二的人赢。平均数最多一百，目标最多是它的三分之二；比这还大的报数严格被支配。删掉一轮，上限就缩到原来的三分之二。一轮轮删下去，只剩零。迭代删除把一整群理性人推到了同一个数。这一集的主线：混合策略把行动变成概率；无差异原理给出求解钥匙；不动点定理保证均衡存在。但公地悲剧提醒我们：存在不等于好，均衡的代价可以随人数爆炸。下一集问计算：均衡存在，那它好算吗？先从零和博弈看起。</p>
+      </details>
+    </figure>
+
+    <p>上一集最后停在两个表：投硬币和石头剪刀布。固定出法，总有一方想改；四个或九个格子连成环，没有稳定的组合。那不是故事讲完了，而是说明「每次只选一个行动」这套语言不够用。这一集把选择从行动换成概率，先回答均衡为什么一定存在，再回答它值不值得。</p>
+
+    <h2 id="mixed">0. 混合策略：行动上的概率分布</h2>
+
+    <p>设玩家 $i$ 的行动集合是 $A_i$。一个<strong>混合策略</strong> $p_i$ 是 $A_i$ 上的概率分布：</p>
+
+    <p>$$p_i(a)\ge 0\quad\text{对每个 }a\in A_i,\qquad \sum_{a\in A_i}p_i(a)=1$$</p>
+
+    <p>它给每个行动分配一个概率，概率非负，加起来等于一。把概率全押在一个行动上，比如 $p_i(a)=1$、其余为 $0$，得到的就是上一集的<strong>纯策略</strong>。所以纯策略不是混合策略的对立面，而是它的退化情形。</p>
+
+    <p>所有混合策略组成的集合叫<strong>单纯形</strong>。两个行动时，它是一条线段；三个行动时，它是一个三角形。这个几何形状后面会再次出现：它是凸的、紧的，正好满足不动点定理的条件。</p>
+
+    <p>收益也要跟着改。给定所有人的混合策略组合 $p=(p_1,\ldots,p_n)$，玩家 $i$ 的<strong>期望收益</strong>是</p>
+
+    <p>$$u_i(p)=\sum_{a_1\in A_1}\cdots\sum_{a_n\in A_n}\left(\prod_{j=1}^{n}p_j(a_j)\right)u_i(a_1,\ldots,a_n)$$</p>
+
+    <p>直白地说：每个行动组合先乘上「所有人都落到这个组合」的概率，再乘这个组合给玩家 $i$ 的收益，最后全部加起来。这里默认每个人各自独立地掷骰子；混合策略不是事先商量好的关联随机。</p>
+
+    <h2 id="pennies">1. 投硬币：均匀混合把所有选择拉平</h2>
+
+    <p>回到投硬币。两面相同玩家一赢，两面不同玩家二赢，赢家拿走两枚：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>玩家一 \ 玩家二</th><th>正</th><th>反</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>正</td><td>(1, -1)</td><td>(-1, 1)</td></tr>
+          <tr><td>反</td><td>(-1, 1)</td><td>(1, -1)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>假设玩家二正面、反面各出 $1/2$。玩家一出正面时，一半概率撞上正面赢 $1$，一半概率撞上反面输 $1$：</p>
+
+    <p>$$\frac12\cdot 1+\frac12\cdot(-1)=0$$</p>
+
+    <p>玩家一出反面完全对称，期望也是 $0$。如果玩家一自己再混合，期望是这两个 $0$ 的加权平均，仍然是 $0$。所以玩家二的均匀混合，把玩家一所有选择的期望都拉平了；玩家一没有办法把期望抬到 $0$ 以上。</p>
+
+    <p>反过来也成立。玩家一均匀混合时，玩家二出正面和出反面的期望都是 $0$，也占不到便宜。双方各 $1/2$，是一个稳定的组合。</p>
+
+    <h2 id="exploit">2. 不均匀，就会被利用</h2>
+
+    <p>上面的稳定依赖「正好各一半」。只要玩家一的分布偏了，玩家二就有办法把期望抬到 $0$ 以上。</p>
+
+    <p>设玩家一出正面的概率是 $p$，出反面的概率是 $1-p$。玩家二出正面时的期望收益是</p>
+
+    <p>$$p\cdot(-1)+(1-p)\cdot 1=1-2p$$</p>
+
+    <p>出反面时是</p>
+
+    <p>$$p\cdot 1+(1-p)\cdot(-1)=2p-1$$</p>
+
+    <p>如果 $p>1/2$，第二个式子大于 $0$，玩家二盯着反面出；如果 $p<1/2$，第一个式子大于 $0$，玩家二盯着正面出。只有当 $p=1/2$ 时，两个期望同时为 $0$，玩家二没有正期望可拿。</p>
+
+    <p>所以投硬币的混合均衡是唯一的：双方都各 $1/2$。这不是「随便随机一下」，而是「随机到对方占不到便宜为止」。</p>
+
+    <h2 id="indifference">3. 无差异原理：被用到的行动必须一样好</h2>
+
+    <p>投硬币的推导里藏着一个更一般的工具。设 $p^*$ 是一个混合策略纳什均衡。玩家 $i$ 以正概率使用行动 $a$ 和 $b$，也就是 $p_i^*(a)>0$、$p_i^*(b)>0$。那么一定有</p>
+
+    <p>$$u_i(a,p_{-i}^*)=u_i(b,p_{-i}^*)$$</p>
+
+    <p>这里 $p_{-i}^*$ 是其他玩家的混合策略组合；$u_i(a,p_{-i}^*)$ 表示玩家 $i$ 确定选 $a$、其他人按 $p_{-i}^*$ 混合时的期望收益。换句话说：<strong>凡是被以正概率使用的行动，期望收益必须相等。</strong></p>
+
+    <p>证明是反证。假设 $a$ 的期望严格高于 $b$。把原本押在 $b$ 上的概率全部挪到 $a$，其他不变；期望收益会增加</p>
+
+    <p>$$p_i^*(b)\big(u_i(a,p_{-i}^*)-u_i(b,p_{-i}^*)\big)>0$$</p>
+
+    <p>这就和 $p^*$ 是纳什均衡矛盾。所以只要还在混合，被用到的行动之间不能有高低。</p>
+
+    <p>注意两点。第一，这条性质只约束<strong>正概率</strong>的行动；某个行动完全没被用到，它的期望可以更低，没人会因为它没被选中而受损。第二，它说的是期望相等，不是每一次实现结果相等。这个共同值也等于玩家当前的混合期望收益；均衡混合是为了让对手无差异，不是为了让自己的每次收益都一样。</p>
+
+    <h2 id="bos">4. 性别战：多出来的第三个均衡</h2>
+
+    <p>用这把钥匙解上一集的性别战。两个人约着出门，一个想看话剧，一个想看球赛；分开行动收益都是 $0$：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>玩家一 \ 玩家二</th><th>话剧</th><th>球赛</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>话剧</td><td>(2, 1)</td><td>(0, 0)</td></tr>
+          <tr><td>球赛</td><td>(0, 0)</td><td>(1, 2)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>设玩家二去话剧的概率是 $q$。玩家一去话剧的期望是 $2q$，去球赛的期望是 $1\cdot(1-q)=1-q$。无差异要求两者相等：</p>
+
+    <p>$$2q=1-q\quad\Longrightarrow\quad q=\frac13$$</p>
+
+    <p>设玩家一去话剧的概率是 $p$。玩家二去话剧的期望是 $p$，去球赛的期望是 $2(1-p)$。无差异给出</p>
+
+    <p>$$p=2(1-p)\quad\Longrightarrow\quad p=\frac23$$</p>
+
+    <p>于是性别战有第三个均衡：玩家一以 $2/3$ 去话剧、$1/3$ 去球赛；玩家二以 $1/3$ 去话剧、$2/3$ 去球赛。双方在这个均衡里的期望收益都是</p>
+
+    <p>$$2\cdot\frac13=\frac23$$</p>
+
+    <p>而两个纯均衡里，双方分别拿到 $(2,1)$ 和 $(1,2)$。混合均衡让两个人都只拿到 $2/3$，被两个纯均衡同时帕累托支配。这是本集第二个提醒：<strong>混合均衡不一定比纯均衡差，但也不一定好；存在性和福利是两件事。</strong></p>
+
+    <h2 id="existence">5. 存在性：有限博弈一定有混合均衡</h2>
+
+    <p>纳什在 1951 年证明了一条定理：</p>
+
+    <blockquote>
+      如果玩家数量有限，每个玩家的行动数量也有限，那么这个博弈至少存在一个混合策略纳什均衡。
+    </blockquote>
+
+    <p>上一集说「均衡未必存在」，指的是<strong>纯策略</strong>。投硬币和石头剪刀布没有纯策略均衡；允许混合之后，它们都有均衡。存在性定理补上的正是这个缺口。</p>
+
+    <p>但定理只保证「至少一个」。它不保证唯一，不保证好，也不保证容易算。性别战有三个均衡，投硬币有一个，公地悲剧里均衡的福利可以很差；这些都不违反定理。</p>
+
+    <h2 id="fixedpoint">6. 为什么一定有：调整函数与不动点</h2>
+
+    <p>存在性的证明不需要把每个博弈的均衡解出来，而是换一个角度：把「所有人都在做最优回应」写成一个不动点问题。</p>
+
+    <p>每个玩家的混合策略集合是一个概率单纯形：凸、紧。把所有玩家的混合策略乘起来，得到的策略空间仍然是凸的紧集。接下来造一个<strong>调整函数</strong> $\Phi$：对每个玩家，看当前混合下各个行动的期望；哪个行动比当前平均更好，就给它加一点概率，再归一化回概率分布。</p>
+
+    <p>这个调整函数是连续的：期望随概率连续变化，归一化也连续。于是布劳威尔不动点定理适用：从凸紧集映到自身的连续函数，一定有不动点。</p>
+
+    <p>在不动点处，调整函数不再改变任何人的分布。这意味着没有任何行动比当前混合更好；否则概率会被挪走。每个人都在做最优回应，整个组合就是纳什均衡。</p>
+
+    <p>这段是证明思路，不是完整证明；但它解释了为什么「有限」这两个字重要。玩家或行动无限时，策略空间可能不再紧，调整函数可能没有不动点，存在性就要另加条件。</p>
+
+    <h2 id="commons">7. 公地悲剧：存在不等于好</h2>
+
+    <p>均衡存在，不代表均衡值得追求。看一个信道共享的例子：一条总容量为 $1$ 的信道，$n$ 个玩家各发一段消息，玩家 $i$ 的发送量是 $x_i\ge 0$。</p>
+
+    <ul>
+      <li>如果总发送量 $\sum_j x_j>1$，信道挤爆，所有人收益为 $0$；</li>
+      <li>如果总发送量不超过 $1$，玩家 $i$ 的收益是 $x_i\left(1-\sum_j x_j\right)$：自己的发送量，乘上剩余的空白。</li>
+    </ul>
+
+    <p>固定其他人的总发送量 $t$，玩家 $i$ 要最大化</p>
+
+    <p>$$x_i(1-t-x_i)$$</p>
+
+    <p>这是一条开口向下的抛物线，顶点在 $x_i=(1-t)/2$。这就是给定别人总量时的最优回应。若 $t\ge1$，任何正发送量都会把信道挤爆，最优回应是 $0$。</p>
+
+    <p>对称地解：每个人都发 $x$，别人的总量是 $(n-1)x$，最优回应要求</p>
+
+    <p>$$x=\frac{1-(n-1)x}{2}\quad\Longrightarrow\quad x=\frac{1}{n+1}$$</p>
+
+    <p>所以纳什均衡是每个人发 $1/(n+1)$，总发送量 $n/(n+1)$，每人收益 $1/(n+1)^2$，总福利</p>
+
+    <p>$$W_{\mathrm{NE}}(n)=\frac{n}{(n+1)^2}$$</p>
+
+    <p>人越多，总福利越接近零。信道没有被完全挤爆，但剩余空间只剩 $1/(n+1)$，每个人分到的份额也越来越小。</p>
+
+    <p>如果大家合作，每人只发 $1/(2n)$，总发送量正好一半，剩余一半；总福利是</p>
+
+    <p>$$W_{\mathrm{opt}}=\frac14$$</p>
+
+    <p>它不随人数消失。把这两个数放在一起，就得到衡量「均衡有多差」的比值：</p>
+
+    <ul>
+      <li><strong>无政府代价</strong>（Price of Anarchy, PoA）：最优福利除以<strong>最差</strong>均衡福利；</li>
+      <li><strong>稳定代价</strong>（Price of Stability, PoS）：最优福利除以<strong>最好</strong>均衡福利。</li>
+    </ul>
+
+    <p>这个例子里均衡唯一，所以 PoA 和 PoS 相同：</p>
+
+    <p>$$\mathrm{PoA}(n)=\frac{1/4}{n/(n+1)^2}=\frac{(n+1)^2}{4n}$$</p>
+
+    <p>当 $n$ 变大，PoA 大约按 $n/4$ 增长。均衡确实存在，但它的效率可以随人数线性变差。</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>人数 $n$</th><th>均衡总福利 $n/(n+1)^2$</th><th>最优总福利</th><th>PoA</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>2</td><td>$2/9\approx 0.222$</td><td>$1/4=0.25$</td><td>$9/8=1.125$</td></tr>
+          <tr><td>5</td><td>$5/36\approx 0.139$</td><td>$0.25$</td><td>$36/20=1.8$</td></tr>
+          <tr><td>10</td><td>$10/121\approx 0.083$</td><td>$0.25$</td><td>$121/40=3.025$</td></tr>
+          <tr><td>100</td><td>$100/10201\approx 0.0098$</td><td>$0.25$</td><td>$10201/400\approx 25.5$</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="dominated">8. 先删再解：严格被支配与迭代删除</h2>
+
+    <p>求解之前可以先化简。玩家 $i$ 的行动 $a$ 被行动 $a'$ <strong>严格支配</strong>，如果不管其他人怎么选，$a'$ 的收益都严格更高：</p>
+
+    <p>$$u_i(a',a_{-i})>u_i(a,a_{-i})\quad\text{对任意 }a_{-i}\text{ 成立}$$</p>
+
+    <p>严格被支配的行动可以放心删掉。理由和占优策略的推理一样：如果 $a$ 出现在某个纳什均衡里，玩家改成 $a'$ 会在所有情况下严格变好，那就不可能是均衡。</p>
+
+    <p>删掉之后，表变小了；在新的表里可能又出现新的严格被支配行动，再删。这个过程叫<strong>迭代删除严格被支配策略</strong>（IDSDS）。它不会丢掉任何纳什均衡，所以可以先把表缩小，再解剩下的部分。</p>
+
+    <p>要注意「严格」两个字。弱被支配只要求「不差于」，删掉弱被支配行动可能把某个纳什均衡一起删掉。工程上做化简时，如果想保留全部均衡，用的是严格支配。</p>
+
+    <h2 id="guess">9. 猜平均数的三分之二：迭代删除推到零</h2>
+
+    <p>经典练习：每人报一个 $0$ 到 $100$ 之间的数，谁最接近所有人平均数的 $2/3$ 谁赢。目标是</p>
+
+    <p>$$T=\frac23\cdot\frac1n\sum_{i=1}^{n}x_i$$</p>
+
+    <p>第一轮，平均数最多是 $100$，所以目标最多是 $100$ 的 $2/3$，约 $66.7$。任何大于这个上限的报数，都被上限本身严格支配：无论目标落在哪里，它都不会比上限更接近。于是上限以外的数全部删掉。</p>
+
+    <p>第二轮，所有人最多报 $66.7$，目标最多变成它的 $2/3$，约 $44.4$；再删。按实数连续选择，上限每轮乘以 $2/3$，趋近于零；按整数玩法取整，区间也会一轮轮缩到 $0$。</p>
+
+    <p>所以这个博弈的唯一纳什均衡是所有人报 $0$。这个结论依赖一个很强的假设：所有人都知道所有人理性，并且这种「知道」可以无限往下一层推。现实实验里，报数通常不会直接落到零；有限层级的理性会在某一轮停下来。迭代删除给出的是「无限理性」的极限，不是对人实际行为的预测。</p>
+
+    <h2 id="relations">10. 几个概念的关系</h2>
+
+    <ul>
+      <li><strong>纯策略是混合策略的特例。</strong>概率全押在一个行动上，就是纯策略。</li>
+      <li><strong>占优策略组合一定是纳什均衡。</strong>固定别人，占优行动已经最优；反过来不成立，性别战的均衡就没有占优策略。</li>
+      <li><strong>严格被支配行动可以删，不丢均衡。</strong>删完再删，表只会变小，不会把均衡删没。</li>
+      <li><strong>有限博弈一定有混合均衡。</strong>纯策略没有时，混合策略补上；但唯一性、好坏、可计算性都不在定理里。</li>
+    </ul>
+
+    <h2 id="pitfalls">11. 常见错误</h2>
+
+    <ol>
+      <li><strong>把混合策略当成「随机乱选」。</strong>混合策略是明确的概率分布；均衡里的混合比例通常不是均匀的，投硬币只是恰好各一半。</li>
+      <li><strong>把期望收益当成某一次的结果。</strong>期望是长期重复下的平均值；单次实现可以是赢、输或平。</li>
+      <li><strong>把无差异原理用到所有行动上。</strong>它只约束以正概率使用的行动；零概率行动可以更差。</li>
+      <li><strong>以为存在性定理保证唯一或好算。</strong>定理只保证至少一个；性别战有三个，公地悲剧的均衡还可以很差。</li>
+      <li><strong>把严格支配和弱支配混着删。</strong>弱支配删除可能删掉纳什均衡；要保留全部均衡，用严格支配。</li>
+      <li><strong>把 PoA 和 PoS 当成同一个数。</strong>它们分别除以最差和最好的均衡福利；只有均衡唯一时才相同。</li>
+      <li><strong>以为公地悲剧里人越多总发送量越少。</strong>总发送量 $n/(n+1)$ 其实越来越接近 $1$；变差的是每个人的份额和总福利。</li>
+      <li><strong>把猜平均数的零当成现实预测。</strong>它依赖无限层级的共同理性；实验中常见明显大于零的报数。</li>
+    </ol>
+
+    <h2 id="quiz">12. 自测 8 题</h2>
+
+    <ol>
+      <li>写出混合策略的定义，并说明纯策略为什么是它的特例。</li>
+      <li>投硬币里，如果对方正面反面各 $1/2$，我方任意混合的期望收益是多少？为什么？</li>
+      <li>如果对方出正面的概率 $p\ne 1/2$，我方怎样把期望收益抬到 $0$ 以上？</li>
+      <li>叙述无差异原理，并用反证法说明它为什么成立。</li>
+      <li>性别战的混合均衡中，双方去话剧的概率分别是多少？混合均衡的期望收益是多少？</li>
+      <li>纳什存在性定理的条件和结论分别是什么？它没有保证什么？</li>
+      <li>公地悲剧里，对称纳什均衡的发送量和总福利是什么？合作解的总福利是多少？</li>
+      <li>猜平均数游戏为什么最终只剩 $0$？这个结论依赖什么假设？</li>
+    </ol>
+
+    <details>
+      <summary>答案</summary>
+      <ol>
+        <li>$p_i(a)\ge 0$ 且 $\sum_a p_i(a)=1$；当某个行动的概率为 $1$、其余为 $0$ 时，混合策略退化成纯策略。</li>
+        <li>期望为 $0$。出正面和出反面的期望都是 $0$，任意混合是这两个 $0$ 的加权平均。</li>
+        <li>若 $p>1/2$，对方出反面的期望 $2p-1>0$；若 $p<1/2$，对方出正面的期望 $1-2p>0$。偏离一半就会被对方利用。</li>
+        <li>均衡中以正概率使用的两个行动期望必须相等；若一个严格更好，把另一个的概率全挪过去会让期望上升，和均衡矛盾。</li>
+        <li>玩家一去话剧 $2/3$，玩家二去话剧 $1/3$；双方期望收益都是 $2/3$。</li>
+        <li>玩家有限、每个玩家的行动有限，则至少存在一个混合策略纳什均衡；不保证唯一、不保证福利好、不保证容易计算。</li>
+        <li>每人发 $1/(n+1)$，总福利 $n/(n+1)^2$；合作解每人发 $1/(2n)$，总福利 $1/4$。</li>
+        <li>每轮把上限压到原来的 $2/3$，反复删除后上限趋近于 $0$；依赖所有人知道所有人理性，并且这种知识无限延伸。</li>
+      </ol>
+    </details>
+
+    <h2 id="end">13. 收尾</h2>
+
+    <p>这一集的主线可以压成一条链：<strong>纯策略不够 → 混合策略 → 期望收益 → 无差异原理 → 存在性</strong>。混合策略把行动变成概率；无差异原理给出求解混合均衡的方程；不动点定理保证有限博弈至少有一个均衡。</p>
+
+    <p>但公地悲剧提醒我们：<strong>存在不等于好</strong>。均衡的福利可以随人数趋近于零，PoA 可以随人数增长。求解之前还要先化简，严格被支配行动可以安全删掉，迭代删除能把猜平均数这样的博弈一路收到零。</p>
+
+    <p>下一集问计算：均衡既然存在，那它好算吗？先从零和博弈与线性规划看起。</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js?v=3"></script>
+  <script defer src="book-shell.js?v=3"></script>
+  <script defer src="katex/katex.min.js"></script>
+  <script defer src="katex/auto-render.min.js"></script>
+  <script defer src="katex/render-math.js"></script>
+</body>
+</html>
