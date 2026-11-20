@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>零和博弈与线性规划：先手后手为什么一样 · 学习笔记</title>
+  <meta name="description" content="零和博弈只写一张矩阵；先手保底与后手上限写成一对对偶线性规划，强对偶给出极小极大定理与多项式算法；最后看博弈的值，以及非零和里先手承诺为什么会改变结果。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="legacy-v1.css?v=3" />
+  <link rel="stylesheet" href="notes.css?v=3" />
+  <link rel="stylesheet" href="book-shell.css" />
+  <link rel="stylesheet" href="katex/katex.min.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+    .table-wrap table { margin-bottom: 0; }
+    .table-wrap td:first-child, .table-wrap th:first-child { white-space: nowrap; }
+    .short-video { max-width: 340px; margin: 0 auto 32px; }
+    .short-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 9 / 16;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .short-video video::cue {
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.4;
+      color: #fffdf9;
+      background: rgba(33, 29, 25, 0.78);
+    }
+    .short-video figcaption {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+    .back-link { display: inline-block; margin-bottom: 28px; font-size: 0.92rem; }
+
+    .article .katex { font-size: 1.03em; }
+    .article .katex-display {
+      margin: 20px 0;
+      padding: 2px 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+    .article .katex-display::-webkit-scrollbar { height: 6px; }
+    .article .katex-display::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#work">项目</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article" id="main" tabindex="-1">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">计算经济学 · 第 3 集</p>
+    <h1>零和博弈与线性规划：先手后手为什么一样</h1>
+
+    <blockquote>
+      一句话主线：零和博弈的总收益恒为零，所以两个玩家只需要一张矩阵。玩家一的<strong>保底</strong>与玩家二的<strong>上限</strong>可以各写成一个线性规划，而且互为对偶。强对偶说明两边最优值相等，这既是<strong>极小极大定理</strong>，也给出了<strong>多项式时间</strong>算法。非零和博弈没有这层结构：先手的承诺可以改变结果，对偶这条路也断了。
+    </blockquote>
+
+    <figure class="short-video">
+      <video controls playsinline loading="lazy" aria-labelledby="video-caption" preload="metadata" width="1080" height="1920"
+             poster="media/zerosum-poster.jpg">
+        <source src="media/zerosum-5min.mp4" type="video/mp4" />
+        <track kind="captions" src="media/zerosum-zh.vtt" srclang="zh" label="中文" />
+        浏览器不支持内嵌视频，<a href="media/zerosum-5min.mp4">点这里下载这段短片</a>。
+      </video>
+      <figcaption id="video-caption">配套短片 · 约 5 分 21 秒 · 有口播和字幕：从零和矩阵、先后手、工厂线性规划、顶点与单纯形，到对偶证书、极小极大定理、博弈的值，最后停在非零和的承诺与下一集</figcaption>
+      <details class="video-transcript">
+        <summary>文字稿</summary>
+        <p>上一集保证了均衡存在。这一集问下一件事：存在的东西，好算吗？答案分两个世界：零和博弈里，均衡能在多项式时间内算出来；一般博弈里，难到自成一个复杂度类。先看零和这个世界，工具是线性规划。</p>
+        <p>零和博弈：任何组合下，所有人收益加起来等于零。你赚的就是我亏的。两个玩家时，一张矩阵就够：格子里只写玩家一的收益，玩家二自动取负号。石头剪刀布就是零和：赢一输一，平局零。</p>
+        <p>现在问顺序。我先出策略，对方看到后做最优回应：我在对方最狠的回应里挑最好的，这叫保底。反过来对方先出，我做最优回应：对方挑的是压我的上限。直觉上后手占便宜：先手暴露信息。零和博弈里真是这样吗？</p>
+        <p>工具先备好：线性规划。目标是一串变量的线性组合，约束是一堆线性不等式，求最大或最小。例子：糖每吨赚一，油每吨赚六；糖最多二百吨，油最多三百吨，总重最多四百吨。每个约束切一刀，切出来的公共区域叫可行域，是一个凸的多边形。把目标值画成一条直线，平行往外推，推到再推就离开可行域为止。最后碰到的点一定是顶点：这里糖一百、油三百，利润一千九。凸性还保证：局部最优就是全局最优，不会停在次优的顶点。</p>
+        <p>单纯形法就顺着这个事实走：从某个顶点出发，沿边跳到更好的邻居，跳不动就停。但顶点个数是组合数级别，最坏情况要跳指数步；各种选邻居的花样都被构造过反例。实践中它几乎总是很快；理论上保证多项式的是椭球法和内点法。</p>
+        <p>换个思路证明一千九就是最优：不画图，只拼不等式。把油不超过三百乘五，加上总重不超过四百：左边正好是糖加六倍油，右边是一千九。于是任何可行解都不超过一千九，而顶点方案恰好达到：最优性拿到了一张书面证书。</p>
+        <p>这套拼法可以自动化：给每个约束配一个非负乘数，要求拼出来的左边盖住目标系数，再让右边尽量小。这本身又是一个线性规划，叫对偶；原来的叫原问题。弱对偶说：原问题任何可行解，不超过对偶任何可行解。强对偶说：两边最优值相等，缝隙永远闭合。</p>
+        <p>回到博弈。玩家一的保底问题能写成线性规划：最大化一个保底数，要求对方每个纯策略回应下，我的收益都不低于它。因为对方最优回应总可以取纯策略，所以只要逐列守住下限；概率非负、和为一，也是线性约束。写出它的对偶，化简之后正好是对方先手的上限问题。强对偶定理一盖：保底等于上限。这就是冯诺依曼一九二八年的极小极大定理：零和博弈里，谁先出招都一样。</p>
+        <p>而且这对最优解本身就是纳什均衡：谁单方面改都占不到便宜。于是解一个线性规划就拿到均衡；用内点法或椭球法，多项式时间。还附带一个好消息：零和博弈的所有均衡里，双方收益都相同，均衡不唯一也不要紧。这个共同的收益叫博弈的值。投硬币的值是零，石头剪刀布的值也是零：公平博弈谁也占不到便宜。值由矩阵唯一决定，和算法挑到哪个均衡无关。</p>
+        <p>非零和就不一样了。性别战里我先宣布去剧院，对方最优回应是跟去剧院：我拿二。先手在这里是承诺，反而占便宜；同时出招却可能错配成零。顺序有没有优势，取决于收益结构，这正是下一集要面对的复杂世界。这一集的主线：零和博弈一张矩阵；保底与上限写成一对对偶线性规划；强对偶同时给出极小极大定理和多项式算法。但非零和博弈里，先手后手不再等价，对偶这条路也断了。下一集：一般博弈的均衡到底有多难算。</p>
+      </details>
+    </figure>
+
+    <p>上一集证明：有限玩家、有限行动的博弈一定有混合均衡。证明是构造性的，但它没有告诉我们怎么把均衡算出来。这一集处理其中最容易的一块：零和博弈。它的结构足够强，强到可以把「找均衡」变成「解线性规划」；而线性规划有多项式时间算法。</p>
+
+    <h2 id="world">0. 两个世界：零和好算，一般难算</h2>
+
+    <p>同样是「求纳什均衡」，难度并不统一。零和博弈是特殊的一类：任何行动组合下，所有玩家的收益加起来都是零。这类博弈的均衡可以写成线性规划，从而在多项式时间内算出来。</p>
+
+    <p>一般博弈没有这层结构。它的均衡同样存在，但找均衡的问题难到自成一个复杂度类（PPAD）。这个类不像 NP 那样问「解是否存在」；均衡已经保证存在，难的是沿着构造性的证明把解真正找出来。下一集会专门讲。</p>
+
+    <p>本集的路线：先把零和博弈压缩成一张矩阵，再把先手和后手的两种最优问题写成线性规划，最后用对偶把两者接起来。强对偶给出的等号，就是极小极大定理。</p>
+
+    <h2 id="zerosum">1. 零和博弈：一张矩阵就够</h2>
+
+    <p>设玩家集合为 $N$，行动组合为 $a=(a_1,\ldots,a_n)$。博弈是<strong>零和</strong>的，如果对每个行动组合都有</p>
+
+    <p>$$\sum_{i\in N}u_i(a)=0$$</p>
+
+    <p>两个玩家时，这条式子就是 $u_1(a)+u_2(a)=0$。玩家二拿到的，正好是玩家一拿到的相反数。于是不需要两张表：一张矩阵 $A$ 记玩家一的收益就够，玩家二的收益自动是 $-A_{ij}$。</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>玩家一 \ 玩家二</th><th>石头</th><th>剪刀</th><th>布</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>石头</td><td>0</td><td>1</td><td>-1</td></tr>
+          <tr><td>剪刀</td><td>-1</td><td>0</td><td>1</td></tr>
+          <tr><td>布</td><td>1</td><td>-1</td><td>0</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>石头剪刀布就是零和：赢一输一，平局零。每一行、每一列都没有一个格子能同时让两边都满意，所以它没有纯策略均衡；混合之后才有。</p>
+
+    <p>零和这个条件很强。它把「两个玩家各自的收益表」压成「一张表」，也把后面对偶结构的一半提前确定下来。</p>
+
+    <h2 id="order">2. 先手与后手：保底和上限</h2>
+
+    <p>零和博弈里，玩家一的收益就是玩家二的损失，所以「让对方少拿」和「让自己多拿」是同一件事。先问一个顺序问题：谁先出策略，结果会不同吗？</p>
+
+    <p>假设玩家一先出混合策略 $x$，玩家二看到后选最优回应。玩家二会选择让玩家一收益最小的列，所以玩家一能保证的是</p>
+
+    <p>$$\max_x\ \min_y\ x^\top A y$$</p>
+
+    <p>这叫<strong>保底</strong>：在对方最狠的回应里，挑一个最好的先手策略。反过来，玩家二先出 $y$，玩家一做最优回应，玩家二能压到的上限是</p>
+
+    <p>$$\min_y\ \max_x\ x^\top A y$$</p>
+
+    <p>这叫<strong>上限</strong>。直觉上后手占便宜：先手先暴露信息，后手可以针对。但零和博弈的特殊结构会给出一个意外的答案：这两个值相等。这正是后面要证的极小极大定理。</p>
+
+    <p>先把这两个优化问题写成线性规划，等号就会自己出现。</p>
+
+    <h2 id="lp">3. 线性规划：目标和可行域</h2>
+
+    <p>线性规划的标准形式是：最大化或最小化一个线性目标，约束是一组线性不等式。例如一个工厂生产糖和油，糖每吨赚 $1$，油每吨赚 $6$；糖最多 $200$ 吨，油最多 $300$ 吨，总重最多 $400$ 吨。写成</p>
+
+    <p>$$\max\ x_1+6x_2\quad\text{s.t.}\quad x_1\le 200,\ x_2\le 300,\ x_1+x_2\le 400,\ x_1,x_2\ge 0$$</p>
+
+    <p>每条约束在平面上切一刀，所有约束的公共区域就是<strong>可行域</strong>。这里它是一个凸五边形，五个顶点分别是</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>顶点</th><th>$(x_1,x_2)$</th><th>目标值 $x_1+6x_2$</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>O</td><td>$(0,0)$</td><td>$0$</td></tr>
+          <tr><td>A</td><td>$(200,0)$</td><td>$200$</td></tr>
+          <tr><td>B</td><td>$(200,200)$</td><td>$1400$</td></tr>
+          <tr><td>C</td><td>$(100,300)$</td><td>$1900$</td></tr>
+          <tr><td>D</td><td>$(0,300)$</td><td>$1800$</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>目标函数在顶点 $C$ 取到最大值 $1900$：糖 $100$ 吨、油 $300$ 吨，总重正好用满 $400$ 吨。</p>
+
+    <h2 id="vertex">4. 最优为什么在顶点</h2>
+
+    <p>把目标值画成一条等值线：$x_1+6x_2=c$。$c$ 越大，这条线越往右上方推。平行往外推，直到再推就完全离开可行域为止；最后碰到的位置一定包含一个顶点。</p>
+
+    <p>这不是这个例子的巧合。线性目标在凸多面体上的最大值，一定能在某个顶点取到。直观上：如果最优点在一条边的内部，沿着边往目标增大的方向走，至少有一个端点不会更差；反复走，就走到顶点。</p>
+
+    <p>凸性还给出另一个保证：<strong>局部最优就是全局最优</strong>。在凸可行域上，如果一个顶点不比它的所有邻居差，它就不比任何可行点差。所以「沿边跳到更好的邻居，跳不动就停」这种局部搜索不会停在次优解上。</p>
+
+    <p>要注意「最优在顶点」不等于「最优解唯一」。如果目标等值线和某条边平行，整条边上的点都最优；值仍然唯一，但解可以是一整段。</p>
+
+    <h2 id="simplex">5. 单纯形法：保证找到，不保证快</h2>
+
+    <p>单纯形法顺着上一节的事实走：从一个顶点出发，沿边跳到目标值更高的邻居；如果所有邻居都不更好，就停。每一步只换一个基变量，计算量是多项式级的。</p>
+
+    <p>问题在于步数。$n$ 个变量、$m$ 条约束的可行域，顶点个数可以达到组合数级别。单纯形法的某条路径，最坏情况下要走指数步；各种「选哪个邻居」的规则，都被构造出过反例。所以它是「实践中几乎总是很快」，但不是「最坏情况多项式」。</p>
+
+    <p>理论上保证多项式时间的是另外两类方法：<strong>椭球法</strong>和<strong>内点法</strong>。它们不走顶点，而是在可行域内部或外包椭球上迭代。对博弈来说，重要的是这个结论：线性规划有多项式时间算法；只要能把找均衡化成线性规划，均衡就能在多项式时间内算出来。</p>
+
+    <h2 id="dual">6. 对偶：用不等式拼出证书</h2>
+
+    <p>再回到工厂例子，这次不画图。要证明 $1900$ 就是上界，只需要把两条约束拼起来：</p>
+
+    <p>$$5\cdot(x_2\le 300)\quad+\quad(x_1+x_2\le 400)$$</p>
+
+    <p>左边相加是 $x_1+6x_2$，右边相加是 $1500+400=1900$。于是任何可行解都满足</p>
+
+    <p>$$x_1+6x_2\le 1900$$</p>
+
+    <p>而顶点方案 $(100,300)$ 恰好让左边等于 $1900$。上界和达到同时成立，最优性就有了书面证书：不需要枚举顶点，也不需要相信任何搜索过程。</p>
+
+    <p>这里的乘数 $5$ 和 $1$ 不是随便挑的。它们要满足两件事：非负，并且拼出来的左边系数正好盖住目标系数 $(1,6)$。这套「配乘数、拼不等式」的做法，可以交给一个优化问题自动完成。</p>
+
+    <h2 id="dualprog">7. 对偶规划与强对偶</h2>
+
+    <p>一般地，原问题是</p>
+
+    <p>$$\max\ c^\top x\quad\text{s.t.}\quad Ax\le b,\ x\ge 0$$</p>
+
+    <p>给每条约束配一个非负乘数 $y_i$，要求拼出的左边盖住目标系数，再让右边尽量小，得到<strong>对偶问题</strong></p>
+
+    <p>$$\min\ b^\top y\quad\text{s.t.}\quad A^\top y\ge c,\ y\ge 0$$</p>
+
+    <p><strong>弱对偶</strong>很容易证：对任意可行 $x,y$，</p>
+
+    <p>$$c^\top x\le (A^\top y)^\top x=y^\top Ax\le y^\top b$$</p>
+
+    <p>第一个不等号用了 $A^\top y\ge c$ 且 $x\ge0$，第二个用了 $Ax\le b$ 且 $y\ge0$。所以原问题的任何可行值，都不超过对偶问题的任何可行值；两者之间有一条缝隙。</p>
+
+    <p><strong>强对偶</strong>说：两边的最优值相等，缝隙永远闭合。这是线性规划的对偶定理。它不是「通常成立」，而是只要两边都有可行解，就一定成立。</p>
+
+    <p>工厂例子里，对偶最优乘数是 $y=(0,5,1)$：油约束乘 $5$、总重约束乘 $1$、糖约束乘 $0$。代进去，对偶目标 $200\cdot0+300\cdot5+400\cdot1=1900$，和原问题的最优值一样。</p>
+
+    <h2 id="gamelp">8. 博弈写成线性规划</h2>
+
+    <p>现在把零和博弈的保底问题写成线性规划。玩家一选混合策略 $x$，希望最大化「对方最优回应下自己的收益」。对方的最优回应总可以取纯策略，所以只要对每一列 $j$ 守住下限：</p>
+
+    <p>$$\max\ z\quad\text{s.t.}\quad (A^\top x)_j\ge z\ \text{对每列 }j,\quad \sum_j x_j=1,\quad x\ge0$$</p>
+
+    <p>这里 $z$ 是保底数：不管对方出哪一列，玩家一的期望收益都不低于 $z$。最大化 $z$，就是在所有混合策略里找最好的保底。</p>
+
+    <p>约束全是线性的：逐列的下限是线性不等式，概率非负是线性不等式，概率和为一是一条线性等式。所以这是一个标准线性规划。</p>
+
+    <p>以石头剪刀布为例，矩阵的三列分别给出三条约束：</p>
+
+    <p>$$-x_2+x_3\ge z,\qquad x_1-x_3\ge z,\qquad -x_1+x_2\ge z$$</p>
+
+    <p>再加上 $x_1+x_2+x_3=1$ 和 $x_i\ge0$。解出来是 $x=(1/3,1/3,1/3)$，$z=0$。</p>
+
+    <h2 id="minimax">9. 对偶即 minmax：极小极大定理</h2>
+
+    <p>写出上面这个线性规划的对偶。对偶变量是对方每一列的概率 $y$，对偶问题化简之后正好是</p>
+
+    <p>$$\min\ w\quad\text{s.t.}\quad (Ay)_i\le w\ \text{对每行 }i,\quad \sum_i y_i=1,\quad y\ge0$$</p>
+
+    <p>这就是玩家二先手时的上限问题：选一个混合策略 $y$，让玩家一无论选哪一行，收益都不超过 $w$；再把 $w$ 压到最小。</p>
+
+    <p>强对偶把两个问题接上：</p>
+
+    <p>$$\max_x\ \min_y\ x^\top Ay\quad=\quad\min_y\ \max_x\ x^\top Ay$$</p>
+
+    <p>这就是冯·诺依曼 1928 年的<strong>极小极大定理</strong>。它说的是：在零和博弈里，先出和后出没有区别。先手暴露信息带来的劣势，正好被「可以选择混合策略」补平。</p>
+
+    <p>证明不需要新的博弈论工具，只需要线性规划的对偶定理。这也是这一集的核心：博弈的结构被翻译成线性规划的结构，后者的对偶性质反过来给出博弈的结论。</p>
+
+    <h2 id="ne">10. 解 LP 就得到均衡</h2>
+
+    <p>设 $x^*,y^*$ 分别是两个线性规划的最优解，共同的最优值是 $v$。那么 $(x^*,y^*)$ 就是一个纳什均衡。</p>
+
+    <p>检查单方面偏离。玩家一把 $x^*$ 换成别的 $x$，玩家二仍然出 $y^*$，收益是 $x^\top Ay^*$。因为 $y^*$ 是上限问题的最优解，任何 $x$ 都不会超过 $v$；所以偏离不会让玩家一变得更好。反过来，玩家二偏离也不会让玩家一拿得更少，即玩家二自己不会更好。</p>
+
+    <p>于是求零和博弈的均衡，等价于解一个线性规划。用内点法或椭球法，时间是多项式的。这和一般博弈形成鲜明对比：后者的均衡也存在，但没有已知的多项式算法。</p>
+
+    <p>还有一个附带结论：零和博弈的所有纳什均衡，双方收益都相同，等于同一个 $v$。均衡不唯一不要紧，因为不同的均衡不会带来不同的收益。</p>
+
+    <h2 id="value">11. 博弈的值</h2>
+
+    <p>这个共同的收益 $v$ 叫<strong>博弈的值</strong>。它由矩阵 $A$ 唯一决定，和算法挑到哪一个均衡无关。</p>
+
+    <p>投硬币的值是 $0$：双方各 $1/2$，谁也占不到便宜。石头剪刀布的值也是 $0$：三方对称，均匀混合就是均衡。这类值等于零的博弈叫公平博弈。</p>
+
+    <p>换一个不对称的零和矩阵：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>玩家一 \ 玩家二</th><th>正</th><th>反</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>正</td><td>2</td><td>-1</td></tr>
+          <tr><td>反</td><td>-1</td><td>1</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>设玩家一出正面的概率为 $p$。对方出正面时收益是 $3p-1$，出反面时是 $1-2p$。令两者相等，得 $p=2/5$，值为</p>
+
+    <p>$$v=3\cdot\frac25-1=\frac15$$</p>
+
+    <p>这个 $1/5$ 是矩阵的性质，不是某个算法的产物。换一种解法、换一个均衡，值仍然是 $1/5$。</p>
+
+    <h2 id="nonzero">12. 非零和：先手是承诺</h2>
+
+    <p>零和的推导从头到尾依赖「你赚的就是我亏的」。一旦收益不再相反，这套结构就断了。看性别战：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>玩家一 \ 玩家二</th><th>话剧</th><th>球赛</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>话剧</td><td>(2, 1)</td><td>(0, 0)</td></tr>
+          <tr><td>球赛</td><td>(0, 0)</td><td>(1, 2)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>零和里先手后手等价；这里不一样。如果玩家一先公开宣布「我去剧院」，这句话就变成了承诺。玩家二看到后，最优回应是跟去剧院，因为 $(2,1)$ 比错配的 $(0,0)$ 好。玩家一拿到 $2$。</p>
+
+    <p>如果双方同时出招，就可能错配：一个去剧院、一个去球场，双方都是 $0$。先手在这里不是劣势，而是把选择变成承诺，反而占便宜。</p>
+
+    <p>所以「先手有没有优势」不是博弈的一般规律，而是取决于收益结构。零和博弈里两种顺序的值相同；非零和博弈里，承诺、威胁、信息顺序都可能改变结果。这也是为什么一般博弈不能简单写成一组线性规划：没有一个统一的对偶结构可以同时表示双方的最优回应。</p>
+
+    <p>下一集处理这个复杂世界：一般博弈的均衡到底有多难算。</p>
+
+    <h2 id="relations">13. 几个概念的关系</h2>
+
+    <ul>
+      <li><strong>零和是一类特殊博弈。</strong>总收益恒为零，两个玩家只需一张矩阵。</li>
+      <li><strong>保底是 maxmin，上限是 minmax。</strong>零和里两者相等；非零和里不一定。</li>
+      <li><strong>线性规划的最优在顶点。</strong>凸性保证局部最优即全局最优，但不保证最优解唯一。</li>
+      <li><strong>单纯形法不是最坏多项式。</strong>椭球法和内点法才有多项式时间保证。</li>
+      <li><strong>对偶给出证书。</strong>弱对偶是不等式，强对偶是等号；后者是极小极大定理的来源。</li>
+      <li><strong>零和均衡可以多项式求解。</strong>一般博弈的均衡存在，但复杂度是另一回事。</li>
+    </ul>
+
+    <h2 id="pitfalls">14. 常见错误</h2>
+
+    <ol>
+      <li><strong>把零和当成所有博弈的性质。</strong>零和要求每个行动组合的总收益为零；一般博弈不满足，不能套用单矩阵与对偶。</li>
+      <li><strong>以为先手一定吃亏或一定占便宜。</strong>零和里先后手等价；非零和里要看收益结构，承诺可能让先手占优。</li>
+      <li><strong>把单纯形法说成多项式算法。</strong>它的最坏情况是指数步；多项式保证来自椭球法或内点法。</li>
+      <li><strong>以为最优解唯一。</strong>最优值唯一，但最优解可能是一整条边或一个面。</li>
+      <li><strong>把对偶乘数当成任意正数。</strong>乘数必须非负，并且拼出的左边要盖住目标系数；否则拼不出合法上界。</li>
+      <li><strong>把弱对偶当成强对偶。</strong>弱对偶只说明原问题不超过对偶；强对偶才保证最优值相等。</li>
+      <li><strong>以为零和的「所有均衡同收益」对一般博弈也成立。</strong>一般博弈的不同均衡可以给出很不同的收益，例如性别战的两个纯均衡。</li>
+      <li><strong>以为一般博弈也能拆成一对线性规划。</strong>非零和没有这种对偶结构；这正是下一集要讲的困难的来源。</li>
+    </ol>
+
+    <h2 id="quiz">15. 自测 8 题</h2>
+
+    <ol>
+      <li>写出两个玩家零和博弈的定义，并说明为什么只需要一张矩阵。</li>
+      <li>保底和上限分别对应哪个优化问题？零和博弈里它们的关系是什么？</li>
+      <li>工厂例子里，可行域的五个顶点和目标值分别是什么？最优点在哪里？</li>
+      <li>为什么线性目标在凸多面体上的最优值一定能在顶点取到？</li>
+      <li>单纯形法每一步的代价是多少？它的最坏情况为什么不是多项式？</li>
+      <li>用 $5\cdot(x_2\le300)+(x_1+x_2\le400)$ 证明 $1900$ 是上界，并说明为什么这是最优性证书。</li>
+      <li>把零和博弈的保底问题写成线性规划，并写出它的对偶。</li>
+      <li>零和博弈的所有均衡为什么收益相同？非零和里这条为什么失效？</li>
+    </ol>
+
+    <details>
+      <summary>答案</summary>
+      <ol>
+        <li>对每个行动组合 $a$，$u_1(a)+u_2(a)=0$；玩家二的收益是玩家一的相反数，所以一张矩阵 $A$ 记玩家一的收益就够。</li>
+        <li>保底是 $\max_x\min_y x^\top Ay$，上限是 $\min_y\max_x x^\top Ay$；零和博弈里由极小极大定理，两者相等。</li>
+        <li>$(0,0)\to0$、$(200,0)\to200$、$(200,200)\to1400$、$(100,300)\to1900$、$(0,300)\to1800$；最优在 $(100,300)$，值 $1900$。</li>
+        <li>若最优点在边内部，沿目标增大的方向走到端点不会更差；反复走到顶点，值不降。</li>
+        <li>每步是一次换基，多项式时间；但顶点数是组合数级别，某些路径要走指数步。</li>
+        <li>两式相加得 $x_1+6x_2\le1900$，所以任何可行解都不超过 $1900$；而 $(100,300)$ 恰好达到，上界与达到同时成立。</li>
+        <li>$\max z$，约束 $(A^\top x)_j\ge z$、$\sum_jx_j=1$、$x\ge0$；对偶是 $\min w$，约束 $(Ay)_i\le w$、$\sum_i y_i=1$、$y\ge0$。</li>
+        <li>强对偶给出共同值 $v$，任何均衡的单方面偏离都不改善，因此收益都被夹在 $v$；非零和没有这层对偶，两个纯均衡可以给出不同的收益分配。</li>
+      </ol>
+    </details>
+
+    <h2 id="end">16. 收尾</h2>
+
+    <p>这一集的主线可以压成一条链：<strong>零和 → 一张矩阵 → 保底与上限 → 一对对偶线性规划 → 强对偶 → 极小极大定理</strong>。零和博弈的特殊结构，让「找均衡」变成了「解线性规划」；线性规划有多项式时间算法，所以零和的均衡好算。</p>
+
+    <p>但这条链依赖零和。非零和博弈里，先手后手不再等价，承诺可以改变结果，也没有一个统一的对偶可以同时表示双方的最优回应。一般博弈的均衡仍然存在，但它的计算复杂度是另一个故事。</p>
+
+    <p>下一集：一般博弈的均衡到底有多难算。</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js?v=3"></script>
+  <script defer src="book-shell.js?v=3"></script>
+  <script defer src="katex/katex.min.js"></script>
+  <script defer src="katex/auto-render.min.js"></script>
+  <script defer src="katex/render-math.js"></script>
+</body>
+</html>
