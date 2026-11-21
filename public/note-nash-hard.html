@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>纳什均衡有多难算：一条指数长的路 · 学习笔记</title>
+  <meta name="description" content="两人博弈可以对称化；均衡对应多面体上满标签的非原点顶点。Lemke-Howson 沿路径走，保证找到但不保证快；把路径抽象成 END OF THE LINE，就得到 PPAD，而两人一般博弈找均衡是 PPAD 完全。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="legacy-v1.css?v=3" />
+  <link rel="stylesheet" href="notes.css?v=3" />
+  <link rel="stylesheet" href="book-shell.css" />
+  <link rel="stylesheet" href="katex/katex.min.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+    .table-wrap table { margin-bottom: 0; }
+    .table-wrap td:first-child, .table-wrap th:first-child { white-space: nowrap; }
+    .short-video { max-width: 340px; margin: 0 auto 32px; }
+    .short-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 9 / 16;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .short-video video::cue {
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.4;
+      color: #fffdf9;
+      background: rgba(33, 29, 25, 0.78);
+    }
+    .short-video figcaption {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+    .back-link { display: inline-block; margin-bottom: 28px; font-size: 0.92rem; }
+
+    .article .katex { font-size: 1.03em; }
+    .article .katex-display {
+      margin: 20px 0;
+      padding: 2px 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+    .article .katex-display::-webkit-scrollbar { height: 6px; }
+    .article .katex-display::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#work">项目</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article" id="main" tabindex="-1">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">计算经济学 · 第 4 集</p>
+    <h1>纳什均衡有多难算：一条指数长的路</h1>
+
+    <blockquote>
+      一句话主线：两人博弈可以<strong>对称化</strong>成一块矩阵；均衡对应多面体上<strong>满标签的非原点顶点</strong>。Lemke-Howson 算法从原点出发沿路径走，每一步是多项式时间，但整条路径可以<strong>指数长</strong>。把这条路径抽象成 <strong>END OF THE LINE</strong>，就得到复杂度类 <strong>PPAD</strong>；两人一般博弈找均衡是 <strong>PPAD 完全</strong>。这和 NP 不是同一种难：解一定存在，只是走不到。
+    </blockquote>
+
+    <figure class="short-video">
+      <video controls playsinline loading="lazy" aria-labelledby="video-caption" preload="metadata" width="1080" height="1920"
+             poster="media/nashhard-poster.jpg">
+        <source src="media/nashhard-5min.mp4" type="video/mp4" />
+        <track kind="captions" src="media/nashhard-zh.vtt" srclang="zh" label="中文" />
+        浏览器不支持内嵌视频，<a href="media/nashhard-5min.mp4">点这里下载这段短片</a>。
+      </video>
+      <figcaption id="video-caption">配套短片 · 5 分 36 秒 · 有口播和字幕：从对称化、多面体与标签，到三行动路径、V_i 图、握手定理、Lemke-Howson、线的尽头、PPAD 完全，最后停在 NP 对比与三人零和的开放问题</figcaption>
+      <details class="video-transcript">
+        <summary>文字稿</summary>
+        <p>上一集零和博弈有多项式算法。一般博弈呢？这一集的答案有点意外：均衡一定存在，但找它可能要走指数长的路。路线是一条沿着多面体顶点走的路径，和一个靠奇偶性定义的复杂度类。</p>
+        <p>先化简。任何两人博弈都能拼成一个对称博弈：把两张收益矩阵放进一个大矩阵的右上和左下，对角放零。新博弈里双方用同一个策略向量，前一半是原来的玩家一，后一半是玩家二。新博弈的对称均衡，恰好对应原博弈的均衡。所以后面只研究对称博弈。</p>
+        <p>造一个多面体：收益矩阵乘向量不超过一，向量非负。约束条数是行动数的两倍，配成行动数对。多面体里除原点外，每个点归一化后就是一个混合策略；同一条射线上的点算同一个策略。某条收益约束取等号，意思是：面对对方这个策略，对应行动是最优回应。</p>
+        <p>顶点是恰好一半约束取等号的点。均衡的条件翻译成标签语言：每一对约束里恰好一条取等号。也就是：用到的行动必须是最优回应，没用到的行动概率为零。原点也满足每对一条，但它归一化不了，是个假均衡。</p>
+        <p>给每条取等号的约束贴上行动编号，一个顶点带的标签数等于行动数。标签恰好把每个行动编号各占一次的非原点顶点，就是均衡；我们管它叫一二三顶点。原点也带满标签，所以我们要找的是第二个一二三。</p>
+        <p>走一个三行动的例子。从原点出发，放开行动一概率为零这条约束，跳到邻居。现在行动三被贴了两次标签：概率为零、又是最优回应。两次标签里有两条路，一条回原点，只能走另一条。一路走到头，解出向量零、六分之一、三分之一，归一化成零、三分之一、三分之二：第二个均衡到手。</p>
+        <p>为什么这条路一定有另一个头？固定一个行动，只看除它以外都带标签的顶点。里面只有两种点：带满标签的均衡点，和某个行动带两次标签的点。前者只有一条边可走，后者有两条：把这张图画出来，每个点度数一或二，连通块只能是路径或圈。</p>
+        <p>握手定理上场：度一的点必成对出现。原点是一个度一点，所以路径另一头必然还有一个度一点。存在性就这样被构造性地再证了一遍；顺带还能看出，一般博弈的均衡个数通常是奇数。</p>
+        <p>这条路径走法就是莱姆克豪森算法：从原点出发，度二逼着你一直向前，不回头。每步只是一次单纯形换基，多项式时间；但路径本身可以指数长，顶点总数是组合数级别。所以它保证找到均衡，却不保证快。</p>
+        <p>把这件事抽象到极限：一张指数大的有向图，每个点入度出度至多一，邻居由一个多项式电路现场算出。给你一个起点，找另一个端点。这就是线的尽头问题：沿着走可能指数长，抄近路又无从下手。</p>
+        <p>能归约到它的问题组成一个类，叫 PPAD：多项式奇偶论证，有向版。名字里的奇偶就是握手定理：解的存在靠奇偶性保证，不靠构造。莱姆克豪森把找均衡归约到线的尽头，所以找均衡在 PPAD 里。</p>
+        <p>它还是 PPAD 里最难的：离散布劳威尔不动点问题是 PPAD 完全，再归约到找均衡。归约用博弈搭电路：玩家概率当数字，四个玩家的乘法小部件逼出输出等于两输入之积。三个领头玩家的概率当坐标，拼出不动点检查器。于是两人博弈找均衡也是 PPAD 完全。</p>
+        <p>这和 NP 完全不一样：NP 问解是否存在，PPAD 的解由奇偶性保证存在，只是难找。我们相信它没有多项式算法，但证不出来；不过它排在 NP 完全之后：NP 若塌成多项式，它也一起塌。所以难在这里是另一层意思：不是不存在，是走不到。</p>
+        <p>这一集的主线：对称化、多面体标签、路径算法、奇偶性，最后落到 PPAD 完全。留一个开放问题：三人零和博弈的均衡复杂度，至今没有答案。下一集换战场：拍卖。机制设计者不再求解均衡，而是设计规则让诚实成为均衡。</p>
+      </details>
+    </figure>
+
+    <p>上一集把零和博弈的均衡化成了线性规划，因此多项式时间可解。这一集处理一般博弈。均衡仍然存在，但“存在”只保证解在某个地方，不保证有一条短路径能走到它。本集把纳什均衡的计算问题拆成三件事：多面体上的标签条件、沿路径走的算法、以及刻画这类路径问题的复杂度类 PPAD。</p>
+
+    <h2 id="from-existence">0. 从「存在」到「难找」</h2>
+
+    <p>纳什定理保证：有限博弈至少有一个混合策略均衡。证明是构造性的，但构造出来的是一个不动点，不是一个可执行的多项式算法。零和博弈是特例，均衡可以写成线性规划；一般博弈没有这层对偶结构。</p>
+
+    <p>这一集的主线是：先把两人博弈对称化，把均衡翻译成多面体顶点上的<strong>标签条件</strong>；再沿着顶点走出一条路径；最后把路径问题抽象成 <strong>END OF THE LINE</strong>，得到复杂度类 <strong>PPAD</strong>。结论是：两人一般博弈找均衡是 PPAD 完全的，和 NP 完全不是同一种难。</p>
+
+    <h2 id="symmetrize">1. 对称化：两人博弈拼成对称博弈</h2>
+
+    <p>设两人博弈的收益矩阵是 $A$ 和 $B$，$A_{ij}$ 是玩家一在行动组合 $(i,j)$ 的收益，$B_{ij}$ 是玩家二的收益。把它拼成一个块矩阵</p>
+
+    <p>$$C=\begin{pmatrix}0&A\\B^\top&0\end{pmatrix}$$</p>
+
+    <p>新博弈里两个玩家用同一个策略向量 $z=(x,y)$：前一半 $x$ 对应原来的玩家一，后一半 $y$ 对应玩家二。对角块放零，所以玩家一选前一半时只吃到 $A$，玩家二选后一半时只吃到 $B^\top$。</p>
+
+    <p>这个构造的关键性质是：$(x,y)$ 是原博弈的纳什均衡，当且仅当 $z=(x,y)$ 是新博弈的<strong>对称纳什均衡</strong>。直观上，原博弈里玩家一偏离 $x$、玩家二偏离 $y$ 的两种单方面偏离，正好对应 $z$ 里两个半块的偏离；收益也一一对应。</p>
+
+    <p>所以后面只研究对称博弈：一个矩阵 $C$，双方用同一个 $z$，均衡要求 $z$ 是对称的最优回应。行动数不同时可以补齐到相同大小，不影响结论。</p>
+
+    <h2 id="polytope">2. 多面体：把策略变成射线</h2>
+
+    <p>对对称博弈 $C$，造一个多面体</p>
+
+    <p>$$P=\{z\in\mathbb{R}^n:\ z\ge 0,\ Cz\le \mathbf{1}\}$$</p>
+
+    <p>约束一共 $2n$ 条：$n$ 条收益约束 $(Cz)_i\le 1$，$n$ 条非负约束 $z_i\ge 0$。按行动编号配成 $n$ 对。</p>
+
+    <p>多面体里除原点外的每个点 $z$，归一化</p>
+
+    <p>$$\hat z=\frac{z}{\sum_j z_j}$$</p>
+
+    <p>就是一个混合策略。同一条射线上的点只差一个正倍数，归一化后是同一个策略，所以可以把整条射线看成一个策略。</p>
+
+    <p>某条收益约束取等号，$(Cz)_i=1$，意思是：在归一化后的策略下，行动 $i$ 是最优回应。约束越紧，说明这个行动越值得用；所有可行点都满足 $\le 1$，所以“顶到 1”就是“没有别的行动更好”。</p>
+
+    <h2 id="vertex">3. 顶点与标签：每对恰有一条紧</h2>
+
+    <p>在非退化情形下，顶点是恰好 $n$ 条约束取等号的点。$2n$ 条约束配成 $n$ 对，均衡的条件可以翻译成：<strong>每一对约束里恰好有一条取等号</strong>。</p>
+
+    <p>把这条条件拆开看：</p>
+
+    <ul>
+      <li>如果 $z_i>0$，非负约束 $z_i\ge0$ 不紧，那么同一对的收益约束 $(Cz)_i\le1$ 必须紧；这表示行动 $i$ 被用到，而且是最优回应。</li>
+      <li>如果 $z_i=0$，非负约束紧；收益约束必须松，表示行动 $i$ 没被用到，而且严格不如被用到的行动。</li>
+    </ul>
+
+    <p>所以“每对恰一条紧”正好对应：用到的行动都是最优回应，没用到的行动概率为零。</p>
+
+    <p>原点 $z=0$ 也满足每对一条：所有非负约束都紧，所有收益约束都松。但它归一化不了，不是一个策略，所以是个<strong>假均衡</strong>。</p>
+
+    <h2 id="labels">4. 一二三顶点：满标签的非原点顶点</h2>
+
+    <p>给每条取等号的约束贴上它所属的行动编号。一个顶点有 $n$ 条紧约束，所以带 $n$ 张标签；标签可以重复。</p>
+
+    <p>如果标签恰好把每个编号各占一次，而且顶点不是原点，这个顶点就叫<strong>满标签顶点</strong>。三个行动时，标签串是 $123$，所以口语里叫<strong>一二三顶点</strong>。它正好对应一个纳什均衡：每个用到的行动都是最优回应，每个没用到的行动都严格更差。</p>
+
+    <p>原点也带满标签 $123$，但它是假均衡。所以真正要找的是<strong>第二个</strong>满标签顶点。整集算法都在回答一个问题：怎么从原点出发，可靠地走到另一个满标签顶点。</p>
+
+    <h2 id="example">5. 三行动例子：沿路径走到头</h2>
+
+    <p>取三行动对称博弈</p>
+
+    <p>$$A=\begin{pmatrix}0&3&0\\0&0&3\\2&2&2\end{pmatrix}$$</p>
+
+    <p>约束是 $Az\le1$、$z\ge0$，三对约束。原点处三条非负约束全紧，标签串 $123$。</p>
+
+    <p>放开 $z_1\ge0$，沿这条边跳到邻居。此时行动 3 被贴了两次标签：$z_3\ge0$ 紧（概率为零），同时第 3 条收益约束也紧（行动 3 是最优回应）。重复标签意味着这个顶点有两条路：一条回原点，一条继续向前。回原点那条不走，走另一条。</p>
+
+    <p>一路走到端点，解出</p>
+
+    <p>$$z=\left(0,\frac16,\frac13\right)\quad\Longrightarrow\quad
+    \hat z=\left(0,\frac13,\frac23\right)$$</p>
+
+    <p>检查：面对 $\hat z$，三行的收益分别是 $1$、$2$、$2$。行动 2 和 3 同为最优回应，行动 1 严格更差；而 $\hat z$ 只在行动 2、3 上放概率。所以这是一个纳什均衡。第二个 $123$ 顶点到手。</p>
+
+    <h2 id="vi-graph">6. V_i 图：度数只有一或二</h2>
+
+    <p>为什么这条路径一定有另一个头？固定一个行动 $i$，只看<strong>除 $i$ 以外都带标签</strong>的顶点，记成 $V_i$。</p>
+
+    <p>$V_i$ 里只有两种点：</p>
+
+    <ul>
+      <li><strong>满标签点</strong>：$i$ 也出现了，所有标签各一次，这是均衡；它只有一条边可走，度数为 $1$。</li>
+      <li><strong>重复标签点</strong>：$i$ 出现了两次，某个别的标签缺失；两条 $i$ 约束里放松哪一条，就有两条边，度数为 $2$。</li>
+    </ul>
+
+    <p>把 $V_i$ 里的边画出来，每个点的度数只能是 $1$ 或 $2$。所以每个连通块只能是<strong>路径</strong>或<strong>圈</strong>，不会分叉。原点在 $V_i$ 里是满标签点，度数 $1$，是一条路径的端点。</p>
+
+    <h2 id="parity">7. 握手定理与奇数个均衡</h2>
+
+    <p>握手定理：一张图所有点的度数之和等于边数的两倍，</p>
+
+    <p>$$\sum_v \deg(v)=2|E|$$</p>
+
+    <p>右边是偶数，所以度数为奇数的点必须有偶数个。特别地，度数为 $1$ 的点<strong>成对出现</strong>。</p>
+
+    <p>原点在 $V_i$ 里是度 $1$ 的点，所以路径另一头必然还有一个度 $1$ 的点。那个点也是满标签点；它不可能是原点（路径不能立刻绕回），所以它是一个非原点的满标签顶点，也就是纳什均衡。存在性被构造性地再证了一遍。</p>
+
+    <p>把 $i$ 取遍所有行动，按端点计数，还能得到一个附加结论：在非退化博弈里，纳什均衡的个数是<strong>奇数</strong>。退化情形可能出现偶数个甚至连续统，所以这里说的是“通常”。</p>
+
+    <h2 id="lh">8. Lemke-Howson：保证找到，不保证快</h2>
+
+    <p>这条路径的走法就是 <strong>Lemke-Howson 算法</strong>：从原点出发，放开一条非负约束；到了新顶点，找重复的标签，沿另一条边继续走；不回头，直到走到满标签顶点。</p>
+
+    <p>每一步只是一次单纯形换基，计算量是多项式级的。问题在步数：顶点总数是组合数级别，路径本身可以指数长；文献里有专门构造的坏例子。所以它<strong>保证找到</strong>均衡，却<strong>不保证快</strong>。</p>
+
+    <p>这是一句很重要的话：算法正确性和算法复杂度是两件事。Lemke-Howson 给出了一个可靠的存在性证明和求解过程，但没有给出多项式时间保证。</p>
+
+    <h2 id="eotl">9. 线的尽头：END OF THE LINE</h2>
+
+    <p>把路径再抽象一层。考虑一张有向图：</p>
+
+    <ul>
+      <li>图的大小是指数级的，不能显式写出来；</li>
+      <li>每个点的入度和出度都至多 $1$；</li>
+      <li>给定一个点，它的前驱和后继由一个多项式时间的电路 $f$ 现场算出。</li>
+    </ul>
+
+    <p>再给一个起点 $s$，它没有前驱。问题：找另一个端点，也就是一个没有前驱或没有后继的点。</p>
+
+    <p>这就是 <strong>END OF THE LINE</strong>。沿着路径走，可能要走指数步；图是隐式的，也没法“抄近路”直接跳到终点。它把 Lemke-Howson 的困难提炼成了一个纯图论问题。</p>
+
+    <h2 id="ppad">10. PPAD：奇偶论证的类</h2>
+
+    <p>能多项式时间归约到 END OF THE LINE 的问题，组成复杂度类 <strong>PPAD</strong>：Polynomial Parity Argument, Directed，多项式奇偶论证（有向版）。</p>
+
+    <p>名字里的“奇偶”就是握手定理：解的存在由度数奇偶性保证，不靠构造。你不需要真的把路径走完才能知道另一端存在；但你也不知道怎么在多项式时间内走到它。</p>
+
+    <p>Lemke-Howson 把找纳什均衡归约到 END OF THE LINE，所以</p>
+
+    <p>$$\mathrm{NASH}\in\mathrm{PPAD}$$</p>
+
+    <p>也就是说，两人博弈找均衡这个问题，至少不会比线的尽头更难；而线的尽头本身，就是 PPAD 里最难的问题之一。</p>
+
+    <h2 id="complete">11. PPAD 完全：用博弈搭电路</h2>
+
+    <p>PPAD 里有一批<strong>PPAD 完全</strong>问题：只要其中一个有多项式算法，整个 PPAD 就塌到多项式时间。离散的布劳威尔不动点问题是其中之一：在三角化的立方体上，按边界条件给顶点定向，必然存在一个不动点单形；找它和线的尽头一样难。</p>
+
+    <p>从布劳威尔归约到博弈，需要把“连续不动点”翻译成“博弈的混合策略”。做法是用博弈搭算术电路：</p>
+
+    <ul>
+      <li>玩家的概率当数字；</li>
+      <li>四个玩家组成一个乘法小部件，均衡条件逼出 $x_c=x_a\cdot x_b$；</li>
+      <li>三个领头玩家的概率当坐标，后接一个不动点检查器。</li>
+    </ul>
+
+    <p>于是找这个博弈的均衡，就能解原来的布劳威尔问题。反向的归约来自 Lemke-Howson，两边合起来：<strong>两人一般博弈找纳什均衡是 PPAD 完全的</strong>。</p>
+
+    <p>边界情况要说清：两人零和是多项式时间；两人一般博弈是 PPAD 完全；三人零和的复杂度至今没有定论，是一个开放问题。</p>
+
+    <h2 id="vs-np">12. 和 NP 的区别</h2>
+
+    <p>NP 完全问题问的是“解存在吗”：可能有一个解，也可能一个都没有；判定和搜索都很难。PPAD 的问题不一样：解由奇偶性<strong>保证存在</strong>，难的是把它找出来。</p>
+
+    <p>这类问题叫<strong>总搜索问题</strong>：输入一定有解，算法只要输出一个解。PPAD 是总搜索问题的一个类。它不太可能 NP 完全，因为 NP 完全问题允许“无解”的输入，而 PPAD 不允许。</p>
+
+    <p>它们之间仍有联系：如果 $\mathrm{P}=\mathrm{NP}$，那么所有 NP 搜索问题都有多项式算法，PPAD 也会一起塌到多项式时间。所以有</p>
+
+    <p>$$\mathrm{P}=\mathrm{NP}\ \Longrightarrow\ \mathrm{P}=\mathrm{PPAD}$$</p>
+
+    <p>但我们既证不出 PPAD 有多项式算法，也证不出它没有。当前的共识是：它很可能没有。于是“难”在这里是另一层意思：<strong>不是不存在，是走不到</strong>。</p>
+
+    <h2 id="open">13. 三人零和：一个开放问题</h2>
+
+    <p>把已知结果排一下：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>博弈</th><th>找均衡的复杂度</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>两人零和</td><td>多项式时间（线性规划）</td></tr>
+          <tr><td>两人一般</td><td>PPAD 完全</td></tr>
+          <tr><td>三人零和</td><td>开放问题</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>三人零和看起来应该比两人一般简单，因为它仍有零和结构；但目前既没有多项式算法，也没有 PPAD 完全性的证明。这个缺口说明：我们对“均衡有多难算”的理解还不完整。</p>
+
+    <h2 id="relations">14. 几个概念的关系</h2>
+
+    <ul>
+      <li><strong>对称化不改变问题。</strong>两人博弈的均衡与拼出的对称博弈的对称均衡一一对应。</li>
+      <li><strong>满标签 + 非原点 = 均衡。</strong>标签重复或原点都不算。</li>
+      <li><strong>V_i 是路径与圈的集合。</strong>度数只有 1 或 2，所以不会分叉。</li>
+      <li><strong>握手定理给存在性。</strong>原点是一个度 1 端点，另一端必然存在。</li>
+      <li><strong>Lemke-Howson 每步多项式，整条路径可指数。</strong>保证找到，不保证快。</li>
+      <li><strong>PPAD 刻画的是这条路径问题。</strong>两人一般博弈是 PPAD 完全；两人零和是多项式；三人零和开放。</li>
+    </ul>
+
+    <h2 id="pitfalls">15. 常见错误</h2>
+
+    <ol>
+      <li><strong>把「均衡存在」当成「均衡好找」。</strong>纳什定理只保证存在；一般博弈的路径可以指数长。</li>
+      <li><strong>把 PPAD 当成 NP。</strong>PPAD 是总搜索问题，解保证存在；NP 允许无解输入。</li>
+      <li><strong>把原点当成均衡。</strong>原点满标签，但归一化不了，是假均衡。</li>
+      <li><strong>以为标签满就够了。</strong>还要非原点；标签重复的顶点也不算。</li>
+      <li><strong>把「123 顶点」理解成任意三个标签。</strong>它要求每个编号各出现一次。</li>
+      <li><strong>把 Lemke-Howson 说成多项式算法。</strong>每步多项式，但步数可以指数。</li>
+      <li><strong>以为所有博弈都 PPAD 完全。</strong>两人零和是多项式；三人零和是开放问题。</li>
+      <li><strong>把布劳威尔不动点和纳什均衡直接等同。</strong>两者之间需要归约和乘法小部件，不是同一个对象。</li>
+      <li><strong>以为均衡个数总是奇数。</strong>非退化时通常是奇数；退化时可能偶数或连续统。</li>
+    </ol>
+
+    <h2 id="quiz">16. 自测 8 题</h2>
+
+    <ol>
+      <li>写出两人博弈的对称化块矩阵 $C$，并说明它的对称均衡与原博弈的均衡如何对应。</li>
+      <li>多面体 $P=\{z\ge0:Cz\le1\}$ 里，为什么要按射线而不是按点看策略？</li>
+      <li>顶点处“每对约束恰有一条紧”对应哪两条博弈条件？原点为什么不算？</li>
+      <li>三行动例子里，$z=(0,1/6,1/3)$ 的标签是什么？归一化后为什么是均衡？</li>
+      <li>$V_i$ 里的点有哪两类？它们的度数分别是多少？</li>
+      <li>握手定理怎样给出“另一个满标签顶点存在”的证明？</li>
+      <li>Lemke-Howson 为什么保证找到均衡，却不保证多项式时间？</li>
+      <li>PPAD 与 NP 的区别是什么？三人零和目前处于什么状态？</li>
+    </ol>
+
+    <details>
+      <summary>答案</summary>
+      <ol>
+        <li>$C=\begin{pmatrix}0&A\\B^\top&0\end{pmatrix}$，$z=(x,y)$；$(x,y)$ 是原博弈的纳什均衡当且仅当 $z$ 是 $C$ 的对称纳什均衡。</li>
+        <li>同一条射线上的点只差正倍数，归一化后是同一个混合策略；策略空间是射线，不是单个点。</li>
+        <li>对应“用到的行动是最优回应”和“没用到的行动概率为零”；原点所有非负约束紧，但归一化不了，不是策略。</li>
+        <li>标签 $123$：$z_1=0$ 给标签 1，第 2、3 条收益约束紧给标签 2、3；归一化后行动 2、3 的收益都是 2，行动 1 是 1，所以是均衡。</li>
+        <li>满标签点度数为 1；某个行动标签重复的点度数为 2。</li>
+        <li>度数之和为偶数，度 1 点成对；原点是一个度 1 端点，所以路径另一端还有度 1 点，即另一个满标签顶点。</li>
+        <li>每步一次换基是多项式；但顶点数是组合数级，路径最坏可以指数长。</li>
+        <li>PPAD 是总搜索问题，解保证存在；NP 允许无解输入。三人零和的复杂度目前是开放问题。</li>
+      </ol>
+    </details>
+
+    <h2 id="end">17. 收尾</h2>
+
+    <p>这一集的主线可以压成一条链：<strong>对称化 → 多面体与标签 → 一二三顶点 → 沿路径走 → 握手定理 → Lemke-Howson → END OF THE LINE → PPAD</strong>。均衡存在，而且可以被一条路径构造性地找到；但这条路径的长度没有多项式上界。两人一般博弈找均衡因此是 PPAD 完全的。</p>
+
+    <p>PPAD 和 NP 不是同一种难。NP 问“有没有解”，PPAD 的解由奇偶性保证存在，难在怎么走到。三人零和的复杂度仍然开放，说明这张地图还没有画完。</p>
+
+    <p>下一集换战场：拍卖。机制设计者不再求解均衡，而是设计规则，让诚实成为均衡。</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js?v=3"></script>
+  <script defer src="book-shell.js?v=3"></script>
+  <script defer src="katex/katex.min.js"></script>
+  <script defer src="katex/auto-render.min.js"></script>
+  <script defer src="katex/render-math.js"></script>
+</body>
+</html>
