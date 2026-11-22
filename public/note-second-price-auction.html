@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>二价拍卖：为什么诚实是占优策略 · 学习笔记</title>
+  <meta name="description" content="一价拍卖的报价既有拉力，均衡又依赖平局规则；二价拍卖让诚实成为占优策略，并满足个体理性、无正转移与效率。固定对手最高报价后，支付曲线被压成两段常数，再用 IR 与 NPT 夹出常数零，就得到唯一性。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="legacy-v1.css?v=3" />
+  <link rel="stylesheet" href="notes.css?v=3" />
+  <link rel="stylesheet" href="book-shell.css" />
+  <link rel="stylesheet" href="katex/katex.min.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+    .table-wrap table { margin-bottom: 0; }
+    .table-wrap td:first-child, .table-wrap th:first-child { white-space: nowrap; }
+    .short-video { max-width: 340px; margin: 0 auto 32px; }
+    .short-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 9 / 16;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .short-video video::cue {
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.4;
+      color: #fffdf9;
+      background: rgba(33, 29, 25, 0.78);
+    }
+    .short-video figcaption {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+    .back-link { display: inline-block; margin-bottom: 28px; font-size: 0.92rem; }
+
+    .article .katex { font-size: 1.03em; }
+    .article .katex-display {
+      margin: 20px 0;
+      padding: 2px 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+    .article .katex-display::-webkit-scrollbar { height: 6px; }
+    .article .katex-display::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#work">项目</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article" id="main" tabindex="-1">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">计算经济学 · 第 5 集</p>
+    <h1>二价拍卖：为什么诚实是占优策略</h1>
+
+    <blockquote>
+      前四集都在<strong>给定规则，求解均衡</strong>；这一集反过来，<strong>设计规则</strong>。一价拍卖里，报价越高越容易赢，但赢了也赚得越少，纯均衡还要看平局怎么判。二价拍卖把付款与自己的报价切开：最高者赢，付第二高。于是诚实成为占优策略，并在个体理性、无正转移、效率三条性质下被唯一刻画。
+    </blockquote>
+
+    <figure class="short-video">
+      <video controls playsinline loading="lazy" aria-labelledby="video-caption" preload="metadata" width="1080" height="1920"
+             poster="media/secondprice-poster.jpg">
+        <source src="media/secondprice-5min.mp4" type="video/mp4" />
+        <track kind="captions" src="media/secondprice-zh.vtt" srclang="zh" label="中文" />
+        浏览器不支持内嵌视频，<a href="media/secondprice-5min.mp4">点这里下载这段短片</a>。
+      </video>
+      <figcaption id="video-caption">配套短片 · 5 分 34 秒 · 有口播和字幕：从一价拍卖的弱被支配与别扭均衡，到二价拍卖的诚实占优、DSIC、IR/NPT、福利，再到支付刻画与唯一性，最后接 VCG 机制</figcaption>
+      <details class="video-transcript">
+        <summary>文字稿</summary>
+        <p>前四集都在求解均衡：给定规则，看理性人怎么玩。这一集反过来：规则是我们设计的。拍卖就是最典型的机制：输入是每个人心怀鬼胎的报价，我们要设计收费方式，让说真话成为最优。</p>
+        <p>先看一价拍卖：出价最高者拿到物品，付自己的报价。爱丽丝估值四百，鲍勃估值三百。赢的人收益是估值减付款，输的人收益零。于是报价越高，赢面越大，但赢了也赚得越少：两个力气往相反方向拉。</p>
+        <p>哪些报价能先排除？报超过估值：赢了也亏，不如报低一点，弱被支配；报零：永远赢不了，也弱被支配。注意都是弱：存在对方报价让两者打平，所以删不干净。占优策略？没有：最优报价永远取决于对方报多少。</p>
+        <p>均衡也很别扭。假设都不超报，报价被压到三百以内。两人报不一样：高的那个可以偷偷降一点，照样赢，不是均衡；报一样且低于三百：任一方加一点就独赢，也不是。只剩双双报三百：是不是均衡，竟取决于平局怎么判。公平掷硬币判平局的话，纯均衡不存在。</p>
+        <p>混合均衡存在，但长得很怪：爱丽丝固定报三百，鲍勃按一条曲线随机报，还有四分之一概率报零。它传达的意思倒很自然：鲍勃报比三百略低，堵死爱丽丝继续降价的路。把报价离散到分，均衡就是三百对二百九十九点九九。可这要求双方知道彼此估值，现实里往往不知道。一价拍卖的分析，到此已经够累了。</p>
+        <p>换一条规则：二价拍卖。最高者赢，但付第二高的报价。四人报七百、九百、六百五、八百三：九百赢，付八百三。赢家付的钱，和自己的报价无关了。这一刀切断了报高多付的拉力。</p>
+        <p>现在证明：报真实估值是占优策略。固定对方最高报价，分情况讨论。对方比我估值高：我报真话输，收益零；报更高赢了也是亏，不如输。对方比我估值低：我报真话赢，付对方的价；报更低可能输掉本来赚的差价。每种情况下报真话都不劣：占优。多人同理，而且完全不需要知道别人的估值。</p>
+        <p>这个性质叫 DSIC：诚实是占优策略。玩家不用猜别人、不用算曲线，报心里那个数就行；结果也因此可预测。机制设计的第一目标，就是把博弈玩成填表。</p>
+        <p>第二组性质管底线。诚实参与收益不为负：来了不后悔，叫个体理性。付款不为负：拍卖行不倒贴钱给买家，叫无正转移。二价拍卖里，赢家付第二高价，不超过自己估值；输家不付钱：两条都满足。</p>
+        <p>第三条管效率：物品归估值最高的人。注意社会福利只算分配：谁拿到物品值多少，付款只是转移，不加进福利。诚实是占优，所以最高报价就是最高估值：效率自动达成。</p>
+        <p>那能不能不收费，白送？只想要前两条，容易；只想要后两条，也容易。但诚实加效率一起要，不收费就崩：没有付款约束，报价变成比谁敢喊大数。收费不是目的，是让真话有代价结构的工具。</p>
+        <p>反过来刻画：要诚实加效率，收费方式必须长什么样？效率要求最高者赢。固定别人最高报价，把我报价轴切成两段：输的那段付款必须是常数，赢的那段也必须是常数。再让真实估值从两侧逼近分界点，两个常数之差被夹成分界点本身：赢就付别人最高价，外加一个常数。</p>
+        <p>最后加底线：个体理性要求那个常数不大于零，无正转移要求它不小于零。夹逼得零。于是收费规则只剩一种：赢者付第二高报价。二价拍卖不是凑巧好，而是三条性质下唯一的答案。</p>
+        <p>这一集的主线：一价拍卖没有占优、均衡别扭；二价拍卖让诚实成为占优，并独占三条好性质。但世界不止一件物品、不止一种分配。下一集：VCG 机制，把对齐个人收益与社会福利推广到任意选择问题。</p>
+      </details>
+    </figure>
+
+    <p>这一集换了一个方向：不再问“规则给定后怎么玩”，而是问“想让参与者说真话，规则该怎么写”。一价拍卖是最自然的规则，却在占优策略、纯均衡和均衡形态上都很别扭；二价拍卖只改了一个付款对象，然后整件事突然变干净。</p>
+
+    <h2 id="from-design">0. 从求解均衡到设计规则</h2>
+
+    <p>机制设计把博弈倒过来看。给定参与者类型（比如估值）、报价规则、分配规则和付款规则，参与者会选择一个策略；我们希望设计这些规则，使得“报真实类型”成为每个人的占优策略。这样的机制叫<strong>激励相容</strong>；如果诚实还是占优策略，就叫 <strong>DSIC</strong>。</p>
+
+    <p>拍卖是最典型的机制：输入是一排报价，输出是“谁拿到物品”和“每个人付多少钱”。本集只处理单件物品、私人估值、准线性效用、没有底价和保留价的情形；结论不能不加条件地搬到所有拍卖。</p>
+
+    <h2 id="first-price">1. 一价拍卖：付自己的报价</h2>
+
+    <p>一价拍卖的规则是：报价最高的人赢，并支付自己的报价。设玩家 $i$ 的估值是 $v_i$，报价是 $b_i$，赢时的效用是</p>
+
+    <p>$$u_i=v_i-b_i,$$</p>
+
+    <p>输时 $u_i=0$。用爱丽丝和鲍勃举例：爱丽丝估值 $400$，鲍勃估值 $300$。报价越高，赢面越大；但一旦赢了，报价越高，$v_i-b_i$ 越小。两个力往相反方向拉。</p>
+
+    <p>这就是一价拍卖的核心张力：报价同时决定<strong>赢的概率</strong>和<strong>赢了之后的利润</strong>。二价拍卖只改付款，不改分配，就把这两件事拆开了。</p>
+
+    <h2 id="dominated">2. 弱被支配，但删不干净</h2>
+
+    <p>先看哪些报价可以先排除。</p>
+
+    <ul>
+      <li>报 $b_i>v_i$：即使赢了，$v_i-b_i<0$；报低一点不会更差。</li>
+      <li>报 $b_i=0$：如果别人报价为正，永远赢不了。</li>
+    </ul>
+
+    <p>这两类报价都是<strong>弱被支配</strong>：存在对手报价使两者打平，所以不能像严格被支配策略那样一次性删干净。比如报超过估值，在对手报价也高于你的估值时，赢和输的收益都可能是负的，报低一点未必严格更好。</p>
+
+    <p>更重要的是：一价拍卖<strong>没有占优策略</strong>。最优报价取决于对手报多少；对手高，你该报高；对手低，你该报低。没有一个与对手无关的报价能永远最优。</p>
+
+    <h2 id="pure-ne">3. 纯均衡：最后看平局规则</h2>
+
+    <p>继续用爱丽丝 $400$、鲍勃 $300$ 的例子。既然不超报是弱支配的，先假设两人都不超过 $300$。</p>
+
+    <ul>
+      <li><strong>报价不同</strong>：高的人可以稍微降一点，仍然赢，利润更高；所以不是均衡。</li>
+      <li><strong>报价相同且低于 300</strong>：任一方加一点就能独赢，且仍有正利润；所以不是均衡。</li>
+      <li><strong>双双报 300</strong>：这是唯一剩下的候选。</li>
+    </ul>
+
+    <p>$(300,300)$ 是不是均衡，取决于平局怎么判。如果平局时公平掷硬币：爱丽丝加一点就能独赢，期望利润从 $50$ 变成接近 $100$，所以她会偏离；纯均衡不存在。如果平局规则固定偏向爱丽丝：爱丽丝没有偏离动机，鲍勃加价会以高于自己估值的价格赢，利润为负，也没有偏离动机；这时 $(300,300)$ 是纯均衡。</p>
+
+    <p>所以“一价拍卖有没有纯均衡”不是一个只由收益矩阵决定的问题，<strong>平局规则也是机制的一部分</strong>。</p>
+
+    <h2 id="mixed">4. 混合均衡：300 对 299.99</h2>
+
+    <p>在这个例子里，混合均衡长得很怪：爱丽丝固定报 $300$；鲍勃按累积分布</p>
+
+    <p>$$F_B(x)=\frac{100}{400-x},\qquad 0\le x\le 300$$</p>
+
+    <p>随机报价，并且在 $x=0$ 处有一个概率集中点：</p>
+
+    <p>$$P(b_B=0)=\frac14.$$</p>
+
+    <p>鲍勃偶尔报零，不是犯傻，而是让爱丽丝无法通过降价稳定获利；他报比 $300$ 略低，则堵住爱丽丝继续降价的路。把报价离散到“分”，均衡就落成 $300$ 对 $299.99$ 这种很具体的形态。</p>
+
+    <p>但这个分析要求双方知道彼此的估值分布，甚至知道对方会怎么随机化。现实拍卖里这通常不成立。一价拍卖的分析，到这里已经足够复杂。</p>
+
+    <h2 id="second-price">5. 二价拍卖：付第二高</h2>
+
+    <p>二价拍卖的规则只有一句话：<strong>最高者赢，付第二高的报价</strong>。四个人报 $700,900,650,830$：$900$ 赢，付 $830$，而不是付 $900$。</p>
+
+    <p>这一刀把“自己的报价”和“自己的付款”切开了。报价仍然决定是否赢，但不再直接决定赢后付多少。报高多付的拉力消失了，剩下的只有“报高更容易赢”这一个方向。</p>
+
+    <p>注意付款是<strong>别人</strong>的最高报价，所以报价时赢家不需要知道自己最终会付多少；他只需要报出自己的估值。这一点是后面 DSIC 证明的关键。</p>
+
+    <h2 id="truth">6. 诚实为什么是占优</h2>
+
+    <p>固定其他人的最高报价 $t$，只考虑我自己的报价 $b$ 和真实估值 $v$。分三种情况：</p>
+
+    <ul>
+      <li><strong>$t>v$</strong>：我报真话会输，收益 $0$。报得比 $t$ 高虽然能赢，但要付 $t>v$，收益为负，不如输。</li>
+      <li><strong>$t<v$</strong>：我报真话会赢，付 $t$，收益 $v-t>0$。报得比 $t$ 低会输，收益 $0$，白白丢掉正利润。</li>
+      <li><strong>$t=v$</strong>：报真话和偏离的收益都是 $0$，不劣。</li>
+    </ul>
+
+    <p>每种情况下，报真话的收益都不低于任何偏离。所以“报 $b=v$”是弱占优策略；对 $n$ 个玩家同理。并且整个过程不需要知道别人的估值，甚至不需要知道别人的报价分布。</p>
+
+    <h2 id="dsic">7. DSIC：把博弈玩成填表</h2>
+
+    <p>这个性质叫 <strong>DSIC</strong>（Dominant-Strategy Incentive Compatible）：诚实报价是每个玩家的占优策略。玩家不用猜别人、不用算均衡曲线，只要写下心里那个数。结果也因此可预测：报价直接反映估值。</p>
+
+    <p>机制设计的第一目标，就是把一个博弈变成一张表：每个人填自己的类型，机制按规则输出分配和付款。二价拍卖是这件事最干净的样板。</p>
+
+    <h2 id="ir-npt">8. P2：两条底线</h2>
+
+    <p>除了诚实，还有两条底线性质。</p>
+
+    <ul>
+      <li><strong>个体理性（IR）</strong>：诚实参与的收益不小于 $0$。来了不后悔。</li>
+      <li><strong>无正转移（NPT）</strong>：付款不小于 $0$。拍卖行不倒贴钱给买家。</li>
+    </ul>
+
+    <p>二价拍卖满足这两条：赢家付第二高价，不超过自己的报价；在诚实报价下，报价等于估值，所以付款不超过估值。输家付 $0$。两个条件同时成立。</p>
+
+    <h2 id="welfare">9. P3：福利只看分配</h2>
+
+    <p>社会福利只计算“谁拿到物品、物品对他值多少”：</p>
+
+    <p>$$\mathrm{SW}=\sum_i x_i v_i,$$</p>
+
+    <p>其中 $x_i\in\{0,1\}$ 表示玩家 $i$ 是否拿到物品。付款只是从买家转移到拍卖行，不是社会成本，所以不进福利。二价拍卖里，诚实是占优，最高报价就是最高估值；物品归最高报价者，也就归最高估值者。效率自动达成。</p>
+
+    <p>这也是一个容易混淆的点：<strong>付款影响个人收益，但不影响社会福利</strong>。福利只关心分配。</p>
+
+    <h2 id="no-pay">10. 不收费，为什么不行</h2>
+
+    <p>只看两条性质，白送并不难：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>性质组合</th><th>白送是否可行</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>P1 + P2</td><td>可以：把物品固定给某个玩家，收益和付款底线都能满足</td></tr>
+          <tr><td>P2 + P3</td><td>可以：把物品白送给最高估值者，福利最大，付款为零</td></tr>
+          <tr><td>P1 + P3</td><td>不行：既要诚实又要效率，付款不能恒为零</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>如果白送又要效率，报价就变成“比谁敢喊大数”：没有付款约束，喊得越高越容易拿到物品，而拿到之后不用付钱。收费不是目的，而是让真话有代价结构的工具。</p>
+
+    <h2 id="characterization">11. 刻画：支付必须长什么样</h2>
+
+    <p>反过来问：如果要求 DSIC 和效率，支付函数必须是什么样？</p>
+
+    <p>效率要求最高者赢。固定其他人最高报价 $t$，我的报价轴被 $t$ 切成两段：输的一段和赢的一段。DSIC 条件在每一段内滑动时，会逼出付款曲线是<strong>常数</strong>：输时付 $p_<$，赢时付 $p_>$。</p>
+
+    <p>再让真实估值从两侧逼近分界点 $t$：如果 $p_>-p_< $ 不等于 $t$，在分界点附近就能通过微小偏离获利。夹逼的结果是</p>
+
+    <p>$$p_> - p_< = t.$$</p>
+
+    <p>于是赢时的付款等于别人最高报价 $t$ 加上一个常数 $p_0$：</p>
+
+    <p>$$p(b)=p_0+\mathbf{1}\{b>t\}\cdot t.$$</p>
+
+    <p>到这里，付款规则只剩下一个自由度：常数 $p_0$。下一节用两条底线把它夹成零。</p>
+
+    <h2 id="uniqueness">12. 唯一性：p0 只能是零</h2>
+
+    <p>个体理性要求诚实参与不亏：$p_0\le 0$。无正转移要求付款不为负：$p_0\ge 0$。两条夹在一起，$p_0=0$。</p>
+
+    <p>支付函数塌缩成“赢者付别人最高报价”，也就是第二高报价。于是：在这套单件物品、私人估值、准线性效用、无底价的设定下，<strong>DSIC + IR + NPT + 效率唯一确定二价拍卖</strong>。</p>
+
+    <p>这不是说所有拍卖都必须长成二价；而是说，如果你同时要这四条性质，二价是唯一答案。换掉其中任何一条，都会出现别的机制。</p>
+
+    <h2 id="pitfalls">13. 常见错误</h2>
+
+    <ol>
+      <li><strong>把一价拍卖当成有占优策略。</strong>一价的最优报价取决于对手；二价才让诚实成为占优。</li>
+      <li><strong>把“弱被支配”说成“严格被支配”。</strong>超报和报零都有打平的情形，所以只能弱弱地删。</li>
+      <li><strong>以为一价拍卖的纯均衡只看收益矩阵。</strong>平局规则也是机制的一部分，(300,300) 是否均衡取决于它。</li>
+      <li><strong>把混合均衡的 300 / 299.99 当成普适结论。</strong>它属于 400/300 这个具体例子，不是所有一价拍卖。</li>
+      <li><strong>把 DSIC 理解成“诚实一定让收益最大”。</strong>它是说诚实不劣于任何偏离，不是保证正收益。</li>
+      <li><strong>把付款算进社会福利。</strong>付款是转移，不是分配带来的价值。</li>
+      <li><strong>以为白送也能同时满足诚实和效率。</strong>没有付款约束，报价会膨胀成喊大数。</li>
+      <li><strong>把唯一性说成无条件的。</strong>它依赖单件物品、私人估值、准线性效用、无底价等设定。</li>
+    </ol>
+
+    <h2 id="quiz">14. 自测 8 题</h2>
+
+    <ol>
+      <li>写出单件一价拍卖中赢家和输家的效用，并说明报价的两个相反作用。</li>
+      <li>为什么“报超过估值”只是弱被支配，而不是严格被支配？</li>
+      <li>在 400/300 的例子中，为什么 $(300,300)$ 的均衡性取决于平局规则？</li>
+      <li>二价拍卖里，为什么赢家付款不超过自己的估值？</li>
+      <li>固定对手最高报价 $t$，分三种情况说明诚实报价为什么不劣。</li>
+      <li>DSIC、IR、NPT、效率分别要求什么？</li>
+      <li>为什么社会福利不把付款算进去？</li>
+      <li>从 $p(b)=p_0+\mathbf{1}\{b>t\}t$ 出发，怎样用 IR 和 NPT 推出 $p_0=0$？</li>
+    </ol>
+
+    <details>
+      <summary>答案</summary>
+      <ol>
+        <li>赢：$u_i=v_i-b_i$；输：$u_i=0$。报价越高越容易赢，但赢了之后利润越小。</li>
+        <li>存在对手报价使超报与报低打平，例如对手报价也高于自己的估值；所以只能弱被支配。</li>
+        <li>公平掷硬币时，任一方加一点就能独赢并提高期望利润；固定偏向爱丽丝时，双方都没有偏离动机。</li>
+        <li>因为付款是第二高报价，而赢家的报价最高；第二高不超过赢家的报价，诚实报价下也不超过估值。</li>
+        <li>$t>v$：真话输 $0$，超报赢但付 $t>v$，负；$t<v$：真话赢赚 $v-t$，低报输 $0$；$t=v$：两种都是 $0$。</li>
+        <li>DSIC：诚实是占优；IR：诚实收益不小于 $0$；NPT：付款不小于 $0$；效率：物品归最高估值者。</li>
+        <li>付款只是买家到拍卖行的转移，不改变“谁拿到物品、值多少”的总和。</li>
+        <li>IR 给 $p_0\le 0$，NPT 给 $p_0\ge 0$，夹逼得 $p_0=0$，于是赢者付第二高。</li>
+      </ol>
+    </details>
+
+    <h2 id="end">15. 收尾</h2>
+
+    <p>这一集的主线可以压成一条链：<strong>一价拍卖的拉力 → 弱被支配但无占优 → 纯均衡依赖平局 → 二价拍卖 → 诚实占优 → DSIC / IR / NPT / 效率 → 支付刻画 → 唯一性</strong>。</p>
+
+    <p>二价拍卖不是“碰巧好用”，而是在单件物品、私人估值、准线性效用、无底价的设定下，把诚实、两条底线和效率同时做到的唯一答案。世界当然不止一件物品、不止一种分配；下一集把这件事推广到任意选择问题，就是 VCG 机制。</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js?v=3"></script>
+  <script defer src="book-shell.js?v=3"></script>
+  <script defer src="katex/katex.min.js"></script>
+  <script defer src="katex/auto-render.min.js"></script>
+  <script defer src="katex/render-math.js"></script>
+</body>
+</html>
