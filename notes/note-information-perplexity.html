@@ -1,19 +1,7 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>从「惊讶」到困惑度：信息论如何给语言模型打分 · 学习笔记</title>
-  <meta name="description" content="从信息量和熵出发，推出联合熵、互信息、KL 散度与交叉熵，最后落到语言模型的困惑度：它是概率倒数的几何平均，也是等效分支度。" />
-  <link rel="icon" href="/favicon.ico" sizes="32x32" />
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <link rel="stylesheet" href="legacy-v1.css?v=3" />
-  <link rel="stylesheet" href="notes.css?v=3" />
-  <link rel="stylesheet" href="book-shell.css" />
-  <link rel="stylesheet" href="katex/katex.min.css" />
-  <style>
+<!--note-page
+{"pageTitle": "从「惊讶」到困惑度：信息论如何给语言模型打分 · 学习笔记", "pageDescription": "从信息量和熵出发，推出联合熵、互信息、KL 散度与交叉熵，最后落到语言模型的困惑度：它是概率倒数的几何平均，也是等效分支度。", "katex": true}
+note-page-->
+<!-- note-style:start -->
     .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
     .article-meta {
       font-family: var(--mono);
@@ -105,27 +93,8 @@
       color: var(--ink-faint);
       text-align: center;
     }
-  </style>
-</head>
-<body>
-  <a class="skip-link" href="#main">跳到主要内容</a>
-  <nav class="nav" id="nav">
-    <div class="nav-inner">
-      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
-      <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navLinks">
-        <span></span><span></span><span></span>
-      </button>
-      <ul class="nav-links" id="navLinks">
-        <li><a href="index.html#about">关于</a></li>
-        <li><a href="index.html#work">项目</a></li>
-        <li><a href="index.html#notes">笔记</a></li>
-        <li><a href="resume.html">简历</a></li>
-        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
-      </ul>
-    </div>
-  </nav>
-
-  <main class="container article" id="main" tabindex="-1">
+<!-- note-style:end -->
+<main class="container article" id="main" tabindex="-1">
     <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
     <p class="article-meta">自然语言处理 · 推导</p>
     <h1>从「惊讶」到困惑度：信息论如何给语言模型打分</h1>
@@ -489,16 +458,3 @@
 
     <p>训练时最小化交叉熵，就是让模型分布靠近真实分布；评估时看困惑度，就是在问：<strong>这个模型每一步的不确定性，相当于在多少个词里瞎猜？</strong></p>
   </main>
-
-  <footer class="footer">
-    <div class="container">
-      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
-    </div>
-  </footer>
-  <script src="script.js?v=3"></script>
-  <script defer src="book-shell.js?v=3"></script>
-  <script defer src="katex/katex.min.js"></script>
-  <script defer src="katex/auto-render.min.js"></script>
-  <script defer src="katex/render-math.js"></script>
-</body>
-</html>

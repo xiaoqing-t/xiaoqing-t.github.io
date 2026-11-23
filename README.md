@@ -17,9 +17,11 @@
 | `resume.html` / `resume-en.html` | 中文 / 英文简历的 Vite 入口；React 渲染，URL 和静态 meta 都保留 |
 | `src/resume/` | 简历页组件与入口 |
 | `src/data/resume.ts` | 简历内容，每条同时写 `zh` / `en` |
-| `public/notes.json` | **笔记书目**（5 本书 / 21 篇，按阅读顺序）← 加笔记改它，首页和笔记页侧栏都读这一份 |
+| `public/notes.json` | **笔记书目**（6 本书 / 28 篇，按阅读顺序）← 加笔记改它，首页、笔记页侧栏、feed 和 sitemap 都读这一份；只放卡片元数据，页面级 SEO 在 `notes/` 片段头里 |
 | `src/styles/global.css` | 全站样式（设计变量在顶部 `:root`） |
-| `public/` | 原样保留的静态页：旧打印简历 + 21 篇笔记 + v1 主页冻结副本 + `robots.txt` / `sitemap.xml` / `404.html` / `notes.css`（笔记页配色覆盖）+ `book-shell.css/js`（笔记页侧栏）—— **URL 一个都没变** |
+| `notes/` | 26 篇普通笔记的**内容片段**：`note-page` 头（页面标题/描述/KaTeX 开关）+ 页内 `<style>` + `<main>`。构建时由 `scripts/build-notes.mjs` 套上公共外壳生成 `dist/note-*.html` |
+| `scripts/build-notes.mjs` + `scripts/lib/note-page.mjs` | 笔记模板：公共 head、导航、页脚、KaTeX/book-shell 脚本；改一次全站笔记生效 |
+| `public/` | 原样保留的静态页：旧打印简历 + 2 篇交互图笔记（体量太大、无书侧栏，单独保留）+ v1 主页冻结副本 + `robots.txt` / `404.html` / `notes.css`（笔记页配色覆盖）+ `book-shell.css/js`（笔记页侧栏）—— **URL 一个都没变**；`sitemap.xml` 不再手写，构建时生成到 `dist/` |
 | `public/now.html` | **现在**页：活跃线卡片 + 最近更新；数据由 `sync:now` 直接内嵌，本地双击也能看 |
 | `public/now.json` | `/now` 的数据快照，由 `npm run sync:now` 从笔记仓库的白名单线卡生成 |
 | `public/case-*.html` | 两个旗舰项目的独立案例页（Coding Agent / EEG 管线），从首页作品弹窗进入 |
@@ -28,7 +30,7 @@
 | `public/uses.html` | **在用什么**：机器、Obsidian 工作流、网站栈、视频流程、字体配色；联系区的「在用什么」进来 |
 | `public/demo/` | **自动机模拟器**：正则 → NFA → DFA 单步运行；`pda.html` 是 PDA / DPDA 模式，栈与分支可视化；入口在 DFA/NFA、正则、PDA、DPDA 四篇笔记 |
 | `public/og-image.png` | 首页分享卡（1200×630，英文） |
-| `public/og/` | 21 篇笔记各自的分享卡，由 `npm run sync:og` 从 `notes.json` 生成 |
+| `public/og/` | 28 篇笔记各自的分享卡，由 `npm run sync:og` 从 `notes.json` 生成 |
 | **`React重构说明.md`** | **讲解 + 增删改查手册** ← 想改东西先看它 |
 
 ## 命令
@@ -46,12 +48,12 @@ npm run test:pda # PDA / DPDA 模拟核心的单元测试
 
 ## 部署
 
-推 `main` 即触发 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)：`npm ci` → `npm run build` → 上传 `dist/` 到 GitHub Pages。构建放在 Linux runner 上跑，因为本地 Windows 的 `vite build` 偶发 `0xC0000409`（产物仍完整）。
+推 `main` 即触发 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)：`npm ci` → `npm run build` → 上传 `dist/` 到 GitHub Pages。构建放在 Linux runner 上跑，因为本地 Windows 的 `vite build` 偶发 `0xC0000409`（产物仍完整）。构建里依次跑 `build-notes`（片段套模板）→ `note-dates`（git 更新时间）→ `sitemap`（生成 `dist/sitemap.xml`）→ `note-meta`（feed + canonical/OG/JSON-LD），所以 CI 需要完整 git 历史（`fetch-depth: 0`）。
 
 ## 两个用途（没变）
 
 1. **简历**（求职向）— `resume.html`（中文）+ `resume-en.html`（英文），两页都由 React 渲染；旧打印页 `public/resume-print.html` 仍保留但未接入
-2. **学习笔记发布出口** — `public/note-*.html` 21 篇（公式多的页面用 `public/katex/` 里自托管的 KaTeX 0.19.1 渲染，不依赖 CDN）
+2. **学习笔记发布出口** — 26 篇普通笔记由 `notes/` 片段生成，2 篇交互图保留在 `public/`；公式多的页面用 `public/katex/` 里自托管的 KaTeX 0.19.1 渲染，不依赖 CDN
 
 ## 简历怎么维护（2026-11）
 
@@ -77,7 +79,7 @@ npm run test:pda # PDA / DPDA 模拟核心的单元测试
 
 | 想做的事 | 改哪 |
 |---|---|
-| 加一篇笔记 | ① html 丢进 `public/`；② 往 `notes.json` 里对应书的 `notes` 追加一项（`title` / `desc` / `meta` / `href`） |
+| 加一篇笔记 | ① 照 `notes/note-vcg-mechanism.html` 建片段：`note-page` 头写 `pageTitle` / `pageDescription` / `katex`，再放页内 `<style>` 和 `<main>`；② 往 `notes.json` 里对应书的 `notes` 追加一项（`title` / `desc` / `meta` / `href` / `date` / `tags`）。`date` 是首次发布日，`tags` 供 JSON-LD 和后续搜索用；`updated` 可手填，不填则由 `scripts/note-dates.mjs` 从 git 历史推导。两张交互图仍直接放 `public/` |
 | 加一本书 | 在 `notes.json` 的 `books` 里加 `{ id, title, tagline, notes: [] }`，位置＝首页显示顺序 |
 | 调章节顺序 / 下架 | 挪动或删掉 `notes` 里的那一项；顺序＝阅读顺序，首页章节号和侧栏都跟着变 |
 

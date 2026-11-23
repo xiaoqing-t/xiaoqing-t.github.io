@@ -1,19 +1,7 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>神经网络语言模型：从数频次到循环网络 · 学习笔记</title>
-  <meta name="description" content="语言模型的任务是给词序列打分并预测下一个词。n 元模型用频次估条件概率，却受限于存储、远距和稀疏；前馈网络把词向量拼接后送进隐层，仍被固定窗口卡住；把权重拆成输入与循环两块，就有了 RNN。再往下是 BPTT 的连乘、梯度消失与爆炸、裁剪，以及 LSTM 和 GRU 的门控。" />
-  <link rel="icon" href="/favicon.ico" sizes="32x32" />
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <link rel="stylesheet" href="legacy-v1.css?v=3" />
-  <link rel="stylesheet" href="notes.css?v=3" />
-  <link rel="stylesheet" href="book-shell.css" />
-  <link rel="stylesheet" href="katex/katex.min.css" />
-  <style>
+<!--note-page
+{"pageTitle": "神经网络语言模型：从数频次到循环网络 · 学习笔记", "pageDescription": "语言模型的任务是给词序列打分并预测下一个词。n 元模型用频次估条件概率，却受限于存储、远距和稀疏；前馈网络把词向量拼接后送进隐层，仍被固定窗口卡住；把权重拆成输入与循环两块，就有了 RNN。再往下是 BPTT 的连乘、梯度消失与爆炸、裁剪，以及 LSTM 和 GRU 的门控。", "katex": true}
+note-page-->
+<!-- note-style:start -->
     .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
     .article-meta {
       font-family: var(--mono);
@@ -102,27 +90,8 @@
       color: var(--ink-faint);
       text-align: center;
     }
-  </style>
-</head>
-<body>
-  <a class="skip-link" href="#main">跳到主要内容</a>
-  <nav class="nav" id="nav">
-    <div class="nav-inner">
-      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
-      <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navLinks">
-        <span></span><span></span><span></span>
-      </button>
-      <ul class="nav-links" id="navLinks">
-        <li><a href="index.html#about">关于</a></li>
-        <li><a href="index.html#work">项目</a></li>
-        <li><a href="index.html#notes">笔记</a></li>
-        <li><a href="resume.html">简历</a></li>
-        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
-      </ul>
-    </div>
-  </nav>
-
-  <main class="container article" id="main" tabindex="-1">
+<!-- note-style:end -->
+<main class="container article" id="main" tabindex="-1">
     <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
     <p class="article-meta">自然语言处理 · 神经网络语言模型</p>
     <h1>神经网络语言模型：从数频次到循环网络</h1>
@@ -511,16 +480,3 @@
 
     <p>如果只用一句话记住它：<strong>语言模型的任务一直没变，变的是「历史怎么表示」——从数频次，到拼接固定窗口，到共享参数的循环，再到用门控制记忆。</strong>上一集《<a href="note-word-vector.html">词向量</a>》解决的是「词怎么变成数字」，这一集把这些数字接进语言模型；再往前，是《<a href="note-syntax.html">句法分析</a>》《<a href="note-bpe.html">BPE</a>》《<a href="note-seg-crf.html">中文分词与 CRF</a>》和《<a href="note-pos-hmm.html">词性标注与 HMM</a>》。</p>
   </main>
-
-  <footer class="footer">
-    <div class="container">
-      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
-    </div>
-  </footer>
-  <script src="script.js?v=3"></script>
-  <script defer src="book-shell.js?v=3"></script>
-  <script defer src="katex/katex.min.js"></script>
-  <script defer src="katex/auto-render.min.js"></script>
-  <script defer src="katex/render-math.js"></script>
-</body>
-</html>

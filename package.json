@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build && vite build --config vite.resume.config.ts && node scripts/note-meta.mjs && node scripts/inline-build.mjs",
+    "build": "tsc --noEmit && vite build && vite build --config vite.resume.config.ts && node scripts/build-notes.mjs && node scripts/note-dates.mjs && node scripts/sitemap.mjs && node scripts/note-meta.mjs && node scripts/inline-build.mjs",
     "preview": "vite preview",
     "sync:now": "node scripts/sync-now.mjs",
     "sync:og": "python scripts/make-og.py",

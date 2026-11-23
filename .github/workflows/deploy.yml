@@ -25,6 +25,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # 笔记的更新时间由 git log 推导，浅克隆会让所有笔记都变成构建当天
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4

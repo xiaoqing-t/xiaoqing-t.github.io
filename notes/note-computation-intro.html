@@ -1,19 +1,7 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>计算理论：从业务到语言 · 学习笔记</title>
-  <meta name="description" content="计算理论先问三个问题：用哪种模型、有没有算法、要多少资源。从一条合法与非法命令的差别出发，把业务实例编码成字符串，把判定问题写成语言，再看有限自动机、下推自动机和图灵机三档记忆；有限状态能描述登录会话与经典正则，却记不住任意深度嵌套。最后把语法正确、行为正确和计算可行分开，给出整门课的路线。" />
-  <link rel="icon" href="/favicon.ico" sizes="32x32" />
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <link rel="stylesheet" href="legacy-v1.css?v=3" />
-  <link rel="stylesheet" href="notes.css?v=3" />
-  <link rel="stylesheet" href="book-shell.css" />
-  <link rel="stylesheet" href="katex/katex.min.css" />
-  <style>
+<!--note-page
+{"pageTitle": "计算理论：从业务到语言 · 学习笔记", "pageDescription": "计算理论先问三个问题：用哪种模型、有没有算法、要多少资源。从一条合法与非法命令的差别出发，把业务实例编码成字符串，把判定问题写成语言，再看有限自动机、下推自动机和图灵机三档记忆；有限状态能描述登录会话与经典正则，却记不住任意深度嵌套。最后把语法正确、行为正确和计算可行分开，给出整门课的路线。", "katex": true}
+note-page-->
+<!-- note-style:start -->
     .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
     .article-meta {
       font-family: var(--mono);
@@ -102,27 +90,8 @@
       color: var(--ink-faint);
       text-align: center;
     }
-  </style>
-</head>
-<body>
-  <a class="skip-link" href="#main">跳到主要内容</a>
-  <nav class="nav" id="nav">
-    <div class="nav-inner">
-      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
-      <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navLinks">
-        <span></span><span></span><span></span>
-      </button>
-      <ul class="nav-links" id="navLinks">
-        <li><a href="index.html#about">关于</a></li>
-        <li><a href="index.html#work">项目</a></li>
-        <li><a href="index.html#notes">笔记</a></li>
-        <li><a href="resume.html">简历</a></li>
-        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
-      </ul>
-    </div>
-  </nav>
-
-  <main class="container article" id="main" tabindex="-1">
+<!-- note-style:end -->
+<main class="container article" id="main" tabindex="-1">
     <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
     <p class="article-meta">计算理论 · 绪论</p>
     <h1>计算理论：从业务到语言</h1>
@@ -397,16 +366,3 @@
 
     <p>如果只用一句话记住它：<strong>计算理论不是先问「怎么算得快」，而是先问「这个问题到底是什么形状、有没有算法、代价是多少」。</strong>下一集《边界与代价》会把停机问题和复杂度展开；再下一站，从最简单的有限记忆开始，进入有限自动机。</p>
   </main>
-
-  <footer class="footer">
-    <div class="container">
-      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
-    </div>
-  </footer>
-  <script src="script.js?v=3"></script>
-  <script defer src="book-shell.js?v=3"></script>
-  <script defer src="katex/katex.min.js"></script>
-  <script defer src="katex/auto-render.min.js"></script>
-  <script defer src="katex/render-math.js"></script>
-</body>
-</html>

@@ -70,6 +70,12 @@ export interface Note {
   desc: string
   /** 右下角那行小字，如 "2026-10 · 推导" */
   meta: string
+  /** 首次发布日，ISO 日期；缺省时构建脚本会从 meta / git 回退 */
+  date?: string
+  /** 手填的更新日；缺省时由 scripts/note-dates.mjs 从 git 推导 */
+  updated?: string
+  /** 供 JSON-LD 与后续搜索使用 */
+  tags?: string[]
   /** 笔记页地址（静态页放在 public/ 里，所以直接写文件名） */
   href: string
 }

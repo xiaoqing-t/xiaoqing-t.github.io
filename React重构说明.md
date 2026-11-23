@@ -13,6 +13,7 @@
 |---|---|
 | 文字、项目 | `src/data/site.tsx` ← **大多数情况** |
 | 笔记书目（属于哪本书、第几章） | `public/notes.json`（首页和笔记页侧栏共用） |
+| 普通笔记正文 / 页内样式 | `notes/note-*.html`（构建时由 `scripts/build-notes.mjs` 套公共外壳） |
 | 结构（多一块 / 少一块 / 换了排布） | `src/components/` + `src/App.tsx` |
 | 颜色、间距、字号、圆角 | `src/styles/global.css` |
 
@@ -53,7 +54,7 @@ src/data/site.tsx  ──import──▶  组件  ──return JSX──▶  Rea
 | `hero` | Hero | 首屏标题、副标题、两颗按钮、下方三个小标签 |
 | `aboutCards` | About | 「关于我」三张卡 |
 | `projects` | Projects | 4 张项目卡 |
-| `books` | Notes | 5 本书 / 21 篇（数据来自 `public/notes.json`） |
+| `books` | Notes | 6 本书 / 28 篇（数据来自 `public/notes.json`） |
 | `contact` | Contact | 联系区的两个按钮 |
 | `siteOwner` | Footer | 页脚署名（年份自动算） |
 
@@ -91,9 +92,9 @@ npm run preview  # 本地预览 dist/（≈ 将来线上的样子）
 | **删一个项目** | 同上 | 整块 `{ … },` 删掉；**别留下孤立的逗号**，也别忘了上一项的逗号 |
 | **调项目顺序** | 同上 | 整块 `{ … }` 上下挪；顺序＝数组顺序 |
 | **改项目里的外链** | 同上 | `links: [{ label: '查看仓库', href: '...' }]`，可以放 0～n 个 |
-| **加一篇笔记** | ① `public/` ② `public/notes.json` | ① html 文件丢进 `public/`；② 往所属书的 `notes` 追加 `{ title, desc, meta, href }`，`href` 只写文件名（如 `note-xxx.html`） |
-| **换笔记顺序 / 下架一篇** | `public/notes.json` | 挪位置 / 删那一项。顺序＝阅读顺序，首页章节号和笔记页侧栏都跟着变；**html 文件删不删随意** |
-| **新笔记页接上「本书」侧栏** | 笔记页本身 | `<head>` 加 `book-shell.css`，`</body>` 前加 `book-shell.js`，认不到就自动不显示 |
+| **加一篇笔记** | ① `notes/` ② `public/notes.json` | ① 照 `notes/note-vcg-mechanism.html` 建片段：`note-page` 头写 `pageTitle` / `pageDescription` / `katex`，再放页内 `<style>` 和 `<main>`；② 往所属书的 `notes` 追加 `{ title, desc, meta, href, date, tags }`，`href` 只写文件名（如 `note-xxx.html`）。`date` 写首次发布日；`updated` 可手填，不填由构建从 git 历史推导 |
+| **换笔记顺序 / 下架一篇** | `public/notes.json` | 挪位置 / 删那一项。顺序＝阅读顺序，首页章节号和笔记页侧栏都跟着变；**`notes/` 里的片段删不删随意** |
+| **新笔记页接上「本书」侧栏** | 普通笔记不用管；交互图看笔记页本身 | 普通笔记由 `build-notes` 自动加 `book-shell.css/js`；直接放 `public/` 的页面才需要手动加，认不到就自动不显示 |
 | **加一个导航项** | `src/data/site.tsx` 的 `navLinks` | 加 `{ label, href }`。跳本页区块写 `#id`，跳别的页面写文件名 |
 | **在页面上加一整块新区块** | ① 新建组件 ② `App.tsx` ③ 数据 ④ 导航 | 见下面「加一块新区块」 |
 | **改配色 / 圆角 / 间距** | `src/styles/global.css` 顶部 `:root` | `--accent`（主色）、`--bg`、`--radius`、`--line` 等，**改一处全站生效** |

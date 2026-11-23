@@ -1,18 +1,7 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Claude Code 1M 上下文配置 · 学习笔记</title>
-  <meta name="description" content="一次完整的问题排查记录：让 Claude Code 桌面 App 的自动压缩阈值从 200K 提到接近 1M。" />
-  <link rel="icon" href="/favicon.ico" sizes="32x32" />
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <link rel="stylesheet" href="legacy-v1.css?v=3" />
-  <link rel="stylesheet" href="notes.css?v=3" />
-  <link rel="stylesheet" href="book-shell.css" />
-  <style>
+<!--note-page
+{"pageTitle": "Claude Code 1M 上下文配置 · 学习笔记", "pageDescription": "一次完整的问题排查记录：让 Claude Code 桌面 App 的自动压缩阈值从 200K 提到接近 1M。", "katex": false}
+note-page-->
+<!-- note-style:start -->
     .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
     .article-meta {
       font-family: var(--mono);
@@ -72,27 +61,8 @@
     .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
     .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
     .back-link { display: inline-block; margin-bottom: 28px; font-size: 0.92rem; }
-  </style>
-</head>
-<body>
-  <a class="skip-link" href="#main">跳到主要内容</a>
-  <nav class="nav" id="nav">
-    <div class="nav-inner">
-      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
-      <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navLinks">
-        <span></span><span></span><span></span>
-      </button>
-      <ul class="nav-links" id="navLinks">
-        <li><a href="index.html#about">关于</a></li>
-        <li><a href="index.html#work">项目</a></li>
-        <li><a href="index.html#notes">笔记</a></li>
-        <li><a href="resume.html">简历</a></li>
-        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
-      </ul>
-    </div>
-  </nav>
-
-  <main class="container article" id="main" tabindex="-1">
+<!-- note-style:end -->
+<main class="container article" id="main" tabindex="-1">
     <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
     <p class="article-meta">工程实践 · 2026-09-16</p>
     <h1>Claude Code 1M 上下文配置实录</h1>
@@ -230,13 +200,3 @@ EOF</code></pre>
       <li>配置的读取时机和优先级比配置内容本身更重要。同一个配置项，放在 env、settings、App 选择器三个位置，结果完全不同——先搞清楚谁覆盖谁，再动手改。</li>
     </ul>
   </main>
-
-  <footer class="footer">
-    <div class="container">
-      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
-    </div>
-  </footer>
-  <script src="script.js?v=3"></script>
-  <script defer src="book-shell.js?v=3"></script>
-</body>
-</html>
