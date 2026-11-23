@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VCG 机制：把个人收益对齐社会福利 · 学习笔记</title>
+  <meta name="description" content="社会选择里，只让大家报估值再选总和最大，防不住谎报。VCG 把分配定为福利最大，把付款写成“与我报价无关的常数减去别人在选中方案的报数和”，于是个人收益等于总福利减常数，诚实成为占优策略。Clarke 枢纽把付款解释成我对别人的损害；二价拍卖、多物品拍卖和囚徒困境调解人都是它的特例。" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="legacy-v1.css?v=3" />
+  <link rel="stylesheet" href="notes.css?v=3" />
+  <link rel="stylesheet" href="book-shell.css" />
+  <link rel="stylesheet" href="katex/katex.min.css" />
+  <style>
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+    .table-wrap table { margin-bottom: 0; }
+    .table-wrap td:first-child, .table-wrap th:first-child { white-space: nowrap; }
+    .short-video { max-width: 340px; margin: 0 auto 32px; }
+    .short-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 9 / 16;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .short-video video::cue {
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.4;
+      color: #fffdf9;
+      background: rgba(33, 29, 25, 0.78);
+    }
+    .short-video figcaption {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+    .back-link { display: inline-block; margin-bottom: 28px; font-size: 0.92rem; }
+
+    .article .katex { font-size: 1.03em; }
+    .article .katex-display {
+      margin: 20px 0;
+      padding: 2px 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+    .article .katex-display::-webkit-scrollbar { height: 6px; }
+    .article .katex-display::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">ZY <span class="nav-brand-en">/ Zhao Yunzhe</span></a>
+      <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html#about">关于</a></li>
+        <li><a href="index.html#work">项目</a></li>
+        <li><a href="index.html#notes">笔记</a></li>
+        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html#contact" class="nav-cta">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container article" id="main" tabindex="-1">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">计算经济学 · 第 6 集</p>
+    <h1>VCG 机制：把个人收益对齐社会福利</h1>
+
+    <blockquote>
+      上一集二价拍卖只处理单件物品。现实里的决策常常是“一群人，在若干个方案里选一个”：选班游地点、选公共项目、分配多件物品。VCG 把二价拍卖推广到这种一般情形：分配仍选报数总和最大的方案；付款则写成一个<strong>与我报价无关的常数</strong>减去别人在选中方案里的报数总和。于是我的收益等于总福利减常数，想让自己收益最大，就等于想让总福利最大。诚实成为占优策略；克拉克枢纽再把付款解释成“我对别人造成的损害”。
+    </blockquote>
+
+    <figure class="short-video">
+      <video controls playsinline loading="lazy" aria-labelledby="video-caption" preload="metadata" width="1080" height="1920"
+             poster="media/vcg-poster.jpg">
+        <source src="media/vcg-5min.mp4" type="video/mp4" />
+        <track kind="captions" src="media/vcg-zh.vtt" srclang="zh" label="中文" />
+        浏览器不支持内嵌视频，<a href="media/vcg-5min.mp4">点这里下载这段短片</a>。
+      </video>
+      <figcaption id="video-caption">配套短片 · 约 5 分 28 秒 · 有口播和字幕：从估值表与谎报反例，到 VCG 两半定义、收益对齐、Clarke 枢纽，以及二价、多物品、囚徒困境三个特例，最后停在计算边界与收入目标</figcaption>
+      <details class="video-transcript">
+        <summary>文字稿</summary>
+        <p>上一集二价拍卖在单物品拍卖里独占三条好性质。但现实决策不止拍卖：一群人要在若干个方案里选一个。</p>
+        <p>选班游地点、选公共项目、分配多个物品，都是同一个形状。这一集把二价拍卖推广成 VCG 机制。</p>
+        <p>每人对每个方案有一个估值，排成一张表。目标：选总和最大的方案。</p>
+        <p>最直接的办法：让大家报估值，然后选报数总和最大的。</p>
+        <p>上一集已经见过结局：不收费，就变成比谁敢喊大数。</p>
+        <p>看一个具体的谎报。方案一给两人估值二和十，方案二给三和一：总和十二比四，选方案一。</p>
+        <p>玩家一更喜欢方案二，于是把方案二的估值谎报成三千：机制看到的表变了，选方案二，他拿到三而不是二。</p>
+        <p>没有钱做约束，社会福利最大化就是空话。</p>
+        <p>所以机制要带钱：一个分配函数，加每人一个付款函数。</p>
+        <p>收益等于选中方案对我的估值，减我付的钱。</p>
+        <p>设计目标不变：诚实是占优、来了不后悔、拍卖行不倒贴、福利最大。</p>
+        <p>VCG 的第一半：分配就选报数总和最大的方案，毫不掩饰。</p>
+        <p>第二半在收费：我的付款等于一个与我报价无关的数，减去其他人在选中方案里的报数总和。</p>
+        <p>别人报多少决定那个常数，但我自己的报价动不了它。</p>
+        <p>把收费代回收益：我的收益等于选中方案的全社会总和，减那个常数。</p>
+        <p>常数与我无关，于是我想让自己收益最大，等价于想让全社会总和最大。</p>
+        <p>而分配函数恰恰在最大化总和：我报真话，它就替我选到我最想要的。别人乱报也不怕：把他们的报价当成估值，推理一字不改。</p>
+        <p>顺带一个一般结论：只要都说真话构成纳什均衡，机制就自动是占优诚实的。</p>
+        <p>反证：若某组别人报价下真话不是最优，就把那组报价设成别人的真实估值，真话均衡立刻被打破。</p>
+        <p>所以 VCG 先证均衡版本，并不吃亏。</p>
+        <p>那个常数怎么选？克拉克枢纽规则：把我踢出去，其他人能拿到的最大总和。</p>
+        <p>于是我的付款等于没有我时别人的最优，减有我时别人实际拿到的：我对别人造成的损害。</p>
+        <p>损害非负，所以不倒贴；有我时的总和不小于没有我时别人的最优，所以来了不后悔。</p>
+        <p>单物品拍卖代进去：我是最高估值时，没有我别人最优是第二高估值；有我时别人拿到零。</p>
+        <p>付款等于第二高估值减零：正是二价拍卖。</p>
+        <p>二价不是孤例，是 VCG 家族里单物品的那一个成员。</p>
+        <p>连囚徒困境都能救。设一个调解人，把四种结局当方案，收 VCG 的钱。</p>
+        <p>都抵赖总和负二，最大，被选中；没有我时别人最优是零，有我时别人实际负一，差是一，于是每人付一，收益负二。</p>
+        <p>玩家一谎报想改成自己坦白：付款变成四，真实收益负四，比负二更差。谎报第一次有了价格。</p>
+        <p>多件相同物品、每人只要一件：估值最高的前几位赢，件数定名额。</p>
+        <p>我的付款等于紧落选者的报价：没有我时，他本来能拿到一件。</p>
+        <p>二价拍卖的付第二高，在这里自然长成付第一落选价。</p>
+        <p>物品可以打包、估值可以互补时，VCG 的性质还在，但计算爆了：物品一件件分给人，分配方案数随物品数指数爆炸。</p>
+        <p>即使估值能简短描述，比如只想要某个固定包裹，福利最大化也 NP 难：能归约到独立集。</p>
+        <p>VCG 要求精确最优，所以这里跑不动；退而求其次有贪心的诚实机制，拿近似福利。</p>
+        <p>还有一条边界：VCG 只会最大化福利。拍卖行想多赚钱、想公平，它不管。</p>
+        <p>福利与收入会打架：下一集看到，有时故意不卖，反而赚得更多。</p>
+        <p>这一集的主线：不带钱的社会选择防不住谎报；VCG 用收益对齐福利让诚实成为占优；克拉克枢纽把付款定成我对别人的损害。</p>
+        <p>二价拍卖、多物品拍卖都是它的特例。</p>
+        <p>下一集：换目标函数，从福利到收入，迈尔森的最优拍卖。</p>
+      </details>
+    </figure>
+
+    <p>前五集基本都在“规则给定，求均衡”。这一集反过来：规则由我们设计，目标是让参与者在规则下愿意说真话。二价拍卖是单件物品的样板；VCG（Vickrey–Clarke–Groves）把同一套思路推广到任意社会选择问题。</p>
+
+    <h2 id="setting">0. 社会选择：n 个人，m 个方案</h2>
+
+    <p>设有 $n$ 个参与者、$m$ 个候选方案。第 $i$ 个人对方案 $a$ 的估值是 $v_i(a)$，把所有人和方案排成一张 $n\times m$ 的表。参与者的估值是私人信息，机制只能看到他们报上来的 $b_i(a)$。</p>
+
+    <p>社会选择的目标是让总福利最大：</p>
+
+    <p>$$\mathrm{SW}(a)=\sum_{i=1}^{n} v_i(a).$$</p>
+
+    <p>如果估值都能如实上报，最直接的办法就是选报数总和最大的方案。但参与者未必愿意如实上报；机制设计要处理的正是这件事。</p>
+
+    <h2 id="naive">1. 最直接的办法：报数求和选最大</h2>
+
+    <p>先看一个三人三方案的表：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>参与者</th><th>方案 A</th><th>方案 B</th><th>方案 C</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>甲</td><td>6</td><td>8</td><td>2</td></tr>
+          <tr><td>乙</td><td>4</td><td>5</td><td>7</td></tr>
+          <tr><td>丙</td><td>3</td><td>2</td><td>3</td></tr>
+          <tr><td><strong>列和</strong></td><td>13</td><td><strong>15</strong></td><td>12</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>方案 B 的列和最大，于是选 B。用公式写，分配函数就是</p>
+
+    <p>$$f(b)=\arg\max_{a\in A}\sum_{i=1}^{n} b_i(a).$$</p>
+
+    <p>如果大家都报真实估值，这个分配就是社会福利最大化的分配。问题在于：大家为什么要报真实估值？没有付款，机制对谎报没有任何惩罚。</p>
+
+    <h2 id="lie">2. 没有钱，福利最大化是空话</h2>
+
+    <p>用一个两方案两玩家的例子。方案一对两人的估值是 $2$ 和 $10$，总和 $12$；方案二给 $3$ 和 $1$，总和 $4$。按列和选，方案一胜出。</p>
+
+    <p>玩家一其实更喜欢方案二。他把方案二的估值从 $3$ 谎报成 $3000$，机制看到的列和变成 $12$ 对 $3001$，于是改选方案二。玩家一在方案二里的真实收益是 $3$，比在方案一里的 $2$ 更高。</p>
+
+    <p>这说明：<strong>只靠“报数、求和、选最大”，机制防不住谎报</strong>。要让社会福利最大化真正可实施，必须给报价加上代价结构。付款就是这种代价结构。</p>
+
+    <p>注意这里说的是“无付款的朴素机制”防不住谎报；加上合适的付款后，福利最大化是可以和诚实激励相容的——这正是 VCG 要做的事。</p>
+
+    <h2 id="mechanism">3. 机制 = 分配函数 + 付款函数</h2>
+
+    <p>一个机制由两部分组成：</p>
+
+    <ul>
+      <li><strong>分配函数</strong> $f$：接收所有人的报价 $b$，输出一个方案 $f(b)$。</li>
+      <li><strong>付款函数</strong> $p_i$：每个人一个，输出玩家 $i$ 要付的钱。</li>
+    </ul>
+
+    <p>玩家 $i$ 的准线性效用是选中方案对自己的估值，减去自己付的钱：</p>
+
+    <p>$$u_i(b)=v_i\big(f(b)\big)-p_i(b).$$</p>
+
+    <p>设计目标沿用上一集：诚实是占优策略（DSIC）、参与不后悔（个体理性，IR）、机制不倒贴（无正转移，NPT）、分配达到福利最大（效率）。这一集的主线，就是找一个同时做到这些的机制。</p>
+
+    <h2 id="vcg-def">4. VCG 的两半定义</h2>
+
+    <p>VCG 机制的分配函数就是福利最大化：</p>
+
+    <p>$$f(b)=\arg\max_{a\in A}\sum_{i=1}^{n} b_i(a).$$</p>
+
+    <p>付款函数写成两段：</p>
+
+    <p>$$p_i(b)=h_i(b_{-i})-\sum_{j\ne i} b_j\big(f(b)\big).$$</p>
+
+    <p>这里 $b_{-i}$ 表示除 $i$ 以外所有人的报价，$h_i$ 是只依赖 $b_{-i}$ 的函数，<strong>不能依赖我自己的报价 $b_i$</strong>。第一项是一个“与我无关的常数”；第二项是其他人在选中方案里的报数总和。</p>
+
+    <p>这个定义的关键在于：我的报价只通过分配 $f(b)$ 影响第二项，而第一项完全由别人决定。别人报多少定下常数，我自己的报价动不了它。后面正是靠这一点把个人收益和总福利对齐。</p>
+
+    <p>$h_i$ 可以有很多选法；不同的 $h_i$ 给出不同的 VCG 机制，影响付款高低、是否满足个体理性，以及机制能收多少钱。下一节的克拉克枢纽是一种特别常用、也特别好解释的选法。</p>
+
+    <h2 id="align">5. 收益对齐：个人收益 = 总福利 − 常数</h2>
+
+    <p>把 VCG 的付款代回效用，并在自己说真话 $b_i=v_i$ 时展开：</p>
+
+    <p>$$u_i=v_i\big(f(b)\big)-p_i(b)
+    =\sum_{j=1}^{n} b_j\big(f(b)\big)-h_i(b_{-i}).$$</p>
+
+    <p>第一项是选中方案下全社会的报数总和，也就是总福利；第二项是一个不依赖我报价的常数。于是：</p>
+
+    <ul>
+      <li>常数我改不了；</li>
+      <li>我想让自己收益最大，等价于想让总福利最大；</li>
+      <li>而分配函数 $f$ 恰恰在最大化总福利。</li>
+    </ul>
+
+    <p>我报真话时，$f$ 替我选到总福利最大的方案，也就是让我个人收益最大的方案。别人怎么报都无所谓：把他们的报价当成他们的估值，上面的推理一字不改。因此<strong>说真话是占优策略</strong>，VCG 是 DSIC 的。</p>
+
+    <p>从图上看，我的收益曲线和总福利曲线形状完全一样，只差一个常数平移 $h_i$；两条曲线的最高点落在同一个方案上。</p>
+
+    <h2 id="ne-dsic">6. 只证“真话是纳什均衡”就够</h2>
+
+    <p>VCG 的 DSIC 证明可以拆成两步。第一步先证一个弱版本：当其他人都说真话时，我说真话是最优回应，也就是真话构成纳什均衡。第二步用一个一般结论把均衡版本升级成占优版本。</p>
+
+    <p><strong>一般结论：</strong>如果一个机制在每一个估值组合下，真话组合都是纳什均衡，那么它就是 DSIC 的。</p>
+
+    <p>反证：假设存在某个玩家 $i$、某个真实估值 $v_i$ 和某组别人的报价 $b_{-i}$，使得 $i$ 在 $b_{-i}$ 下说真话不是最优。现在构造一个估值组合：让别人的真实估值正好等于这组 $b_{-i}$。在这个组合里，$i$ 偏离真话就能获利，于是真话不再是纳什均衡，和假设矛盾。</p>
+
+    <p>所以先证均衡版本并不吃亏：只要“每个估值组合下真话都是纳什均衡”，占优诚实自动成立。</p>
+
+    <h2 id="clarke">7. Clarke 枢纽：付款 = 我对别人的损害</h2>
+
+    <p>现在选具体的 $h_i$。克拉克枢纽规则是：把我从问题里拿掉，看其他人能拿到的最大总福利。</p>
+
+    <p>$$h_i(b_{-i})=\max_{a\in A}\sum_{j\ne i} b_j(a).$$</p>
+
+    <p>于是我的付款等于</p>
+
+    <p>$$p_i(b)=\underbrace{h_i(b_{-i})}_{\text{没有我时别人最优}}
+    -\underbrace{\sum_{j\ne i} b_j(f(b))}_{\text{有我时别人实际拿到}}.$$</p>
+
+    <p>这正是“我出现之后，别人福利减少了多少”，也就是我对别人造成的<strong>损害</strong>。</p>
+
+    <p>这个选择带来两条底线：</p>
+
+    <ul>
+      <li><strong>无正转移（NPT）</strong>：$h_i$ 是别人福利的最大值，不可能小于别人在选中方案里的实际福利，所以付款非负，机制不倒贴。</li>
+      <li><strong>个体理性（IR）</strong>：设 $a^*$ 是没有我时让别人福利最大的方案。$f$ 让总福利最大，所以 $\mathrm{SW}(f)\ge v_i(a^*)+h_i$；两边减去 $h_i$，得到 $u_i(f)\ge v_i(a^*)$。也就是说，参与机制的收益不低于“别人按他们的最优选择、我被排除在外”时我能拿到的收益。在拍卖这种不参与收益为 $0$ 的设定里，这就是 $u_i\ge 0$。</li>
+    </ul>
+
+    <p>这里要留意：IR 比较的是<strong>外部选项</strong>，不是任何场景下的绝对零收益。拍卖里外部选项是 $0$，所以写成 $u_i\ge 0$；像囚徒困境这种收益为负的场景，IR 只保证“不比被排除时更差”，不保证收益为正。</p>
+
+    <p>用一个具体表核对。我是第一行，乙、丙是另外两人：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th></th><th>方案 A</th><th>方案 B</th><th>方案 C</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>我</td><td>6</td><td>8</td><td>4</td></tr>
+          <tr><td>乙</td><td>5</td><td>3</td><td>7</td></tr>
+          <tr><td>丙</td><td>2</td><td>6</td><td>3</td></tr>
+          <tr><td><strong>列和</strong></td><td>13</td><td><strong>17</strong></td><td>14</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>有我在，选 B，总福利 $17$，别人拿到 $3+6=9$。没有我，乙丙的列和是 $7,9,10$，最优是 C，$h_i=10$。付款 $=10-9=1$，正好是我把别人从 C（$10$）挤到 B（$9$）造成的损失。付款非负；我的收益 $=17-10=7\ge 0$，两条底线都过。</p>
+
+    <h2 id="second-price">8. 特例一：单物品就是二价拍卖</h2>
+
+    <p>把方案理解成“谁拿到物品”。如果我是最高估值者，那么：</p>
+
+    <ul>
+      <li>没有我时，别人能拿到的最好结果是第二高的人赢，$h_i$ 等于第二高报价；</li>
+      <li>有我时，别人在选中方案里什么都没拿到，总和为 $0$；</li>
+      <li>付款等于第二高报价减零。</li>
+    </ul>
+
+    <p>如果我输了，付款是 $h_i$ 减去别人在选中方案里的实际福利；没有我时最优和实际选中是同一个结果，付款为 $0$。于是只有赢家付第二高报价，正是二价拍卖。</p>
+
+    <p>所以二价拍卖不是孤立的巧妙规则，而是 VCG 家族在单物品上的那一个成员。</p>
+
+    <h2 id="multi-unit">9. 特例二：多件相同物品付第一落选价</h2>
+
+    <p>设有 $k$ 件相同物品，每人最多要一件。估值最高的前 $k$ 个人各拿一件，件数决定名额。</p>
+
+    <p>对一个赢家 $i$：没有我时，别人能拿走的是除我之外估值最高的 $k$ 个人，总和里多出第 $k+1$ 高的报价；有我时，别人拿到的是其余 $k-1$ 个赢家的报价之和。两者相减，付款正好是<strong>第 $k+1$ 高的报价</strong>，也就是紧落选者的报价，常叫“第一落选价”。</p>
+
+    <p>单物品时 $k=1$，第一落选价就是第二高报价；二价拍卖在这里自然长成多物品版本。</p>
+
+    <h2 id="pd">10. 特例三：囚徒困境里的调解人</h2>
+
+    <p>VCG 不只管拍卖。把囚徒困境的四种结局当成四个方案，每个玩家的收益是原来的刑期取负，再让一个调解人按 VCG 收钱：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>甲 / 乙</th><th>乙抵赖</th><th>乙坦白</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>甲抵赖</strong></td><td>(−1, −1)，和 −2</td><td>(−4, 0)，和 −4</td></tr>
+          <tr><td><strong>甲坦白</strong></td><td>(0, −4)，和 −4</td><td>(−3, −3)，和 −6</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>“都抵赖”的总和 $-2$ 最大，被选中。对玩家一来说，没有他时玩家二可以坦白拿到 $0$，所以 $h_1=0$；有他时玩家二在“都抵赖”里拿到 $-1$。付款 $=0-(-1)=1$，玩家一的收益 $=-1-1=-2$。</p>
+
+    <p>如果玩家一谎报，把“甲坦白、乙抵赖”里自己的 $0$ 改成 $10$，那个方案的总和变成 $6$，超过 $-2$，机制改选它。此时 $h_1$ 仍是 $0$，玩家二在选中方案里拿到 $-4$，付款变成 $0-(-4)=4$；玩家一的真实收益是 $0-4=-4$，比诚实的 $-2$ 更差。</p>
+
+    <p>谎报第一次有了价格。调解人把合作结局“买”了出来，代价是每个人付一笔 VCG 付款；这笔钱不再返还，否则激励会被改回去。</p>
+
+    <h2 id="combinatorial">11. 组合拍卖：性质还在，计算爆了</h2>
+
+    <p>物品可以打包、估值可以互补时，VCG 的定义一字不改：分配仍选总福利最大的方案，付款仍按 Clarke 损害算。但计算量会爆炸。</p>
+
+    <p>如果每件物品必须分给某个人，$m$ 件物品、$n$ 个人，粗略就有 $n^m$ 种分配；物品越多，方案数指数增长。更麻烦的是，即使估值能写得很短，福利最大化也可能很难。</p>
+
+    <p><strong>single-minded 估值：</strong>每个投标人只想要一个固定包裹 $T_i$，拿到就值 $v_i$，拿不到就值 $0$。可行的分配要求不同人的包裹不重叠。把每个包裹看成图的一个点，包裹相交就在两点之间连边；选一组互不重叠的包裹，就是选一个独立集。福利最大化于是变成最大权独立集问题，这是 NP 难的。</p>
+
+    <p>VCG 要求精确的福利最大化，还要对每个 $i$ 再算一次“没有我时的最优”，所以一般组合拍卖里它跑不动。退而求其次，有贪心的诚实机制：按某种归一化估值排序，依次把包裹分给不冲突的人，能保证一个近似比，但拿不到精确最优。</p>
+
+    <h2 id="limits">12. 边界：VCG 只最大化福利</h2>
+
+    <p>VCG 的目标函数只有一个：社会福利。它不保证拍卖行收入最大，也不保证分配公平。</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>目标</th><th>VCG</th><th>说明</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>社会福利</td><td>最大化</td><td>分配按报数总和选</td></tr>
+          <tr><td>拍卖行收入</td><td>不保证</td><td>付款是损害，不是收入最优</td></tr>
+          <tr><td>公平</td><td>不保证</td><td>只看总福利，不看分配差距</td></tr>
+          <tr><td>计算</td><td>一般情形很难</td><td>组合拍卖的福利最大化 NP 难</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>福利和收入会打架。下一集把目标函数从福利换成收入，就会看到：有时故意不卖，反而能让期望收入更高。这也是迈尔森最优拍卖的起点。</p>
+
+    <h2 id="pitfalls">13. 常见错误</h2>
+
+    <ol>
+      <li><strong>把 VCG 的分配说成最大化收入。</strong>VCG 最大化的是社会福利；收入只是付款的副产品。</li>
+      <li><strong>让 $h_i$ 依赖自己的报价。</strong>DSIC 的关键就是常数项不能被我操纵；一旦依赖 $b_i$，收益对齐的证明立刻失效。</li>
+      <li><strong>把付款算进社会福利。</strong>付款是参与者之间的转移，不改变“谁拿到方案、值多少”的总和。</li>
+      <li><strong>把 IR 说成任何情况下收益都非负。</strong>IR 比较的是外部选项；拍卖里外部选项是 $0$，所以写成 $u_i\ge 0$，其他场景要按外部选项理解。</li>
+      <li><strong>把 Clarke 损害理解成“我拿走的物品价值”。</strong>损害是别人福利的减少量，不是我自己的收益。</li>
+      <li><strong>单物品付款说成付自己的报价。</strong>VCG 在单物品上付的是第二高报价。</li>
+      <li><strong>多物品付款说成第 $k$ 高。</strong>赢家付的是第 $k+1$ 高，也就是第一落选价。</li>
+      <li><strong>认为 VCG 在组合拍卖里总能算。</strong>精确福利最大化一般很难；性质还在，算法不一定跑得动。</li>
+      <li><strong>把“真话是 NE”和“DSIC”当成两件无关的事。</strong>一般结论是：每个估值组合下真话都是 NE，就能推出 DSIC。</li>
+      <li><strong>忽略平局规则。</strong>福利最大者不唯一时，平局怎么判会影响付款和 IR；机制要事先固定规则。</li>
+    </ol>
+
+    <h2 id="quiz">14. 自测 8 题</h2>
+
+    <ol>
+      <li>写出 VCG 的分配函数和付款函数，并说明为什么 $h_i$ 不能依赖 $b_i$。</li>
+      <li>用两方案两玩家的例子说明：只选报数总和最大，为什么防不住谎报？</li>
+      <li>把 VCG 付款代回效用，证明 $u_i=\mathrm{SW}(f(b))-h_i(b_{-i})$，并解释为什么诚实是占优。</li>
+      <li>证明一般结论：若每个估值组合下真话都是纳什均衡，则机制是 DSIC 的。</li>
+      <li>在 Clarke 枢纽下，付款为什么等于“我对别人的损害”？NPT 和 IR 分别由什么保证？</li>
+      <li>单物品 VCG 为什么退化成二价拍卖？$k$ 件相同物品时为什么付第 $k+1$ 高？</li>
+      <li>囚徒困境的 VCG 调解人：为什么“都抵赖”被选中？玩家一谎报后的付款和真实收益各是多少？</li>
+      <li>组合拍卖里 VCG 的性质和计算难点分别是什么？为什么 single-minded 福利最大化是 NP 难？</li>
+    </ol>
+
+    <details>
+      <summary>答案</summary>
+      <ol>
+        <li>$f(b)=\arg\max_a\sum_i b_i(a)$，$p_i(b)=h_i(b_{-i})-\sum_{j\ne i}b_j(f(b))$。$h_i$ 只读别人的报价，我的报价就动不了常数项，只能通过分配影响第二项；这是收益对齐证明的前提。</li>
+        <li>方案一 $(2,10)$ 和方案二 $(3,1)$ 本来选方案一；玩家一把自己的 $3$ 报成 $3000$，方案二列和变成 $3001$，机制改选方案二，他拿到 $3$ 而不是 $2$。没有付款约束，谎报有利可图。</li>
+        <li>代入得 $u_i=v_i(f(b))-h_i+\sum_{j\ne i}b_j(f(b))$；说真话 $b_i=v_i$ 时，前两项合并成 $\sum_j b_j(f(b))-h_i$。常数 $h_i$ 与我无关，$f$ 又最大化总和，所以报真话让我的收益最大；对任意别人报价都成立，故是占优。</li>
+        <li>反证：若某组 $b_{-i}$ 下真话不是最优，就把别人的真实估值设成这组 $b_{-i}$；在这个估值组合里，偏离真话能获利，真话不再是 NE，矛盾。</li>
+        <li>$h_i$ 是没有我时别人福利的最大值，减去有我时别人实际拿到的，就是别人福利的减少量，即我的损害。$h_i$ 不小于别人实际福利，所以付款非负（NPT）；$f$ 最大化总福利，给出 $u_i(f)\ge v_i(a^*)$，在拍卖里 $v_i(a^*)=0$，所以 $u_i\ge 0$（IR）。</li>
+        <li>单物品时 $h_i$ 是第二高报价，别人在选中方案拿 $0$，付款就是第二高。$k$ 件物品时，没有我别人多拿到第 $k+1$ 高那一份，有我时别人拿其余 $k-1$ 个赢家的和，相减得第 $k+1$ 高。</li>
+        <li>四个结局里“都抵赖”总和 $-2$ 最大。$h_1=0$，别人在选中方案拿 $-1$，付款 $1$，收益 $-2$。谎报把“甲坦白、乙抵赖”的 $0$ 改成 $10$，该方案总和 $6$ 被选中；付款 $0-(-4)=4$，真实收益 $0-4=-4$，更差。</li>
+        <li>性质：VCG 仍是 DSIC、福利最大、按 Clarke 损害付款。难点：分配方案数约 $n^m$，精确福利最大化一般很难；single-minded 时可行包裹对应独立集，福利最大化成为最大权独立集，NP 难。</li>
+      </ol>
+    </details>
+
+    <h2 id="end">15. 收尾</h2>
+
+    <p>这一集的主线可以压成一条链：<strong>社会选择 → 无付款防不住谎报 → 机制 = 分配 + 付款 → VCG 两半 → 个人收益 = 总福利 − 常数 → DSIC → Clarke 损害 → 二价 / 多物品 / 调解人特例 → 计算边界</strong>。</p>
+
+    <p>VCG 的核心不是某个具体收费公式，而是一个对齐思路：把每个人的收益写成“社会总福利减去一个自己动不了的常数”，于是个人追利和集体追福利变成同一件事。这个思路在单物品上给出二价拍卖，在多物品上给出第一落选价，在一般社会选择上给出 Clarke 付款。</p>
+
+    <p>但 VCG 只对齐福利，不对齐收入。下一集换目标函数：从福利到收入，看迈尔森怎样用保留价把期望收入做到最大。</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© <span id="year"></span> Zhao Yunzhe · 用 HTML/CSS/JS 手写构建</p>
+    </div>
+  </footer>
+  <script src="script.js?v=3"></script>
+  <script defer src="book-shell.js?v=3"></script>
+  <script defer src="katex/katex.min.js"></script>
+  <script defer src="katex/auto-render.min.js"></script>
+  <script defer src="katex/render-math.js"></script>
+</body>
+</html>
