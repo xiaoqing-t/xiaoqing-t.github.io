@@ -180,6 +180,20 @@ a:hover { text-decoration: underline; }
     repeating-linear-gradient(118deg, rgba(120, 95, 65, 0.035) 0 1px, transparent 1px 6px);
   pointer-events: none;
 }
+.hero-motion {
+  position: relative;
+  width: min(var(--maxw), 92%);
+  height: clamp(210px, 20vw, 250px);
+  margin: 0 auto clamp(14px, 2vw, 24px);
+}
+.hero-motion iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  pointer-events: none;
+}
 .hero-inner {
   position: relative;
   width: min(var(--maxw), 92%);

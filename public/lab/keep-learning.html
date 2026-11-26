@@ -1,0 +1,944 @@
+<!doctype html>
+<!-- 单文件 Canvas 2D 粒子流向 demo
+     默认循环；点击重播，Space 暂停；?t=3.9 可定格单帧。 -->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  if (new URLSearchParams(location.search).get('embed') === '1') {
+    document.documentElement.classList.add('embed');
+  }
+</script>
+<title>keep learning · 粒子流向</title>
+<style>
+  :root {
+    --bg: #f4f1ec;
+    --surface: #fbf8f2;
+    --ink: #1a1a18;
+    --ink-soft: #46423b;
+    --ink-faint: #6f675b;
+    --line: #ddd5c7;
+    --line-strong: #cbc2b0;
+    --accent: #7a5a34;
+    --accent-warm: #9c7a4e;
+    --accent-soft: #e7dcc8;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    color-scheme: light;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    touch-action: manipulation;
+    cursor: pointer;
+  }
+  html.embed,
+  html.embed body { background: transparent; }
+  html.embed .hud { display: none; }
+  html.embed canvas { cursor: default; }
+
+  .hud {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    padding: clamp(18px, 3vw, 34px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    pointer-events: none;
+    user-select: none;
+  }
+  .hud-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+  .brand-mark {
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--ink);
+    display: grid;
+    place-items: center;
+    font-family: var(--mono);
+    font-size: 16px;
+    line-height: 1;
+    letter-spacing: -0.06em;
+  }
+  .brand-copy { display: grid; gap: 2px; }
+  .brand-cn {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: 0.08em;
+  }
+  .brand-en {
+    font-family: var(--mono);
+    font-size: 9px;
+    line-height: 1.3;
+    letter-spacing: 0.17em;
+    color: var(--ink-faint);
+  }
+  .meta {
+    text-align: right;
+    display: grid;
+    gap: 5px;
+  }
+  .meta-line {
+    font-family: var(--mono);
+    font-size: 9px;
+    line-height: 1.4;
+    letter-spacing: 0.13em;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .meta-line b {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .hud-bottom {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .phase {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    line-height: 1;
+    letter-spacing: 0.13em;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .phase-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+  .phase-zh {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+  }
+  .phase-bar {
+    position: relative;
+    width: 92px;
+    height: 1px;
+    background: var(--line);
+    overflow: hidden;
+  }
+  .phase-bar i {
+    position: absolute;
+    inset: 0;
+    background: var(--accent);
+    transform-origin: left center;
+    transform: scaleX(0);
+  }
+  .hint {
+    text-align: right;
+    font-size: 10px;
+    line-height: 1.7;
+    letter-spacing: 0.05em;
+    color: var(--ink-faint);
+  }
+  .hint kbd {
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 1px 5px;
+    border: 1px solid var(--line-strong);
+    border-radius: 3px;
+    background: rgba(251, 248, 242, 0.6);
+    color: var(--ink-soft);
+  }
+
+  @media (max-width: 700px) {
+    .hud { padding: 18px; }
+    .brand-mark { width: 30px; height: 30px; font-size: 14px; }
+    .brand-cn { font-size: 11px; }
+    .brand-en { font-size: 8px; letter-spacing: 0.12em; }
+    .meta-line { font-size: 8px; letter-spacing: 0.08em; }
+    .phase-bar { width: 54px; }
+    .hint { display: none; }
+  }
+  @media (max-height: 520px) {
+    .hud { padding: 14px 18px; }
+    .brand-en, .meta-line:first-child { display: none; }
+  }
+</style>
+</head>
+<body>
+<canvas id="stage" aria-label="粒子从左侧课程、推导、实验、写作四个节点出发，汇聚成一条开放的螺旋，停留后喷发到右侧笔记、项目、研究、关于卡片"></canvas>
+
+<div class="hud">
+  <div class="hud-top">
+    <div class="brand">
+      <div class="brand-mark">Z</div>
+      <div class="brand-copy">
+        <span class="brand-cn">粒子流向</span>
+        <span class="brand-en">PARTICLE FLOW / 01</span>
+      </div>
+    </div>
+    <div class="meta">
+      <span class="meta-line"><span id="count">—</span> PARTICLES</span>
+      <span class="meta-line">CANVAS 2D · <b id="dims">—</b></span>
+    </div>
+  </div>
+
+  <div class="hud-bottom">
+    <div class="phase">
+      <span class="phase-dot" id="phaseDot"></span>
+      <span class="phase-zh" id="phaseZh">汇聚</span>
+      <span id="phaseEn">GATHER</span>
+      <span class="phase-bar"><i id="phaseBar"></i></span>
+    </div>
+    <div class="hint">
+      点击重播 · <kbd>space</kbd> 暂停
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  const params = new URLSearchParams(location.search);
+  const embed = params.get('embed') === '1';
+  const canvas = document.getElementById('stage');
+  const ctx = canvas.getContext('2d', { alpha: embed });
+  const countEl = document.getElementById('count');
+  const dimsEl = document.getElementById('dims');
+  const phaseZhEl = document.getElementById('phaseZh');
+  const phaseEnEl = document.getElementById('phaseEn');
+  const phaseBarEl = document.getElementById('phaseBar');
+  const phaseDotEl = document.getElementById('phaseDot');
+
+  const PAPER = '#f4f1ec';
+  const COLORS = ['#7a5a34', '#9c7a4e', '#5b7a52', '#6d5a68'];
+  const LOCK_COLORS = ['#302c26', '#332f28', '#292f27', '#2c2829'];
+  const UI_FONT = '"Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif';
+  const MONO_FONT = '"SFMono-Regular", Consolas, monospace';
+  const TAU = Math.PI * 2;
+
+  const BUILD_END = 3.4;
+  const HOLD_END = 5.0;
+  const DIVERGE_END = 6.5;
+  const CYCLE = 7.2;
+  const MAX_ROT = 0.24;
+
+  const PHASES = [
+    { until: 2.2, zh: '汇聚', en: 'GATHER' },
+    { until: BUILD_END, zh: '吸附', en: 'SNAP' },
+    { until: HOLD_END, zh: '停留', en: 'HOLD' },
+    { until: DIVERGE_END, zh: '喷发', en: 'DIVERGE' },
+    { until: CYCLE, zh: '重置', en: 'RESET' },
+  ];
+
+  const reducedQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const seekParam = Number.parseFloat(params.get('t'));
+
+  let W = 0;
+  let H = 0;
+  let dpr = 1;
+  let compact = false;
+  let layout = null;
+  let logoPoints = [];
+  let particles = [];
+  let background = null;
+  let particlesCount = 0;
+
+  let clock = 0;
+  let lastFrame = performance.now();
+  let paused = reducedQuery.matches;
+  let pausedByUser = false;
+  let lastPhase = -1;
+
+  const rand = (a = 0, b = 1) => a + Math.random() * (b - a);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const smoothstep = (a, b, v) => {
+    const x = clamp((v - a) / (b - a), 0, 1);
+    return x * x * (3 - 2 * x);
+  };
+
+  function roundRect(c, x, y, w, h, r) {
+    const rr = Math.min(r, w / 2, h / 2);
+    c.beginPath();
+    c.moveTo(x + rr, y);
+    c.arcTo(x + w, y, x + w, y + h, rr);
+    c.arcTo(x + w, y + h, x, y + h, rr);
+    c.arcTo(x, y + h, x, y, rr);
+    c.arcTo(x, y, x + w, y, rr);
+    c.closePath();
+  }
+
+  function bez(x0, x1, x2, x3, s) {
+    const m = 1 - s;
+    return m * m * m * x0 + 3 * m * m * s * x1 + 3 * m * s * s * x2 + s * s * s * x3;
+  }
+
+  function bezTan(x0, x1, x2, x3, s) {
+    const m = 1 - s;
+    return 3 * m * m * (x1 - x0) + 6 * m * s * (x2 - x1) + 3 * s * s * (x3 - x2);
+  }
+
+  function addWobble(px, py, dx, dy, envelope, seed, amp) {
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len;
+    const ny = dx / len;
+    const n = Math.sin(seed + envelope * 9.3) * 0.68 +
+      Math.sin(seed * 1.73 + envelope * 17.1) * 0.32;
+    const k = Math.sin(Math.PI * clamp(envelope, 0, 1)) * amp * n;
+    return [px + nx * k, py + ny * k];
+  }
+
+  function rotatePoint(x, y, angle) {
+    const dx = x - layout.cx;
+    const dy = y - layout.cy;
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+    return [layout.cx + dx * c - dy * s, layout.cy + dx * s + dy * c];
+  }
+
+  function holdAngle(t) {
+    return MAX_ROT * smoothstep(BUILD_END, HOLD_END, t);
+  }
+
+  function makeLayout() {
+    compact = W < 760;
+    const pad = compact ? (embed ? 16 : 24) : clamp(W * 0.035, embed ? 28 : 38, 64);
+    const cy = H * 0.5;
+    const span = embed
+      ? Math.min(H * 0.72, compact ? 190 : 250)
+      : Math.min(H * 0.43, 430);
+    const nodeX = compact ? pad + (embed ? 8 : 10) : W * (embed ? 0.135 : 0.145);
+    const cardW = compact
+      ? (embed ? 66 : 74)
+      : (embed ? clamp(W * 0.13, 120, 170) : clamp(W * 0.145, 150, 222));
+    const cardH = compact ? (embed ? 26 : 38) : (embed ? 34 : 58);
+    const cardX = compact ? W - pad - cardW / 2 - 2 : W * (embed ? 0.865 : 0.835);
+    const logoSize = embed
+      ? clamp(Math.min(W * (compact ? 0.24 : 0.18), H * 0.6), compact ? 80 : 110, 200)
+      : clamp(Math.min(W * 0.2, H * 0.28), compact ? 96 : 144, 260);
+
+    const sources = [
+      { zh: '课程', en: 'COURSE', color: 0 },
+      { zh: '推导', en: 'DERIVE', color: 1 },
+      { zh: '实验', en: 'LAB', color: 2 },
+      { zh: '写作', en: 'WRITE', color: 3 },
+    ];
+    const targets = [
+      { zh: '笔记', en: 'NOTES', color: 0 },
+      { zh: '项目', en: 'WORK', color: 1 },
+      { zh: '研究', en: 'RESEARCH', color: 2 },
+      { zh: '关于', en: 'ABOUT', color: 3 },
+    ];
+
+    const nodes = sources.map((n, i) => ({
+      ...n,
+      x: nodeX,
+      y: cy - span * 0.5 + (span * i) / 3,
+      flashAt: -99,
+    }));
+    const cards = targets.map((c, i) => ({
+      ...c,
+      x: cardX,
+      y: cy - span * 0.5 + (span * i) / 3,
+      w: cardW,
+      h: cardH,
+      flashAt: -99,
+    }));
+
+    return {
+      compact,
+      cx: W * (compact ? 0.485 : 0.495),
+      cy,
+      logoSize,
+      spiralR: logoSize * (compact ? 0.44 : 0.46),
+      nodes,
+      cards,
+    };
+  }
+
+  function buildLogoPoints() {
+    const R = layout.spiralR;
+    const r0 = R * 0.09;
+    const thetaMax = 5.5 * TAU;
+    const spacing = compact ? 2.5 : 3;
+    const pts = [];
+    let prev = null;
+    let acc = 0;
+    let next = spacing * 0.5;
+
+    for (let i = 0; i <= 5000; i++) {
+      const th = (thetaMax * i) / 5000;
+      const r = r0 + (R - r0) * (th / thetaMax);
+      const x = layout.cx + Math.cos(th) * r;
+      const y = layout.cy + Math.sin(th) * r;
+
+      if (prev) acc += Math.hypot(x - prev.x, y - prev.y);
+      if (!prev || acc >= next) {
+        pts.push({ x, y });
+        next += spacing;
+      }
+      prev = { x, y };
+    }
+    logoPoints = pts;
+  }
+
+  function buildWave() {
+    particles = [];
+    const { nodes, cards, cy } = layout;
+    const spread = Math.min(H * 0.085, 82);
+
+    for (const tgt of logoPoints) {
+      const si = (Math.random() * nodes.length) | 0;
+      const src = nodes[si];
+      const card = cards[si];
+
+      const c1x = src.x + (tgt.x - src.x) * 0.42;
+      const c1y = src.y + (tgt.y - src.y) * 0.16 + rand(-spread, spread);
+      const c2x = tgt.x - (tgt.x - src.x) * 0.18;
+      const c2y = tgt.y + (cy - tgt.y) * 0.12 + rand(-spread, spread) * 0.22;
+
+      const [startX, startY] = rotatePoint(tgt.x, tgt.y, MAX_ROT);
+
+      const ex = card.x - card.w / 2 + (compact ? 10 : 16);
+      const ey = card.y;
+      const ox1 = startX + (ex - startX) * 0.34;
+      const oy1 = startY + (ey - startY) * 0.08 + rand(-spread, spread) * 0.8;
+      const ox2 = ex - (ex - startX) * 0.13;
+      const oy2 = ey - (ey - startY) * 0.08 + rand(-spread, spread) * 0.18;
+
+      particles.push({
+        sx: src.x + rand(-2.4, 2.4),
+        sy: src.y + rand(-2.4, 2.4),
+        tx: tgt.x,
+        ty: tgt.y,
+        startX,
+        startY,
+        c1x, c1y, c2x, c2y,
+        ex, ey, ox1, oy1, ox2, oy2,
+        si,
+        color: COLORS[si],
+        lockColor: Math.random() < 0.09 ? COLORS[si] : LOCK_COLORS[si],
+        seed: rand(0, 100),
+        size: rand(1.8, 2.9) * (compact ? 0.8 : 1),
+        delay: rand(0, 2.05),
+        dur: rand(0.9, 1.25),
+        exitAt: HOLD_END + rand(0, 0.4),
+        exitDur: rand(0.72, 1),
+        wobble: rand(5, 12) * (compact ? 0.7 : 1),
+        done: false,
+      });
+    }
+    particlesCount = particles.length;
+    countEl.textContent = particlesCount.toLocaleString('en-US');
+  }
+
+  function buildBackground() {
+    if (embed) {
+      background = null;
+      return;
+    }
+
+    const bg = document.createElement('canvas');
+    bg.width = Math.max(1, Math.round(W * dpr));
+    bg.height = Math.max(1, Math.round(H * dpr));
+    const b = bg.getContext('2d');
+    b.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    b.fillStyle = PAPER;
+    b.fillRect(0, 0, W, H);
+
+    const glow = b.createRadialGradient(W / 2, H * 0.47, 0, W / 2, H * 0.47, Math.max(W, H) * 0.62);
+    glow.addColorStop(0, 'rgba(255, 255, 255, 0.5)');
+    glow.addColorStop(0.55, 'rgba(255, 255, 255, 0.14)');
+    glow.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    b.fillStyle = glow;
+    b.fillRect(0, 0, W, H);
+
+    b.fillStyle = 'rgba(26, 26, 24, 0.052)';
+    const gap = compact ? 22 : 28;
+    for (let y = gap; y < H; y += gap) {
+      for (let x = gap; x < W; x += gap) {
+        b.fillRect(x, y, 1, 1);
+      }
+    }
+
+    const noise = document.createElement('canvas');
+    noise.width = 128;
+    noise.height = 128;
+    const nctx = noise.getContext('2d');
+    const img = nctx.createImageData(128, 128);
+    for (let i = 0; i < img.data.length; i += 4) {
+      const v = 80 + Math.random() * 175;
+      img.data[i] = v;
+      img.data[i + 1] = v;
+      img.data[i + 2] = v;
+      img.data[i + 3] = 255;
+    }
+    nctx.putImageData(img, 0, 0);
+    b.globalAlpha = 0.035;
+    b.fillStyle = b.createPattern(noise, 'repeat');
+    b.fillRect(0, 0, W, H);
+    b.globalAlpha = 1;
+
+    background = bg;
+  }
+
+  function rebuild() {
+    W = window.innerWidth;
+    H = window.innerHeight;
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    canvas.style.width = `${W}px`;
+    canvas.style.height = `${H}px`;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+
+    layout = makeLayout();
+    buildBackground();
+    buildLogoPoints();
+    buildWave();
+    dimsEl.textContent = `${W}×${H}`;
+    lastPhase = -1;
+    render(clock);
+  }
+
+  function drawSpacedText(text, x, y, spacing) {
+    const chars = [...text];
+    const widths = chars.map((ch) => ctx.measureText(ch).width);
+    const total = widths.reduce((sum, w) => sum + w, 0) + spacing * (chars.length - 1);
+    let cursor = x - total / 2;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i < chars.length; i++) {
+      ctx.fillText(chars[i], cursor, y);
+      cursor += widths[i] + spacing;
+    }
+  }
+
+  function drawKeepLearning(t) {
+    const alpha = smoothstep(BUILD_END, BUILD_END + 0.6, t) *
+      (1 - smoothstep(HOLD_END, DIVERGE_END, t));
+    if (alpha <= 0.01) return;
+
+    const { cx, cy, spiralR } = layout;
+    const y = cy + spiralR + (compact ? 20 : 24);
+    ctx.save();
+    ctx.globalAlpha = alpha * 0.34;
+    ctx.fillStyle = 'rgba(122, 90, 52, 1)';
+    ctx.fillRect(cx - 8, y - (compact ? 9 : 11), 16, 1);
+
+    ctx.globalAlpha = alpha * 0.92;
+    ctx.fillStyle = 'rgba(70, 66, 59, 1)';
+    ctx.font = `${compact ? 8.5 : 10}px ${MONO_FONT}`;
+    drawSpacedText(
+      'keep learning',
+      cx,
+      y,
+      compact ? 1.3 : 2,
+    );
+    ctx.restore();
+  }
+
+  function drawNotebookPage(t) {
+    const alpha = smoothstep(BUILD_END, BUILD_END + 0.6, t) *
+      (1 - smoothstep(HOLD_END, DIVERGE_END, t));
+    if (alpha <= 0.01) return;
+
+    const { cx, cy, spiralR } = layout;
+    const short = embed && !compact && H < 240;
+    const x = cx - (spiralR + (compact ? 14 : 28));
+    const y = cy - spiralR - (compact ? 16 : short ? 12 : 24);
+    const w = 2 * spiralR + (compact ? 28 : 56);
+    const h = 2 * spiralR + (compact ? 50 : short ? 50 : 68);
+    const fold = compact ? 9 : 15;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + w - fold, y);
+    ctx.lineTo(x + w, y + fold);
+    ctx.lineTo(x + w, y + h);
+    ctx.lineTo(x, y + h);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(251, 248, 242, 0.42)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(26, 26, 24, 0.12)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(x + w - fold, y);
+    ctx.lineTo(x + w - fold, y + fold);
+    ctx.lineTo(x + w, y + fold);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(231, 220, 200, 0.38)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(26, 26, 24, 0.13)';
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawNode(node, t) {
+    const { color, zh, en, x, y } = node;
+    const active = t < 2.05;
+    const pulse = active ? 0.5 + 0.5 * Math.sin(t * 4.4 + color * 1.7) : 0;
+    const dotR = embed ? 2.7 : compact ? 3 : 3.4;
+    const labelSize = embed ? (compact ? 9 : 10) : (compact ? 10 : 12);
+    const labelGap = embed ? 7 : compact ? 8 : 12;
+
+    ctx.save();
+    ctx.strokeStyle = COLORS[color];
+    ctx.globalAlpha = 0.18 + pulse * 0.18;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(x, y, dotR + (embed ? 3.5 : 5) + pulse * 1.4, 0, TAU);
+    ctx.stroke();
+
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = COLORS[color];
+    ctx.beginPath();
+    ctx.arc(x, y, dotR, 0, TAU);
+    ctx.fill();
+
+    ctx.strokeStyle = COLORS[color];
+    ctx.globalAlpha = 0.34;
+    ctx.beginPath();
+    ctx.moveTo(x + dotR + 7, y);
+    ctx.lineTo(x + dotR + (embed ? 13 : compact ? 13 : 18), y);
+    ctx.stroke();
+
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = 'rgba(26, 26, 24, 0.88)';
+    ctx.font = `${labelSize}px ${UI_FONT}`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(zh, x + dotR + labelGap, y - (compact ? 0 : 0.5));
+
+    if (!compact) {
+      ctx.fillStyle = 'rgba(111, 103, 91, 0.85)';
+      ctx.font = `${embed ? 9 : 8}px ${MONO_FONT}`;
+      ctx.fillText(en, x + dotR + 12, y + 14);
+    }
+    ctx.restore();
+  }
+
+  function drawCard(card, t) {
+    const { color, zh, en, x, y, w, h } = card;
+    const flash = card.flashAt > -50 ? Math.max(0, 1 - (t - card.flashAt) / 1.0) : 0;
+    const eased = flash * flash * (3 - 2 * flash);
+    const left = x - w / 2;
+    const top = y - h / 2;
+    const labelSize = embed ? (compact ? 9 : 10) : (compact ? 10 : 12);
+    const labelX = embed ? (compact ? 16 : 24) : (compact ? 18 : 27);
+    const dotX = left + (embed ? (compact ? 9 : 14) : (compact ? 10 : 16));
+    const dotR = embed ? (compact ? 2 : 2.5) : (compact ? 2.4 : 3);
+
+    ctx.save();
+    roundRect(ctx, left, top, w, h, compact ? 6 : 8);
+    ctx.fillStyle = flash > 0
+      ? `rgba(231, 220, 200, ${0.44 + eased * 0.36})`
+      : 'rgba(251, 248, 242, 0.58)';
+    ctx.fill();
+    ctx.strokeStyle = flash > 0
+      ? COLORS[color]
+      : 'rgba(203, 194, 176, 0.9)';
+    ctx.globalAlpha = flash > 0 ? 0.45 + eased * 0.5 : 1;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = COLORS[color];
+    ctx.globalAlpha = 0.55 + eased * 0.45;
+    ctx.beginPath();
+    ctx.arc(dotX, y, dotR, 0, TAU);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = 'rgba(26, 26, 24, 0.88)';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.font = `${labelSize}px ${UI_FONT}`;
+    ctx.fillText(zh, left + labelX, y - (compact ? 0 : 0.5));
+
+    if (!compact) {
+      ctx.fillStyle = 'rgba(111, 103, 91, 0.85)';
+      ctx.font = `${embed ? 9 : 8}px ${MONO_FONT}`;
+      ctx.textAlign = 'right';
+      ctx.fillText(en, left + w - 14, y + 0.5);
+    }
+    ctx.restore();
+  }
+
+  function drawParticleIn(p, t) {
+    const u = clamp((t - p.delay) / p.dur, 0, 1);
+    const s = 1 - Math.pow(1 - u, 3);
+    let x = bez(p.sx, p.c1x, p.c2x, p.tx, s);
+    let y = bez(p.sy, p.c1y, p.c2y, p.ty, s);
+    const dx = bezTan(p.sx, p.c1x, p.c2x, p.tx, s);
+    const dy = bezTan(p.sy, p.c1y, p.c2y, p.ty, s);
+    [x, y] = addWobble(x, y, dx, dy, u, p.seed, p.wobble);
+    const alpha = Math.min(1, u * 5) * 0.92;
+    return { x, y, alpha, size: p.size, vx: dx, vy: dy };
+  }
+
+  function drawParticleHold(p, t) {
+    const [bx, by] = rotatePoint(p.tx, p.ty, holdAngle(t));
+    const j = 0.28 + 0.22 * Math.sin(t * 2.1 + p.seed * 7.3);
+    const x = bx + Math.cos(t * 2.7 + p.seed * 12.7) * j;
+    const y = by + Math.sin(t * 2.3 + p.seed * 8.9) * j;
+    return {
+      x,
+      y,
+      alpha: 0.86 + 0.1 * Math.sin(t * 2.4 + p.seed * 5.1),
+      size: p.size * (compact ? 0.86 : 0.92),
+      color: p.lockColor,
+    };
+  }
+
+  function drawParticleOut(p, t) {
+    const v = clamp((t - p.exitAt) / p.exitDur, 0, 1);
+    const s = Math.pow(v, 1.7);
+    let x = bez(p.startX, p.ox1, p.ox2, p.ex, s);
+    let y = bez(p.startY, p.oy1, p.oy2, p.ey, s);
+    const dx = bezTan(p.startX, p.ox1, p.ox2, p.ex, s);
+    const dy = bezTan(p.startY, p.oy1, p.oy2, p.ey, s);
+    [x, y] = addWobble(x, y, dx, dy, v, p.seed + 11, p.wobble * 0.55);
+    return {
+      x,
+      y,
+      alpha: 0.92 * (1 - smoothstep(0.72, 1, v)),
+      size: p.size * (compact ? 0.78 : 0.86),
+      vx: dx,
+      vy: dy,
+    };
+  }
+
+  function drawParticles(t) {
+    for (const p of particles) {
+      if (t < p.delay) continue;
+
+      let pos = null;
+      let color = p.color;
+
+      if (t < p.delay + p.dur) {
+        pos = drawParticleIn(p, t);
+      } else if (t < p.exitAt) {
+        pos = drawParticleHold(p, t);
+        color = pos.color || p.lockColor;
+      } else {
+        const v = (t - p.exitAt) / p.exitDur;
+        if (v >= 1) {
+          if (!p.done) {
+            p.done = true;
+            const card = layout.cards[p.si];
+            card.flashAt = t;
+          }
+          continue;
+        }
+        pos = drawParticleOut(p, t);
+      }
+
+      if (!pos) continue;
+
+      if (pos.vx !== undefined) {
+        const speed = Math.hypot(pos.vx, pos.vy);
+        if (speed > 1) {
+          const tail = Math.min(compact ? 4.5 : 6.5, pos.size * 2.6);
+          ctx.globalAlpha = pos.alpha * 0.22;
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 0.7;
+          ctx.beginPath();
+          ctx.moveTo(pos.x - (pos.vx / speed) * tail, pos.y - (pos.vy / speed) * tail);
+          ctx.lineTo(pos.x, pos.y);
+          ctx.stroke();
+        }
+      }
+
+      ctx.globalAlpha = pos.alpha;
+      ctx.fillStyle = color;
+      const s = pos.size;
+      ctx.fillRect(pos.x - s / 2, pos.y - s / 2, s, s);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function render(t) {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    if (background) {
+      ctx.drawImage(background, 0, 0);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    for (const node of layout.nodes) drawNode(node, t);
+    for (const card of layout.cards) drawCard(card, t);
+    drawNotebookPage(t);
+    drawParticles(t);
+    drawKeepLearning(t);
+
+    const phaseIndex = getPhaseIndex(t);
+    if (phaseIndex !== lastPhase) {
+      lastPhase = phaseIndex;
+      phaseZhEl.textContent = PHASES[phaseIndex].zh;
+      phaseEnEl.textContent = PHASES[phaseIndex].en;
+    }
+    phaseBarEl.style.transform = `scaleX(${clamp(t / CYCLE, 0, 1)})`;
+  }
+
+  function getPhaseIndex(t) {
+    for (let i = 0; i < PHASES.length; i++) {
+      if (t < PHASES[i].until) return i;
+    }
+    return PHASES.length - 1;
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.05, (now - lastFrame) / 1000);
+    lastFrame = now;
+
+    if (!paused) {
+      clock += dt;
+      if (clock >= CYCLE) {
+        clock %= CYCLE;
+        for (const card of layout.cards) card.flashAt = -99;
+        buildWave();
+        lastPhase = -1;
+      }
+      render(clock);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function restart() {
+    clock = 0;
+    paused = false;
+    pausedByUser = false;
+    lastFrame = performance.now();
+    for (const card of layout.cards) card.flashAt = -99;
+    buildWave();
+    lastPhase = -1;
+    phaseDotEl.style.background = 'var(--accent)';
+    phaseDotEl.style.boxShadow = '0 0 0 3px var(--accent-soft)';
+  }
+
+  function togglePause() {
+    paused = !paused;
+    pausedByUser = paused;
+    lastFrame = performance.now();
+    phaseDotEl.style.background = paused ? 'var(--ink-faint)' : 'var(--accent)';
+    phaseDotEl.style.boxShadow = paused
+      ? '0 0 0 3px var(--line)'
+      : '0 0 0 3px var(--accent-soft)';
+  }
+
+  let resizeTimer = 0;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      rebuild();
+      if (Number.isFinite(seekParam)) {
+        clock = ((seekParam % CYCLE) + CYCLE) % CYCLE;
+        paused = true;
+        render(clock);
+      }
+    }, 120);
+  });
+
+  if (!embed) {
+    canvas.addEventListener('pointerdown', () => {
+      if (reducedQuery.matches) {
+        clock = (BUILD_END + HOLD_END) / 2;
+        paused = true;
+        render(clock);
+        return;
+      }
+      restart();
+    });
+
+    window.addEventListener('keydown', (event) => {
+      if (event.code === 'Space') {
+        event.preventDefault();
+        togglePause();
+      }
+    });
+  }
+
+  window.addEventListener('message', (event) => {
+    if (!embed || event.origin !== location.origin) return;
+    if (event.data === 'learning-flow:pause') {
+      paused = true;
+    } else if (event.data === 'learning-flow:play' && !reducedQuery.matches) {
+      paused = false;
+      lastFrame = performance.now();
+    }
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    lastFrame = performance.now();
+  });
+
+  reducedQuery.addEventListener?.('change', (event) => {
+    paused = event.matches || pausedByUser;
+    lastFrame = performance.now();
+  });
+
+  rebuild();
+
+  window.__particleFlow = {
+    get size() { return { W, H, dpr, compact }; },
+    get layout() { return layout; },
+    get points() { return logoPoints.length; },
+    seek(sec) {
+      clock = ((sec % CYCLE) + CYCLE) % CYCLE;
+      paused = true;
+      render(clock);
+    },
+  };
+
+  if (Number.isFinite(seekParam)) {
+    clock = ((seekParam % CYCLE) + CYCLE) % CYCLE;
+    paused = true;
+    render(clock);
+  } else if (reducedQuery.matches) {
+    clock = (BUILD_END + HOLD_END) / 2;
+    paused = true;
+    render(clock);
+  }
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

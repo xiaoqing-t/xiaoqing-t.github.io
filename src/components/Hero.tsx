@@ -1,14 +1,50 @@
-// 首屏：左侧大标题（衬线，斜体棕色强调），右侧关注 / 现在 / 荣誉三块。
+// 首屏：顶部粒子横幅 + 左侧大标题（衬线，斜体棕色强调）+ 右侧关注 / 现在 / 荣誉三块。
 // 内容来自 src/data/site.tsx 的 hero 与 focus。
+
+import { useEffect, useRef } from 'react'
 
 import { hero, focus } from '../data/site'
 
 export default function Hero() {
+  const motionFrame = useRef<HTMLIFrameElement>(null)
+
+  useEffect(() => {
+    const frame = motionFrame.current
+    if (!frame) return
+
+    let visible = true
+    const post = (kind: 'play' | 'pause') => {
+      frame.contentWindow?.postMessage(`learning-flow:${kind}`, location.origin)
+    }
+    const onLoad = () => post(visible ? 'play' : 'pause')
+    frame.addEventListener('load', onLoad)
+
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting
+      post(visible ? 'play' : 'pause')
+    }, { threshold: 0.01 })
+    observer.observe(frame)
+
+    return () => {
+      observer.disconnect()
+      frame.removeEventListener('load', onLoad)
+    }
+  }, [])
+
   return (
     // id="top" 是给导航栏左上角姓名用的锚点
     <header className="hero" id="top">
       {/* 纯装饰的背景层，对读屏软件隐藏 */}
       <div className="hero-bg" aria-hidden="true" />
+
+      <div className="hero-motion" aria-hidden="true">
+        <iframe
+          ref={motionFrame}
+          src={`${import.meta.env.BASE_URL}lab/keep-learning.html?embed=1`}
+          title="keep learning 粒子动画"
+          tabIndex={-1}
+        />
+      </div>
 
       <div className="hero-inner">
         <div className="hero-main">
