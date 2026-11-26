@@ -1,0 +1,459 @@
+<!--note-page
+{"pageTitle": "Myerson 最优拍卖：把报价换算成虚拟价值 · 学习笔记", "pageDescription": "VCG 只最大化福利，拍卖行却要赚钱。两人均匀分布时二价拍卖的期望收入是 1/3；加一个 1/2 的底价，收入升到 5/12，代价是福利不再最大。迈尔森引理说：单参数设定里，分配规则可实施当且仅当它单调，而且收费被唯一锁成“矩形减曲线下面积”。把收费代入期望，收入变成虚拟价值的期望；虚拟价值正则时，最优拍卖就是在虚拟价值上做福利最大化。", "katex": true}
+note-page-->
+<!-- note-style:start -->
+    .article { max-width: 800px; margin-inline: auto; padding: 56px 0 80px; }
+    .article-meta {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .article h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+    .article h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 40px 0 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .article h3 { font-size: 1.08rem; font-weight: 700; margin: 24px 0 10px; }
+    .article p { color: var(--ink-soft); margin-bottom: 14px; }
+    .article strong { color: var(--ink); }
+    .article ul, .article ol { color: var(--ink-soft); padding-left: 1.4em; margin-bottom: 14px; }
+    .article li { margin-bottom: 6px; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .article code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    .article table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 18px; }
+    .article th, .article td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+    .article th { color: var(--ink); font-weight: 700; background: var(--bg-alt); }
+    .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+    .table-wrap table { margin-bottom: 0; }
+    .table-wrap td:first-child, .table-wrap th:first-child { white-space: nowrap; }
+    .short-video { max-width: 340px; margin: 0 auto 32px; }
+    .short-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 9 / 16;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .short-video video::cue {
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.4;
+      color: #fffdf9;
+      background: rgba(33, 29, 25, 0.78);
+    }
+    .short-video figcaption {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+    .back-link { display: inline-block; margin-bottom: 28px; font-size: 0.92rem; }
+
+    .article .katex { font-size: 1.03em; }
+    .article .katex-display {
+      margin: 20px 0;
+      padding: 2px 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+    .article .katex-display::-webkit-scrollbar { height: 6px; }
+    .article .katex-display::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+<!-- note-style:end -->
+<main class="container article" id="main" tabindex="-1">
+    <a class="back-link" href="index.html#notes">← 返回学习笔记</a>
+    <p class="article-meta">计算经济学 · 第 7 集</p>
+    <h1>Myerson 最优拍卖：把报价换算成虚拟价值</h1>
+
+    <blockquote>
+      上一集 VCG 把福利最大化做到了极致，但它不管拍卖行赚不赚钱。这一集把目标换成<strong>收入</strong>：诚实的占优约束（DSIC）和不亏的底线（IR）保留，只把目标函数换掉。先看到反直觉的一幕：<strong>故意不卖，反而多赚</strong>。再把问题收进单参数设定，用迈尔森引理把收费锁死成一块面积；最后把期望收入改写成期望虚拟福利，最优拍卖就变成“在虚拟价值上做福利最大化”。
+    </blockquote>
+
+    <figure class="short-video">
+      <video controls playsinline loading="lazy" aria-labelledby="video-caption" preload="metadata" width="1080" height="1920"
+             poster="media/myerson-poster.jpg">
+        <source src="media/myerson-5min.mp4" type="video/mp4" />
+        <track kind="captions" src="media/myerson-zh.vtt" srclang="zh" label="中文" />
+        浏览器不支持内嵌视频，<a href="media/myerson-5min.mp4">点这里下载这段短片</a>。
+      </video>
+      <figcaption id="video-caption">配套短片 · 约 5 分 50 秒 · 有口播和字幕：从二价基准收入 1/3 与底价 5/12 的对比，到单参数、单调、面积公式、虚拟价值与正则，最后组装出最优拍卖</figcaption>
+      <details class="video-transcript">
+        <summary>文字稿</summary>
+        <p>上一集 VCG 把福利最大化做到了极致。但拍卖行开门是要赚钱的：目标换成收入，诚实和个体理性还得保留。</p>
+        <p>这一集的答案是迈尔森最优拍卖：先把报价换算成虚拟价值，再在虚拟价值上做福利最大化。</p>
+        <p>先算基准。两人估值独立、都在零到一均匀分布；二价拍卖的收入是较低那个估值。</p>
+        <p>较低值的期望是三分之一：这就是诚实加不亏底线下的起点。</p>
+        <p>能不能更高？能，而且办法有点反直觉。</p>
+        <p>加一条底价：低于底价不卖；只有一人过线，按底价卖；两人过线，照旧付第二高。</p>
+        <p>底价取二分之一，四种情况等概率：都不过线收零；一人过线收二分之一；都过线收三分之二。</p>
+        <p>平均十二分之五，比三分之一高。有时故意不卖，反而赚更多：代价是福利不再最大。</p>
+        <p>迈尔森引理的舞台叫单参数设定：每人只有一个数，单位估值；分配给他多少份额，价值就是估值乘份额。</p>
+        <p>单物品、多物品、可分物品都算；组合拍卖不算，因为每件物品的估值不一样。</p>
+        <p>机制还是两件套：分配规则加收费规则。</p>
+        <p>什么叫好的分配规则？可实施：存在某种收费，让诚实成为占优。</p>
+        <p>迈尔森的条件朴素得惊人：单调。我报得更高，拿到的份额不能变少。</p>
+        <p>反例：物品给第二高者。我本来排第二能拿；报高变成第一，反而拿不到：不单调，也就不可实施。</p>
+        <p>引理两半：可实施当且仅当单调；而且单调时收费规则唯一。</p>
+        <p>唯一长这样：我的报价乘我的份额，减去份额曲线从零到我报价下方的面积。</p>
+        <p>报零付零的约定下，没有别的收费能配得上这条分配曲线。</p>
+        <p>画出来：报价乘份额是一个矩形；矩形挖掉曲线下面积，剩下的就是付款。</p>
+        <p>单物品时份额曲线是一个台阶：台阶高度一，跳变点在别人最高报价。</p>
+        <p>矩形挖完剩下的面积恰好等于台阶位置：付第二高。二价的唯一性，在这里第二次被证出来。</p>
+        <p>为什么必须单调？把诚实占优写两次：真实估值是我报价时，和我真实估值是另一个数时。</p>
+        <p>两个不等式相夹，付款差被夹在中间；整理后得到：报价差乘份额差，非负。</p>
+        <p>这正是单调。诚实的要求，反过来逼出了分配的形状。</p>
+        <p>为什么收费唯一？让两个报价无限接近，夹逼变成导数关系：付款对份额的导数等于报价本身。</p>
+        <p>从零积分到我报价，就是那条面积公式。</p>
+        <p>最后验证它确实诚实：画图上，谎报的收益损失是一块三角形面积，永远非负。三步合起来，引理证完。</p>
+        <p>还有个尾巴：报零付多少？付正数违反个体理性；付负数等于白送钱，收入次优。</p>
+        <p>所以只能是零。于是设计机制彻底简化成设计分配规则：收费由引理自动给出。</p>
+        <p>现在算期望收入。把面积公式代进去，交换积分次序，合并同类项。</p>
+        <p>每个玩家冒出一个只和他自己分布有关的数，叫虚拟价值：报价本身，扣掉一减分布函数与密度的比值。</p>
+        <p>期望付款等于期望虚拟价值乘份额；对所有人求和：期望收入等于期望虚拟社会福利。这一步要求估值独立。</p>
+        <p>虚拟价值可以是负的，也可能不单调：密度分段时它会往下跳。</p>
+        <p>分布正则，就是指虚拟价值单调不减；均匀分布的虚拟价值是二倍报价减一，正则。</p>
+        <p>福利最大化规则对每个坐标单调，套上单调的虚拟价值，复合出来仍单调：引理的前提保住了。</p>
+        <p>组装：收到报价，先换算虚拟价值；在虚拟价值上做福利最大化分配；收费按面积公式。</p>
+        <p>均匀分布时虚拟价值在二分之一处过零：最优拍卖就是底价二分之一的二价拍卖，收入十二分之五。</p>
+        <p>分布不同则底价因人而异：有人报得更高也会输。非正则分布要靠熨平修补，那是另一章。</p>
+        <p>这一集的主线：收入与福利打架；迈尔森引理把收费锁死成面积公式；期望收入等于虚拟福利，于是最优拍卖是虚拟价值上的福利最大化。</p>
+        <p>但这一集的最优性依赖拍卖行知道估值分布；而一价拍卖那边，玩家连彼此估值都不知道。</p>
+        <p>下一集：把信息藏起来，贝叶斯博弈与一价拍卖的重新分析。</p>
+      </details>
+    </figure>
+
+    <p>前六集的关键词是“诚实”。二价拍卖与 VCG 都在解决同一个问题：给定一个想要的目标（福利最大），怎样收费才能让人说真话。这一集换了目标：<strong>收入最大</strong>。约束没有变——仍然要求诚实是占优、参与不后悔——但目标从“把蛋糕做大”变成“把蛋糕多切给自己”。这一换，会带来一个反直觉的结论：有时候把东西留在手里不卖，收入反而更高。</p>
+
+    <h2 id="objective">0. 目标：在 DSIC 与 IR 下最大化收入</h2>
+
+    <p>沿用拍卖的基本设定：$n$ 个买家，每人有一个私人估值 $v_i$；机制看到报价 $b$，输出分配 $x_i(b)$ 和付款 $p_i(b)$。买家的准线性效用是</p>
+
+    <p>$$u_i(b)=v_i\,x_i(b)-p_i(b).$$</p>
+
+    <p>这一集保留两条底线：</p>
+
+    <ul>
+      <li><strong>DSIC</strong>：说真话是占优策略；</li>
+      <li><strong>IR</strong>：参与机制的效用不低于不参与（这里外部选项是 $0$）。</li>
+    </ul>
+
+    <p>目标换成卖家的期望收入：</p>
+
+    <p>$$\mathrm{Rev}=\mathbb{E}\left[\sum_{i=1}^{n}p_i(b)\right].$$</p>
+
+    <p>注意付款是买家之间的转移，不进入社会福利。所以“收入最大”和“福利最大”是两个不同的目标；这一集要看的，就是它们在什么情况下一致、什么情况下打架。</p>
+
+    <h2 id="baseline">1. 基准：两人均匀分布，二价拍卖收 1/3</h2>
+
+    <p>先算一个基准。两个买家，估值独立且在 $[0,1]$ 上均匀分布。二价拍卖让最高者赢、付第二高价，收入就是两人中较低的那个估值：</p>
+
+    <p>$$p=\min(v_1,v_2).$$</p>
+
+    <p>较低值的分布函数是 $F_{\min}(x)=1-(1-x)^2$。用“期望等于生存函数的积分”，</p>
+
+    <p>$$\mathbb{E}[\min(v_1,v_2)]=\int_0^1\bigl(1-F_{\min}(x)\bigr)\,dx.$$</p>
+
+    <p>均匀分布下 $1-F_{\min}(x)=(1-x)^2$，于是</p>
+
+    <p>$$\mathbb{E}[\min(v_1,v_2)]=\int_0^1(1-x)^2\,dx=\frac13.$$</p>
+
+    <p>所以诚实且不亏的起点是 $1/3$。问题是：还能不能更高？如果只在“分配规则 + 收费规则”里打转，很容易以为二价已经到顶；但加上一条底价，收入会立刻上去。</p>
+
+    <h2 id="reserve">2. 底价：故意不卖，反而多赚</h2>
+
+    <p>给拍卖加一条底价 $r$：报价低于 $r$ 的人不参与分配；若只有一人过线，他按 $r$ 成交；若两人都过线，仍按二价规则付较低的那个报价。</p>
+
+    <p>取 $r=1/2$。两个估值独立均匀，于是四种情况等概率：</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>情况</th><th>概率</th><th>成交价</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>两人都低于 $1/2$</td><td>$1/4$</td><td>不卖，$0$</td></tr>
+          <tr><td>只有一人过线</td><td>$1/2$</td><td>$1/2$</td></tr>
+          <tr><td>两人都过线</td><td>$1/4$</td><td>较低者，期望 $2/3$</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>“两人都过线”时，两个估值都在 $[1/2,1]$ 上均匀，较低者的期望是 $1/2+(1/2)/3=2/3$。于是期望收入</p>
+
+    <p>$$\frac14\cdot0+\frac12\cdot\frac12+\frac14\cdot\frac23
+    =\frac14+\frac16=\frac{5}{12}.$$</p>
+
+    <p>$5/12\approx0.417$，高于 $1/3\approx0.333$。多出来的收入来自哪里？来自左下角那个 $1/4$ 的概率：本来二价拍卖会在两人估值都很低时也成交，收一个很小的数；底价直接把这块交易砍掉，避免了“贱卖”。</p>
+
+    <p>代价也很清楚：左下角本来有效率交易，现在不卖了，社会福利不再是最大。这是收入与福利第一次正面冲突。后面迈尔森的理论会告诉我们：这条底价不是拍脑袋，而是虚拟价值过零的位置。</p>
+
+    <h2 id="single-param">3. 单参数设定：一个数，一份份额</h2>
+
+    <p>要把“任意机制”里的最优找出来，先收窄舞台。迈尔森引理处理的是<strong>单参数设定</strong>：每个买家只有一个私人参数 $v_i$（单位估值），机制分配给他一份份额 $x_i\in[0,1]$，他的价值就是</p>
+
+    <p>$$v_i\,x_i.$$</p>
+
+    <p>单物品拍卖是 $x_i\in\{0,1\}$、且 $\sum_i x_i\le1$；$k$ 件相同物品是 $x_i\in\{0,1\}$、$\sum_i x_i\le k$；可分物品是 $x_i$ 取小数。反过来，组合拍卖一般不属于单参数：每件物品的估值不同，一个买家有多个私人参数，迈尔森引理不直接适用。</p>
+
+    <p>机制仍是两件套：分配规则 $x(b)$ 加收费规则 $p(b)$。这一集的任务，是在单参数设定里把这两件都定下来。</p>
+
+    <h2 id="implementable">4. 可实施与单调</h2>
+
+    <p>先定义什么叫“好”的分配规则。一个分配规则是<strong>可实施</strong>的，如果存在某个收费规则，使得诚实成为占优策略。</p>
+
+    <p>迈尔森给出的条件简单得惊人：<strong>单调</strong>。固定其他人的报价，把自己的报价从低往高调，分配到的份额不能变少：</p>
+
+    <p>$$z\le z'\quad\Longrightarrow\quad x_i(z)\le x_i(z').$$</p>
+
+    <p>反过来，不单调就一定不可实施。看一个反例：把物品给“第二高报价者”。我本来排第二，能拿到物品；一旦把报价提高、超过原来的最高者，我变成第一，按规则反而拿不到，份额从 $1$ 掉到 $0$。这条曲线不单调，因此不存在任何收费能让诚实成为占优：我只要把报价压在第二，就能稳定拿到东西。</p>
+
+    <p>这个反例说明：单调不是技术性的小条件，而是“诚实”对分配形状提出的直接要求。</p>
+
+    <h2 id="lemma">5. 迈尔森引理：收费被锁死</h2>
+
+    <p>引理有两半：</p>
+
+    <ol>
+      <li>分配规则可实施 <strong>当且仅当</strong> 它单调；</li>
+      <li>单调时，收费规则<strong>唯一</strong>（在约定 $p_i(0)=0$ 之后）。</li>
+    </ol>
+
+    <p>唯一的收费长这样：</p>
+
+    <p>$$p_i(z)=z\,x_i(z)-\int_0^z x_i(w)\,dw.$$</p>
+
+    <p>用一句话念：<strong>报价乘份额，减去份额曲线从零到报价下方的面积</strong>。第一项是“报价 × 份额”的矩形，第二项是从矩形里挖掉的面积，剩下的那块就是付款。</p>
+
+    <p>这条公式的威力在于：它把“设计分配”和“设计收费”两件事合成了一件。只要选定一条单调的分配曲线，收费就没有自由度；除了整体加一个常数（$p_i(0)$）之外，没有第二条收费能配得上它。</p>
+
+    <h2 id="area">6. 面积公式的图像：单物品就是二价</h2>
+
+    <p>把公式画出来。横轴是我的报价 $z$，纵轴是我的份额 $x(z)$。矩形的高是 $x(z)$、宽是 $z$，面积 $z\,x(z)$；曲线下方的面积是 $\int_0^z x(w)\,dw$。两者相减，剩下的红色区域就是付款。</p>
+
+    <p>单物品时，份额曲线是一个台阶：别人的最高报价是 $b_{\max}$，我报价低于它时份额 $0$，高于它时份额 $1$。台阶高度为 $1$，跳变点在 $b_{\max}$。把它代进面积公式：</p>
+
+    <p>$$p(b)=b\cdot\mathbf{1}\{b>b_{\max}\}-\int_0^b\mathbf{1}\{w>b_{\max}\}\,dw.$$</p>
+
+    <p>两个指示函数相减，等价于只在 $b>b_{\max}$ 时剩下 $b_{\max}$ 这一段：</p>
+
+    <p>$$p(b)=b-(b-b_{\max})=b_{\max}.$$</p>
+
+    <p>矩形挖完剩下的面积恰好是台阶的位置：付第二高。二价拍卖的“唯一性”，在这里第二次被证出来——第一次是在第五集用支付曲线夹出来的，这一次是从迈尔森引理直接落下来的。</p>
+
+    <h2 id="monotone-proof">7. 为什么必须单调：把诚实写两遍</h2>
+
+    <p>先证“可实施 ⇒ 单调”。设我的真实估值是 $v$，可以报 $v$ 也可以谎报 $z$。诚实占优意味着两条不等式同时成立：</p>
+
+    <p>$$v\,x(v)-p(v)\ \ge\ v\,x(z)-p(z),$$</p>
+    <p>$$z\,x(z)-p(z)\ \ge\ z\,x(v)-p(v).$$</p>
+
+    <p>第一条是“真估值为 $v$ 时，报 $v$ 不比报 $z$ 差”；第二条是“真估值为 $z$ 时，报 $z$ 不比报 $v$ 差”。两条相加，付款项消掉：</p>
+
+    <p>$$(v-z)\bigl(x(v)-x(z)\bigr)\ \ge\ 0.$$</p>
+
+    <p>若 $v>z$，则 $x(v)\ge x(z)$；若 $v<z$，则 $x(v)\le x(z)$。合起来就是单调。诚实的激励要求，反过来塑造了分配曲线的形状。</p>
+
+    <h2 id="unique-proof">8. 为什么收费唯一：导数、积分与损失三角</h2>
+
+    <p>再证“单调 ⇒ 收费唯一”。固定 $z$，让真实估值 $v$ 从上方逼近 $z$。把上面的两条不等式改写成付款差被夹在中间：</p>
+
+    <p>$$z\bigl(x(v)-x(z)\bigr)\ \le\ p(v)-p(z)\ \le\ v\bigl(x(v)-x(z)\bigr).$$</p>
+
+    <p>两边除以 $v-z$，再令 $v\to z$，夹逼给出</p>
+
+    <p>$$\frac{dp}{dx}=z.$$</p>
+
+    <p>也就是说，<strong>付款对份额的导数等于报价本身</strong>。从 $0$ 积分到 $z$：</p>
+
+    <p>$$p(z)=p(0)+\int_0^z w\,x'(w)\,dw.$$</p>
+
+    <p>再用分部积分：</p>
+
+    <p>$$p(z)=p(0)+z\,x(z)-\int_0^z x(w)\,dw.$$</p>
+
+    <p>最后一步是分部积分。分配曲线有跳变时，把积分理解成对份额的累积，结论不变；这里不展开测度细节。</p>
+
+    <p>还要验证这条收费确实让诚实占优。真实估值为 $v$、报 $z$ 时，收益与诚实收益之差是一块面积：</p>
+
+    <p>$$u(v,v)-u(v,z)=
+    \begin{cases}
+    \displaystyle\int_z^v\bigl(x(w)-x(z)\bigr)\,dw, & z<v,\\
+    \displaystyle\int_v^z\bigl(x(z)-x(w)\bigr)\,dw, & z>v.
+    \end{cases}$$</p>
+
+    <p>两种情形都由单调性保证非负。画在图上，这块差值就是曲线与水平线之间夹出的三角形（或曲边三角形）面积；谎报只会损失这块面积。三步合起来，引理证完。</p>
+
+    <h2 id="p0">9. 报零付零：$p_i(0)=0$</h2>
+
+    <p>公式里还剩一个自由常数 $p_i(0)$。它被两条要求夹到零：</p>
+
+    <ul>
+      <li><strong>IR 压上界</strong>：报 $0$ 的买家份额是 $0$，若 $p_i(0)>0$，他的效用是 $-p_i(0)<0$，不如不参与。</li>
+      <li><strong>收入顶下界</strong>：若 $p_i(0)<0$，卖家在买家报零时倒贴钱；把所有付款整体加一个常数不改变任何人的激励，却能让收入变高，所以收入最优时不会取负值。</li>
+    </ul>
+
+    <p>于是 $p_i(0)=0$。设计机制这件事，彻底简化成“设计一条单调的分配规则”：收费由引理自动给出，不再是自由变量。</p>
+
+    <h2 id="virtual">10. 期望收入 = 期望虚拟福利</h2>
+
+    <p>现在把收费公式代进期望收入。对单个买家，期望付款拆成两项：</p>
+
+    <p>$$\begin{aligned}
+    \mathbb{E}[p_i(v_i)] &= \int_0^{\omega_i} v_i\,x_i(v_i)\,f_i(v_i)\,dv_i \\
+    &\quad -\int_0^{\omega_i}\left(\int_0^{v_i}x_i(w)\,dw\right)f_i(v_i)\,dv_i.
+    \end{aligned}$$</p>
+
+    <p>第二项交换积分次序：</p>
+
+    <p>$$\begin{aligned}
+    &\int_0^{\omega_i}\left(\int_0^{v_i}x_i(w)\,dw\right)f_i(v_i)\,dv_i \\
+    &\quad=\int_0^{\omega_i}x_i(w)\bigl(1-F_i(w)\bigr)\,dw.
+    \end{aligned}$$</p>
+
+    <p>两项合起来，每个 $v_i$ 前的系数正好是一个只由分布决定的函数。把它命名为<strong>虚拟价值</strong>：</p>
+
+    <p>$$\varphi_i(v_i)=v_i-\frac{1-F_i(v_i)}{f_i(v_i)}.$$</p>
+
+    <p>于是期望付款可以写成</p>
+
+    <p>$$\begin{aligned}
+    \mathbb{E}[p_i(v_i)] &= \int_0^{\omega_i}\varphi_i(v_i)\,x_i(v_i)\,f_i(v_i)\,dv_i \\
+    &=\mathbb{E}\bigl[\varphi_i(v_i)\,x_i(v_i)\bigr].
+    \end{aligned}$$</p>
+
+    <p>它只由买家自己的分布决定，和别人的报价无关。对所有人求和，并用独立性把联合期望拆开：</p>
+
+    <p>$$\mathbb{E}[\mathrm{Rev}]
+    =\mathbb{E}\left[\sum_{i=1}^{n}\varphi_i(v_i)\,x_i(v)\right]
+    =\mathbb{E}\bigl[\text{虚拟福利}\bigr].$$</p>
+
+    <p>这一步是整集的分水岭：<strong>收入最大化，等价于在虚拟价值上做福利最大化</strong>。原来那个“收入”目标，被翻译成了一个和 VCG 长得一样的目标，只是把真实估值 $v_i$ 换成了虚拟价值 $\varphi_i(v_i)$。</p>
+
+    <p>独立性在这里不能省。若估值相关，联合分布不能拆成边缘分布的乘积，$\mathbb{E}[\sum\varphi_i x_i]$ 与期望收入之间会多出相关项，整套“逐人换算”的简化就失效了。</p>
+
+    <h2 id="regular">11. 正则：虚拟价值不往下跳</h2>
+
+    <p>虚拟价值有两个麻烦：它可以是负的；它也可能不单调。</p>
+
+    <p>先看负值。均匀分布 $[0,1]$ 上，$F(v)=v$、$f(v)=1$，于是</p>
+
+    <p>$$\varphi(v)=v-(1-v)=2v-1.$$</p>
+
+    <p>在 $v<1/2$ 时为负。虚拟价值为负的买家，如果还分给他东西，期望收入反而被拉低；最优做法是设一条底价，把 $\varphi<0$ 的类型挡在门外。均匀分布时零点在 $1/2$，这正好解释了上一节的底价。</p>
+
+    <p>再看单调。取密度在 $1$ 处从 $1/2$ 掉到 $1/4$：</p>
+
+    <p>$$f(v)=\begin{cases}1/2, & 0\le v\le1,\\ 1/4, & 1<v\le3.\end{cases}$$</p>
+
+    <p>两段分别算：</p>
+
+    <p>$$\varphi(v)=\begin{cases}2v-2, & 0\le v\le1,\\ 2v-3, & 1<v\le3.\end{cases}$$</p>
+
+    <p>在 $v=1$ 处，虚拟价值从 $0$ 直接掉到 $-1$。这不是连续下移，而是向下跳。这样的分布叫<strong>非正则</strong>。</p>
+
+    <p>如果虚拟价值单调不减，就称分布是<strong>正则</strong>的（regular）。正则的好处是：福利最大化规则对每个坐标单调，套上单调的虚拟价值，复合出来仍然单调，迈尔森引理的前提保住了。</p>
+
+    <p>具体说，设 $x$ 在真实估值 $v$ 下最大化 $\sum_j\varphi_j(v_j)x_j$，$x'$ 在 $v'$ 下最大化，且只把第 $i$ 个坐标从 $v_i$ 调到 $v_i'$。两组最优性不等式相减：</p>
+
+    <p>$$\bigl(\varphi_i(v_i')-\varphi_i(v_i)\bigr)\bigl(x_i'-x_i\bigr)\ \ge\ 0.$$</p>
+
+    <p>若 $\varphi_i$ 单调不减，则 $x_i'\ge x_i$：分配对每个坐标单调，于是可实施。</p>
+
+    <p>非正则时，需要先把虚拟价值“熨平”（ironing）成单调包络，再在熨平后的虚拟价值上做福利最大化。那是迈尔森完整解的下一层，这里只留一个接口。</p>
+
+    <h2 id="assembly">12. 组装：最优拍卖长什么样</h2>
+
+    <p>把前面的零件接起来，收入最优的拍卖只有三步：</p>
+
+    <ol>
+      <li><strong>换算</strong>：收到报价，按每个人自己的分布算虚拟价值 $\varphi_i(b_i)$；</li>
+      <li><strong>分配</strong>：在虚拟价值上做福利最大化，把份额分给 $\sum\varphi_i x_i$ 最大的方案（单物品就是分给虚拟价值最高且非负的人）；</li>
+      <li><strong>收费</strong>：按面积公式 $p_i=z\,x_i(z)-\int_0^z x_i(w)\,dw$ 收钱。</li>
+    </ol>
+
+    <p>均匀分布的例子最好核对。两人都在 $[0,1]$ 均匀，$\varphi(v)=2v-1$，零点在 $1/2$。虚拟价值最大且非负，等价于“报价最高且超过 $1/2$”。于是最优拍卖就是底价 $1/2$ 的二价拍卖，期望收入正是上一节算过的 $5/12$。</p>
+
+    <p>分布不同，底价就因人而异。设买家一在 $[0,1]$ 均匀（$\varphi_1=2v-1$，零点是 $1/2$），买家二在 $[0,2]$ 均匀（$\varphi_2=2v-2$，零点是 $1$）。虚拟价值比较的是换算后的数，不是原始报价。比如 $v_1=0.9$（$\varphi_1=0.8$）对 $v_2=1.1$（$\varphi_2=0.2$）：买家二报得更高，却因为虚拟价值更低而输。这就是“高报者也可能输”的来源。</p>
+
+    <p>再往外一步，就是迈尔森拍卖的完整叙述：在正则分布下，它是“虚拟福利最大化 + 面积收费”；在非正则分布下，先把虚拟价值熨成单调，再用同一套流程。目标从福利换成收入，机制的骨架却还是 VCG 那一副：先定分配，再由分配反推收费。</p>
+
+    <h2 id="pitfalls">13. 常见错误</h2>
+
+    <ol>
+      <li><strong>把最优拍卖说成福利最大。</strong>迈尔森最大化的是收入；为了收入，它会故意不卖，福利因此低于 VCG。</li>
+      <li><strong>以为底价是拍脑袋的常数。</strong>底价来自虚拟价值的零点；分布一变，底价跟着变。</li>
+      <li><strong>把单调理解成“对别人的报价也单调”。</strong>单调只要求分配对自己报价不降；对别人的报价没有这个要求。</li>
+      <li><strong>以为任意分配都能配任意收费。</strong>在 $p_i(0)=0$ 下，单调分配对应的收费是唯一的，不能随手另写一个。</li>
+      <li><strong>忘了虚拟价值可以为负。</strong>负虚拟价值的类型要设底价挡掉；硬卖会拉低期望收入。</li>
+      <li><strong>漏掉独立性假设。</strong>“期望收入 = 期望虚拟福利”的逐人拆解依赖估值独立；相关估值要另做。</li>
+      <li><strong>把正则当成均匀分布。</strong>正则只要求虚拟价值单调不减；均匀、指数、很多常见分布都正则，但不是所有分布都正则。</li>
+      <li><strong>把 $p_i(0)=0$ 说成 DSIC 的直接结论。</strong>DSIC 只定出收费的差；$p_i(0)=0$ 是 IR 加上收入最优共同夹出来的。</li>
+      <li><strong>把二价加底价当成所有分布的最优。</strong>它只是均匀分布下的最优；别的分布有别的底价与分配规则。</li>
+      <li><strong>忘了这是贝叶斯最优。</strong>卖家用的是分布信息；分布估错，所谓“最优”就不再最优。</li>
+    </ol>
+
+    <h2 id="quiz">14. 自测 8 题</h2>
+
+    <ol>
+      <li>两人均匀分布、二价拍卖的期望收入为什么是 $1/3$？写出较低值的分布函数与积分。</li>
+      <li>底价 $1/2$ 时，四种情况的概率与成交价分别是什么？期望收入 $5/12$ 怎么来？代价是什么？</li>
+      <li>什么是单参数设定？单物品、多物品、可分物品、组合拍卖各属不属于？</li>
+      <li>写出“可实施 ⇔ 单调”的证明中两条 IC 不等式，并推出单调。</li>
+      <li>从夹逼 $\frac{dp}{dx}=z$ 出发，推出收费公式 $p(z)=z x(z)-\int_0^z x(w)dw$（取 $p(0)=0$）。</li>
+      <li>$p_i(0)$ 为什么被夹到 $0$？IR 与收入分别起了什么作用？</li>
+      <li>写出虚拟价值的定义，并推导 $\mathbb{E}[\mathrm{Rev}]=\mathbb{E}[\sum_i\varphi_i(v_i)x_i(v)]$；独立性用在哪一步？</li>
+      <li>什么是正则分布？均匀分布的最优拍卖是什么？非正则时“熨平”解决了什么问题？</li>
+    </ol>
+
+    <details>
+      <summary>答案</summary>
+      <ol>
+        <li>二价收入是 $\min(v_1,v_2)$，其分布函数 $F(x)=1-(1-x)^2$。于是 $\mathbb{E}[\min]=\int_0^1(1-F(x))dx=\int_0^1(1-x)^2dx=1/3$。</li>
+        <li>都低于 $1/2$（概率 $1/4$）收 $0$；一人过线（$1/2$）收 $1/2$；两人都过线（$1/4$）收较低者，条件期望 $2/3$。期望收入 $=\frac14\cdot0+\frac12\cdot\frac12+\frac14\cdot\frac23=5/12$。代价是左下角本来有效率的交易被砍掉，福利不再最大。</li>
+        <li>每人只有一个私人参数 $v_i$，份额 $x_i\in[0,1]$，价值 $v_i x_i$。单物品、多物品、可分物品都属于；组合拍卖一般不属于，因为每个买家有多维估值。</li>
+        <li>$v x(v)-p(v)\ge v x(z)-p(z)$ 与 $z x(z)-p(z)\ge z x(v)-p(v)$。相加得 $(v-z)(x(v)-x(z))\ge0$，于是 $v>z$ 时 $x(v)\ge x(z)$，即单调。</li>
+        <li>IC 给出 $z(x(v)-x(z))\le p(v)-p(z)\le v(x(v)-x(z))$。除以 $v-z$ 并令 $v\to z$，得 $p'(z)=z x'(z)$。从 $0$ 积分并用分部积分：$p(z)=p(0)+\int_0^z w x'(w)dw=p(0)+z x(z)-\int_0^z x(w)dw$。取 $p(0)=0$。</li>
+        <li>IR：报 $0$ 时份额为 $0$，若 $p(0)>0$ 则效用为负，不如不参与，所以 $p(0)\le0$。收入：若 $p(0)<0$，把所有付款整体加一个常数不改变激励，却提高收入，所以最优不会取负。两条夹出 $p(0)=0$。</li>
+        <li>$\varphi_i(v)=v-(1-F_i(v))/f_i(v)$。把面积公式代入 $\mathbb{E}[p_i]$，对 $\int_0^v x(w)dw$ 交换积分次序得 $\int_0^\omega x(w)(1-F(w))dw$，合并后得到 $\mathbb{E}[\varphi_i(v_i)x_i(v_i)]$；对 $i$ 求和时用独立性把联合期望拆成边缘期望的乘积。</li>
+        <li>正则指 $\varphi_i$ 单调不减。均匀分布 $\varphi=2v-1$，零点 $1/2$，最优拍卖是底价 $1/2$ 的二价拍卖。非正则时 $\varphi$ 会向下跳，直接做虚拟福利最大化不保证分配单调；熨平把 $\varphi$ 换成它的单调包络，再走同一套流程。</li>
+      </ol>
+    </details>
+
+    <h2 id="end">15. 收尾</h2>
+
+    <p>这一集的主线可以压成一条链：<strong>收入目标 → 二价基准 1/3 → 底价 5/12 → 单参数 → 单调 ⇔ 可实施 → 面积公式 → 虚拟价值 → 正则 → 虚拟福利最大化</strong>。</p>
+
+    <p>最值得记住的不是某个底价数字，而是这次“翻译”：把期望收入写成期望虚拟福利之后，收入问题变成了一个熟悉的福利问题。分配仍然选总和最大，只是把真实估值换成了虚拟价值；收费仍然由分配唯一决定，只是这次是由迈尔森引理决定。VCG 与迈尔森拍卖，一个对齐福利，一个对齐收入，骨架却是同一副。</p>
+
+    <p>但这套最优性有一个前提：拍卖行知道估值分布。下一集把这个前提拿掉，进入贝叶斯博弈：玩家连彼此的估值都不知道，一价拍卖要重新分析，均衡也不再是“诚实”这么简单。</p>
+  </main>
