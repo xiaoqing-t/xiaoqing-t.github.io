@@ -40,7 +40,7 @@ export default function Hero() {
       <div className="hero-motion" aria-hidden="true">
         <iframe
           ref={motionFrame}
-          src={`${import.meta.env.BASE_URL}lab/keep-learning.html?embed=1`}
+          src={`${import.meta.env.BASE_URL}lab/keep-learning.html?embed=1&layout=hero`}
           title="keep learning 粒子动画"
           tabIndex={-1}
         />
